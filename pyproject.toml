@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tgfp-web"
-version = "1.0.0"
+version = "1.0.1"
 description = "The Great Football Pool flask web site"
 authors = ["John Sturgeon <john.sturgeon@me.com>"]
 license = "MIT"
