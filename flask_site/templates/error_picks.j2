@@ -1,0 +1,16 @@
+{% extends "base.j2" %}
+{% set page_title="Picks Page - results" %}
+{% set page_description="The Picks Page results page" %}
+{% block content %}
+Oops!<br />
+<ul>
+{% for error_message in error_messages -%}
+    <li>{{ error_message }}</li>
+{% endfor -%}
+</ul>
+{% if goto_route == 'allpicks' -%}
+	<a href="{{ url_for('allpicks') }}">Go to everybody's picks</a>
+{% else -%}
+	<a href="javascript:history.back()">Go back to the Picks Page</a>
+{% endif -%}
+{% endblock %}

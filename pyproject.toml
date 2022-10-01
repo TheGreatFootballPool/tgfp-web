@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "tgfp-web"
+version = "1.0.0"
+description = "The Great Football Pool flask web site"
+authors = ["John Sturgeon <john.sturgeon@me.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^2.2.2"
+sentry-sdk = {extras = ["flask"], version = "^1.9.8"}
+gunicorn = "^20.1.0"
+Flask-Discord = "^0.1.69"
+blinker = "^1.5"
+doppler-env = "^0.3.0"
+tgfp-lib = "^1.14.1"
+Flask-DebugToolbar = "^0.13.1"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.15.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

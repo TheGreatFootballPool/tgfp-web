@@ -1,0 +1,44 @@
+{% extends "base.j2" -%}
+{% set page_title="Team Standings Page" -%}
+{% set page_description="The Standings Page for Teams - " -%}
+{% macro row_with_style(row_number) -%}
+    {% if row_number%2 == 0 -%}
+        <tr style="border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
+    {% else -%}
+        <tr>
+    {% endif -%}
+{% endmacro -%}
+{% block content %}
+<div style="color:#a32f31;padding:8px;padding-left: 0px;padding-bottom: 12px">Click on a table header to sort by that column.</div>
+    <table id=standings_table class="sortable">
+	    <tr>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Name</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Wins</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Losses</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Bonus</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Last<br />Wins</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Last<br />Losses</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Last<br />Bonus</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Total</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Win %</td>
+	        <td bgcolor="#CCCCCC" class="standings_head" nowrap>Games<br />Back</td>
+	    </tr>
+        {% set row_number=0 -%}
+	    {% for clan in clans %}
+		    {{ row_with_style(row_number) }}
+		    {% set games_back = clans[0].total_points - clan.total_points -%}
+			    <td>{{ clan.clan_name }}</td>
+			    <td style="text-align: right;">{{ clan.wins }}</td>
+			    <td style="text-align: right;">{{ clan.losses }}</td>
+			    <td style="text-align: right;">{{ clan.bonus }}</td>
+			    <td style="text-align: right;">{{ clan.last_wins }}</td>
+			    <td style="text-align: right;">{{ clan.last_losses }}</td>
+			    <td style="text-align: right;">{{ clan.last_bonus }}</td>
+			    <td style="text-align: right;">{{ clan.total_points }}</td>
+			    <td style="text-align: right;">{{'%.3f'| format(clan.winning_pct|float)}}</td>
+			    <td style="text-align: center;">{% if games_back == 0 %}-{% else %}{{ games_back }}{% endif %}</td>
+		    </tr>
+		    {% set row_number = row_number + 1 %}
+	    {% endfor %}
+    </table>
+{% endblock %}
