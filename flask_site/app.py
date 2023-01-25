@@ -105,6 +105,12 @@ def index():
     return redirect(url_for('home'))
 
 
+@app.route('/profile')
+def profile():
+    """ Home page"""
+    return render_template('profile.j2')
+
+
 @app.route('/home')
 def home():
     """ Home page route for the football pool """

@@ -1,0 +1,39 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Restaurant</title>
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='hamburger.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='grid.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-container container">
+        <input type="checkbox" name="" id="">
+        <div class="hamburger-lines">
+            <span class="line line1"></span>
+            <span class="line line2"></span>
+            <span class="line line3"></span>
+        </div>
+        <ul class="menu-items">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#food">Category</a></li>
+            <li><a href="#food-menu">Menu</a></li>
+            <li><a href="#testimonials">Testimonial</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="logo">
+            <img alt="logo" src="{{ url_for('static', filename='images/tgfp_logo.png') }}">
+        </div>
+    </div>
+</nav>
+<footer id="footer">
+</footer>
+</body>
+<!--
+  .................../ JS Code for smooth scrolling /...................... -->
+
+
+</html>

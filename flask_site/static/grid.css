@@ -1,0 +1,9 @@
+:root {
+    --background-color: white;
+    --menu-bg-color: #cccc99;
+}
+
+.logo IMG {
+    max-height: 60px;
+    vertical-align: middle;
+}
