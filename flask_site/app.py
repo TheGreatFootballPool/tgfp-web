@@ -5,8 +5,6 @@ from typing import List, Optional
 from flask import Flask, session, request, abort
 from flask import render_template, redirect, url_for, g
 from flask_discord import DiscordOAuth2Session
-import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
 
 from tgfp_lib import TGFP, TGFPPlayer, TGFPPick, TGFPGame
 
@@ -14,17 +12,6 @@ from config import get_config
 
 config = get_config()
 
-sentry_sdk.init(
-    dsn=config.SENTRY_DSN_TGFP_WEB,
-    integrations=[
-        FlaskIntegration(),
-    ],
-
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0
-)
 
 logger = config.logger(os.path.basename(__file__))
 # timeout in seconds * minutes
@@ -47,7 +34,7 @@ def before_request():
     if 'static' not in request.path and '_profile' not in request.path:
         tgfp = None
         if not hasattr(g, 'tgfp'):
-            tgfp = TGFP()
+            tgfp = TGFP(config.MONGO_URI)
         # pylint: disable=assigning-non-slot
         g.current_week = tgfp.current_week()
         g.tgfp = tgfp

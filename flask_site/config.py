@@ -13,27 +13,17 @@ class InvalidEnvironment(Exception):
 class Config:
     """ Base configuration class """
     #  Discord config variables
-    DISCORD_ADMIN_EMAIL = os.getenv("DISCORD_ADMIN_EMAIL")
-    DISCORD_BOT_CHANNEL_ID = os.getenv("DISCORD_BOT_CHANNEL_ID")
-    DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
-    DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
-    DISCORD_GUILD = os.getenv("DISCORD_GUILD")
-    DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI")
-    DISCORD_WEBHOOK_BOT_ID = os.getenv("DISCORD_WEBHOOK_BOT_ID")
     OAUTHLIB_INSECURE_TRANSPORT = os.getenv("OAUTHLIB_INSECURE_TRANSPORT")
 
-    LOGIN_URL = os.getenv("LOGIN_URL")
+    DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
+    DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+    DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI")
+
     LOG_LEVEL = os.getenv("LOG_LEVEL")
 
-    #  Mongo variables
-    MONGODUMP_BIN = os.getenv("MONGODUMP_BIN")
-    MONGO_BACKUP_FOLDER = os.getenv("MONGO_BACKUP_FOLDER")
-
     SECRET_KEY = os.getenv("SECRET_KEY")
-    SENTRY_DSN_TGFP_WEB = os.getenv("SENTRY_DSN_TGFP_WEB")
     TGFP_WEB_CHECK_URL = os.getenv("TGFP_WEB_CHECK_URL")
-
-    DOPPLER_ENVIRONMENT = os.getenv("DOPPLER_ENVIRONMENT")
+    MONGO_URI = os.getenv("MONGO_URI")
 
     def logger(self, name: str) -> logging.Logger:
         """ Return the common logger """

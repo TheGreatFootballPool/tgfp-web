@@ -65,3 +65,9 @@ http {
 - (see: https://kb.virtubox.net/knowledgebase/cloudflare-ssl-origin-certificates-nginx/)
 - open port 80, 443
 
+
+### Updating Poetry Packages
+
+When updating to newer version of any package (for example `tgfp-nfl` or `tgfp-lib`):
+* `poetry cache clear pypi --all`
+* `poetry add tgfp-nfl:latest` or `poetry add tgfp-lib:latest`
