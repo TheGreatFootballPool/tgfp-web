@@ -22,7 +22,6 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL")
 
     SECRET_KEY = os.getenv("SECRET_KEY")
-    TGFP_WEB_CHECK_URL = os.getenv("TGFP_WEB_CHECK_URL")
     MONGO_URI = os.getenv("MONGO_URI")
 
     def logger(self, name: str) -> logging.Logger:

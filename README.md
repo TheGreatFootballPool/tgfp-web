@@ -1,73 +1,30 @@
 # Great Football Pool
-## Notes during massive refactor
 
-### Uses the following
-- Install docker
-- Make directory somewhere on unix machine
-- write this docker compose
-```yaml
-version: '3.8'
+### Production Deployment
 
-services:
-  tgfp-web:
-    image: johnofcamas/tgfp-web:latest
-    container_name: tgfp-web
-    restart: unless-stopped
-    command: doppler run --command="gunicorn -b 0.0.0.0:8000 app:app"
-    networks:
-      my-network:
-        aliases:
-          - tgfp-web
-    environment:
-      - DOPPLER_TOKEN=<insert token here>
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    volumes:
-      - ./data/certs:/etc/nginx/certs:ro
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - "80:80"
-    networks:
-      - my-network
-    depends_on:
-      - tgfp-web
-
-networks:
-  my-network:
-
-```
-- Create nginx.conf file:
-```
-events { worker_connections 1024; }
-
-http {
-
-    upstream app_servers {    # Create an upstream for the web servers
-        server tgfp-web:80;    # the first server
-    }
-
-    server {
-        listen 80;
-        listen [::]:80;
-
-        server_name tgfp.us www.tgfp.us;
-        location / {
-            proxy_pass http://tgfp-web:8000;
-        }
-    }
-}
-
-```
-- Install cloudflares ssl certificates
-  - install into `data/certs`
-- (see: https://kb.virtubox.net/knowledgebase/cloudflare-ssl-origin-certificates-nginx/)
-- open port 80, 443
-
+- Docker Compose (Use Portainer)
+- Here is the [docker compose](docker-compose.yaml)
 
 ### Updating Poetry Packages
 
 When updating to newer version of any package (for example `tgfp-nfl` or `tgfp-lib`):
 * `poetry cache clear pypi --all`
 * `poetry add tgfp-nfl:latest` or `poetry add tgfp-lib:latest`
+
+## Development process
+1. Get the IP address of your dev machine (we'll call it `<dev_ip_address>` below)
+2. Prepare the docker compose (for running the mongodb and test deployment of web)
+   - Use the <dev docker compose](dev-docker-compose.yaml) file for development
+   - create a .env file (see the portainer stack)
+   - change `OAUTHLIB_INSECURE_TRANSPORT` to `true`
+   - change the `DISCORD_REDIRECT_URI` to `http://<dev_ip_address>:6701/callback` (assuming same port)
+   - change the mongo password to whatever you want (update the MONGO_URI)
+   - change the `SECRET_KEY`
+3. Start the mongo-db service from `dev-docker-compose`
+4. Connect to the terminal of the container
+5. Clone the Prod db for development
+   1. `mongodump --username tgfp --password <password> --host="<dev_ip_address>:27017"`
+   2. `rm -rf dump/admin`
+   3. `mongorestore --username tgfp --password development dump/ --authenticationDatabase=admin`
+
+That's it, you should be able to run the 'Flask' PyCharm Run config now

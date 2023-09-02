@@ -1,0 +1,38 @@
+services:
+  tgfp-mongodb:
+    image: mongo:6
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD
+    restart: unless-stopped
+    container_name: tgfp-mongodb
+    hostname: mongo
+    ports:
+      - "${MONGO_PORT_EXTERNAL}:${MONGO_PORT_INTERNAL}"
+    volumes:
+      - ./db:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:${MONGO_PORT_INTERNAL}/ --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+  tgfp-web:
+    build: .
+    container_name: tgfp-web
+    restart: unless-stopped
+    command: gunicorn -b 0.0.0.0:$WEB_PORT app:app
+    environment:
+      - TZ
+      - LOG_LEVEL
+      - OAUTHLIB_INSECURE_TRANSPORT
+      - DISCORD_CLIENT_ID
+      - DISCORD_REDIRECT_URI=http://0.0.0.0:6701/callback
+      - DISCORD_CLIENT_SECRET
+      - MONGO_URI=mongodb://tgfp:development@mongo:27017/?authMechanism=DEFAULT
+      - SECRET_KEY
+    ports:
+      - "$WEB_PORT:$WEB_PORT"
+    depends_on:
+      tgfp-mongodb:
+        condition: service_started

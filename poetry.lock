@@ -498,7 +498,7 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [[package]]
 name = "tgfp-lib"
-version = "2.1.0"
+version = "2.1.1"
 description = "The Great Football Pool Project"
 category = "main"
 optional = false
@@ -580,7 +580,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "c45361e151fccbd6e0cfc5380d167d852bfe155a22d3d5352a12bf054def6dbf"
+content-hash = "34e510379cafb2ae117d266ef67b5a645c922cff24f21ca23076b95fc94340f9"
 
 [metadata.files]
 annotated-types = [
@@ -1078,8 +1078,8 @@ setuptools = [
     {file = "setuptools-68.1.2.tar.gz", hash = "sha256:3d4dfa6d95f1b101d695a6160a7626e15583af71a5f52176efa5d39a054d475d"},
 ]
 tgfp-lib = [
-    {file = "tgfp_lib-2.1.0-py3-none-any.whl", hash = "sha256:1413235e6fdd5dd3bf42c46ddc226e4fb8294fa636d3f1d1bfc43b6c0181272d"},
-    {file = "tgfp_lib-2.1.0.tar.gz", hash = "sha256:8aebae7e44e409c7cb78f86c2d8dc76ff190896a76743274ec6d55199b1e7f44"},
+    {file = "tgfp_lib-2.1.1-py3-none-any.whl", hash = "sha256:d8548c10098d76accaffa14a08873e517c721fa68d5e90717a1f0d65d18b2c7d"},
+    {file = "tgfp_lib-2.1.1.tar.gz", hash = "sha256:c1c613a505e801a8346717929475a51952af68767401eceff2eb49cba2c29ab6"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

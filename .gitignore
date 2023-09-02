@@ -13,5 +13,4 @@ env
 logs
 .nova
 .idea
-docker-compose.yaml
-./data
+.env
