@@ -3,6 +3,8 @@ from logging.handlers import RotatingFileHandler
 import logging
 import os
 
+from prefect.blocks.system import Secret
+
 
 # pylint: disable=missing-class-docstring
 class InvalidEnvironment(Exception):
@@ -12,6 +14,9 @@ class InvalidEnvironment(Exception):
 # pylint: disable=too-few-public-methods
 class Config:
     """ Base configuration class """
+    ENV: str = os.getenv('ENVIRONMENT')
+    MONGO_URI = Secret.load(f'mongo-uri-{ENV}')
+
     #  Discord config variables
     OAUTHLIB_INSECURE_TRANSPORT = os.getenv("OAUTHLIB_INSECURE_TRANSPORT")
 
@@ -22,7 +27,6 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL")
 
     SECRET_KEY = os.getenv("SECRET_KEY")
-    MONGO_URI = os.getenv("MONGO_URI")
 
     def logger(self, name: str) -> logging.Logger:
         """ Return the common logger """
