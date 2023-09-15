@@ -20,12 +20,16 @@ def get_logger():
 class Config:
     """ Base configuration class """
     ENV: str = os.getenv('ENVIRONMENT')
-    MONGO_URI = Secret.load(f'mongo-uri-{ENV}')
+    s: Secret = Secret.load(f'mongo-uri-{ENV}')
+    MONGO_URI = s.get()
     OAUTHLIB_INSECURE_TRANSPORT = variables.get(f'discord_oauthlib_insecure_transport_{ENV}')
-    DISCORD_CLIENT_ID = Secret.load('discord-client-id')
-    DISCORD_CLIENT_SECRET = Secret.load(f'discord-client-secret-{ENV}')
+    s = Secret.load('discord-client-id')
+    DISCORD_CLIENT_ID = s.get()
+    s = Secret.load(f'discord-client-secret-{ENV}')
+    DISCORD_CLIENT_SECRET = s.get()
     DISCORD_REDIRECT_URI = variables.get(f'discord_redirect_ui_{ENV}')
-    SECRET_KEY = Secret.load(f'web-secret-key-{ENV}')
+    s = Secret.load(f'web-secret-key-{ENV}')
+    SECRET_KEY = s.get()
 
 
 def get_config():

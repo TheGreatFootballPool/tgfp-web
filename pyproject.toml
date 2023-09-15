@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tgfp-web"
-version = "2.3.0"
+version = "2.4.0"
 description = "The Great Football Pool flask web site"
 authors = ["John Sturgeon <john.sturgeon@me.com>"]
 license = "MIT"
@@ -11,13 +11,11 @@ Flask = "^2.2.2"
 gunicorn = "^21.2.0"
 Flask-Discord = "^0.1.69"
 blinker = "^1.6.2"
-doppler-env = "^0.3.0"
 tgfp-lib = "^2.1.1"
 Flask-DebugToolbar = "^0.13.1"
-setuptools = "^68.1.2"
+setuptools = "^68.2.2"
 pylint = "^2.17.5"
 fastapi = "^0.103.1"
-uvicorn = "^0.23.2"
 prefect = "^2.13.1"
 
 [tool.poetry.dev-dependencies]
