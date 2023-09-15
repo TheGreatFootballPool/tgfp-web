@@ -11,9 +11,6 @@ from tgfp_lib import TGFP, TGFPPlayer, TGFPPick, TGFPGame
 from config import get_config
 
 config = get_config()
-
-
-logger = config.logger(os.path.basename(__file__))
 # timeout in seconds * minutes
 seconds_in_one_day: int = 60*60*24
 days_for_timeout: int = 14

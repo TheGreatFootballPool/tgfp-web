@@ -1,9 +1,9 @@
 """ Configuration file """
-from logging.handlers import RotatingFileHandler
 import logging
 import os
 
 from prefect.blocks.system import Secret
+from prefect import variables, get_run_logger
 
 
 # pylint: disable=missing-class-docstring
@@ -12,35 +12,20 @@ class InvalidEnvironment(Exception):
 
 
 # pylint: disable=too-few-public-methods
+def get_logger():
+    """ Return the common logger """
+    return get_run_logger()
+
+
 class Config:
     """ Base configuration class """
     ENV: str = os.getenv('ENVIRONMENT')
     MONGO_URI = Secret.load(f'mongo-uri-{ENV}')
-
-    #  Discord config variables
-    OAUTHLIB_INSECURE_TRANSPORT = os.getenv("OAUTHLIB_INSECURE_TRANSPORT")
-
-    DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
-    DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
-    DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI")
-
-    LOG_LEVEL = os.getenv("LOG_LEVEL")
-
-    SECRET_KEY = os.getenv("SECRET_KEY")
-
-    def logger(self, name: str) -> logging.Logger:
-        """ Return the common logger """
-        logger: logging.Logger = logging.getLogger(name)
-        logger.setLevel(getattr(logging, self.LOG_LEVEL))
-        file_path = os.path.dirname(os.path.abspath(__file__)) + '/logs'
-        if not os.path.exists(file_path):
-            os.mkdir(file_path)
-        file_path += '/tgfp_logfile.log'
-        handler = RotatingFileHandler(file_path, maxBytes=1000000, backupCount=10)
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        return logger
+    OAUTHLIB_INSECURE_TRANSPORT = variables.get(f'discord_oauthlib_insecure_transport_{ENV}')
+    DISCORD_CLIENT_ID = Secret.load('discord-client-id')
+    DISCORD_CLIENT_SECRET = Secret.load(f'discord-client-secret-{ENV}')
+    DISCORD_REDIRECT_URI = variables.get(f'discord_redirect_ui_{ENV}')
+    SECRET_KEY = Secret.load(f'web-secret-key-{ENV}')
 
 
 def get_config():
