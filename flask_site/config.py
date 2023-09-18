@@ -1,9 +1,8 @@
 """ Configuration file """
-import logging
 import os
 
-from prefect.blocks.system import Secret
-from prefect import variables, get_run_logger
+from prefect import get_run_logger
+from prefect_helpers import get_secret
 
 
 # pylint: disable=missing-class-docstring
@@ -19,17 +18,16 @@ def get_logger():
 
 class Config:
     """ Base configuration class """
-    ENV: str = os.getenv('ENVIRONMENT')
-    s: Secret = Secret.load(f'mongo-uri-{ENV}')
-    MONGO_URI = s.get()
-    OAUTHLIB_INSECURE_TRANSPORT = int(variables.get(f'discord_oauthlib_insecure_transport_{ENV}'))
-    s = Secret.load('discord-client-id')
-    DISCORD_CLIENT_ID = s.get()
-    s = Secret.load(f'discord-client-secret-{ENV}')
-    DISCORD_CLIENT_SECRET = s.get()
-    DISCORD_REDIRECT_URI = variables.get(f'discord_redirect_ui_{ENV}')
-    s = Secret.load(f'web-secret-key-{ENV}')
-    SECRET_KEY = s.get()
+    MONGO_URI: str = get_secret('mongo-uri')
+    OAUTHLIB_INSECURE_TRANSPORT: str = get_secret(
+        'discord_oauthlib_insecure_transport',
+        is_var=True
+    )
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = OAUTHLIB_INSECURE_TRANSPORT
+    DISCORD_CLIENT_ID = get_secret('discord-client-id')
+    DISCORD_CLIENT_SECRET = get_secret('discord-client-secret')
+    DISCORD_REDIRECT_URI = get_secret('discord_redirect_ui', is_var=True)
+    SECRET_KEY = get_secret('web-secret-key')
 
 
 def get_config():
