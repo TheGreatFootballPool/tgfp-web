@@ -24,7 +24,7 @@ class Config:
         is_var=True
     )
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = OAUTHLIB_INSECURE_TRANSPORT
-    DISCORD_CLIENT_ID = get_secret('discord-client-id')
+    DISCORD_CLIENT_ID = get_secret('discord-client-id', use_env=False)
     DISCORD_CLIENT_SECRET = get_secret('discord-client-secret')
     DISCORD_REDIRECT_URI = get_secret('discord_redirect_ui', is_var=True)
     SECRET_KEY = get_secret('web-secret-key')
