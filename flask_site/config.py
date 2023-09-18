@@ -22,7 +22,7 @@ class Config:
     ENV: str = os.getenv('ENVIRONMENT')
     s: Secret = Secret.load(f'mongo-uri-{ENV}')
     MONGO_URI = s.get()
-    OAUTHLIB_INSECURE_TRANSPORT = variables.get(f'discord_oauthlib_insecure_transport_{ENV}')
+    OAUTHLIB_INSECURE_TRANSPORT = int(variables.get(f'discord_oauthlib_insecure_transport_{ENV}'))
     s = Secret.load('discord-client-id')
     DISCORD_CLIENT_ID = s.get()
     s = Secret.load(f'discord-client-secret-{ENV}')
