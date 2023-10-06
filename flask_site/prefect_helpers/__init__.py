@@ -1,6 +1,6 @@
 """ Nag Players module """
-from .helpers import get_secret
+from .helpers import PrefectHelper
 
 __all__ = [
-    "get_secret"
+    "PrefectHelper"
 ]

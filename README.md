@@ -14,37 +14,37 @@ When updating to newer version of any package (for example `tgfp-nfl` or `tgfp-l
 
 ## Development process
 
+### Prerequisites
+
+* Cloudflare WARP client installed and connected
+* `tgfp-web` and `tgfp` repos cloned
+
 ### Gather all the variables you'll need
 
-1. Get the IP address of your dev machine (we'll call it `<dev_ip_address>` below)
+Instructions below are for 'full stack' dev -- for DB only, just execute steps with [DB] in front
+
+1. [DB] Create the dev stack .env file
+   - `create_dev_env.sh`
+2. [DB] Get the IP address of your dev machine (we'll call it `<dev_ip_address>` below)
    - `ipconfig getifaddr en0`
-2. Get the `DISCORD_CLIENT_SECRET` from 1Password
-   - `op read op://tgfp/DISCORD/production/client_secret`
-3. Generate a UUID for the `SECRET_KEY`
-   - `curl https://www.uuidgenerator.net/api/guid`
-4. Get the production mongo DB password from 1Password `<prod_db_pass>`
-   - `op read op://tgfp/MONGO/production/initdb_root_password`
-5. Get the production mongo IP address `<prod_ip_address>`
-   - `nslookup goshdarnedserver.lan`
+3. [DB] Get the production mongo DB password from 1Password `<prod_db_pass>`
+   - `python prefect_fetch.py mongo-root-password-production`
 
-### Create the .env file
+### Set up the discord redirect URI
 
-1. copy the [dev.env](dev.env) file to `.env`
-2. change the `DISCORD_REDIRECT_URI` to `http://<dev_ip_address>:6701/callback` (assuming same port)
-3. add the redirect URI to the [Discord Developer Portal](https://discord.com/developers/applications) 
-4. change the `DISCORD_CLIENT_SECRET` to the `<discord_client_secret>` from step 2 above
-5. change the `SECRET_KEY` to the UUID generated in step 3 above
-6. [optional] change the mongo password to whatever you want (update the MONGO_URI)
+1. go to 'prefect cloud' and change the variable `discord_redirect_uri_development` to `http://<dev_ip_address>:6701/callback` (assuming same port)
+2. add the redirect URI to the [Discord Developer Portal](https://discord.com/developers/applications) 
 
-### Initialize the database
+### Start and Initialize the database
 
 1. Use the [dev docker compose](dev-docker-compose.yaml) file for development
 2. Start the mongo-db service from `dev-docker-compose`
 3. Connect to the terminal of the container
 4. Clone the Prod db for development
-   1. `mongodump --username tgfp --password <prod_db_pass> --host="<prod_ip_address>:27017"`
+   1. `mongodump --username tgfp --password <prod_db_pass> --host="goshdarnedserver.lan:27017"`
    2. `rm -rf dump/admin`
    3. `mongorestore --username tgfp --password development dump/ --authenticationDatabase=admin --drop`
+5. Confirm the DB looks good by checking with mongo compass gui
 
 ### Start the web server and log in to test
 
