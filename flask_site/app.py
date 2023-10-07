@@ -8,7 +8,7 @@ from flask_discord import DiscordOAuth2Session
 
 from tgfp_lib import TGFP, TGFPPlayer, TGFPPick, TGFPGame
 
-from .config import get_config, Config
+from config import get_config, Config
 
 config: Config = get_config()
 # timeout in seconds * minutes

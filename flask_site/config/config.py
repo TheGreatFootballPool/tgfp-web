@@ -1,7 +1,7 @@
 """ Configuration file """
 import os
 
-from .prefect_helpers import PrefectHelper
+from prefect_helpers import PrefectHelper
 
 
 # pylint: disable=too-few-public-methods
