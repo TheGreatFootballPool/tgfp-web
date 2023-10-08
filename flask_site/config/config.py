@@ -1,7 +1,7 @@
 """ Configuration file """
 import os
 
-from flask_site.config.prefect_helpers import PrefectHelper
+from config.prefect_helpers import PrefectHelper
 
 
 # pylint: disable=too-few-public-methods
