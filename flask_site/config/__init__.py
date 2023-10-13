@@ -5,4 +5,3 @@ __all__ = [
     "Config",
     "get_config"
 ]
-

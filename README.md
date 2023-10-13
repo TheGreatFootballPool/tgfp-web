@@ -37,14 +37,14 @@ Instructions below are for 'full stack' dev -- for DB only, just execute steps w
 
 ### Start and Initialize the database
 
-1. Use the [dev docker compose](dev-docker-compose.yaml) file for development
-2. Start the mongo-db service from `dev-docker-compose`
-3. Connect to the terminal of the container
-4. Clone the Prod db for development
+1. [DB] Use the [dev docker compose](dev-docker-compose.yaml) file for development
+2. [DB] Start the mongo-db service from `dev-docker-compose`
+3. [DB] Connect to the terminal of the container
+4. [DB] Clone the Prod db for development
    1. `mongodump --username tgfp --password <prod_db_pass> --host="goshdarnedserver.lan:27017"`
    2. `rm -rf dump/admin`
    3. `mongorestore --username tgfp --password development dump/ --authenticationDatabase=admin --drop`
-5. Confirm the DB looks good by checking with mongo compass gui
+5. [DB] Confirm the DB looks good by checking with mongo compass gui
 
 ### Start the web server and log in to test
 
