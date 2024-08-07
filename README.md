@@ -50,3 +50,13 @@ Instructions below are for 'full stack' dev -- for DB only, just execute steps w
 
 1. Run the `Flask` Configuration (drop down menu PyCharm)
 2. Test log in to Discord
+
+# 2024 TODOS
+- [ ] Migrate secrets to 1Password
+
+## Current state
+* Simple FastAPI Docker container created
+
+## Next step
+* publish docker to docker hub on git push
+
