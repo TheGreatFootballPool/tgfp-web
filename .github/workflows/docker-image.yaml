@@ -5,27 +5,37 @@ on:
     tags: [ 'v*']
 
 jobs:
-  build:
+  docker:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v3
+        name: Load secret
+        uses: 1password/load-secrets-action@v2
+        with:
+          # Export loaded secrets as environment variables
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          DOCKER_HUB_ACCESS_TOKEN: op://secrets/DOCKER_HUB_ACCESS_TOKEN/credential
+          DOCKER_HUB_USERNAME: op://secrets/DOCKER_HUB_ACCESS_TOKEN/username
       -
         name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ secrets.DOCKER_HUB_USERNAME }}/tgfp-web
+          images: $DOCKER_HUB_USERNAME/tgfp-web
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          username: $DOCKER_HUB_USERNAME
+          password: $DOCKER_HUB_ACCESS_TOKEN
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -33,10 +43,6 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v2
         with:
-          flavor: |
-            latest=auto
-            prefix=
-            suffix=
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
