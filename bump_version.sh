@@ -7,6 +7,12 @@ then
   exit 1
 fi
 
+if ! test $# -eq 2
+then
+  echo "This script needs to arguments [major, minor, patch] and \"commit message\""
+  exit 1
+fi
+
 # shellcheck disable=SC1090
 source ${VERSION_FILE}
 echo "Previous Version: $MAJOR.$MINOR.$PATCH"
