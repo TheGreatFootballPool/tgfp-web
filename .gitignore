@@ -12,7 +12,7 @@ games_data.json
 env
 logs
 .nova
-.idea
 .env
 db/*
 stack.env
+archived_code
