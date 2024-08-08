@@ -40,7 +40,7 @@ then
   exit 1
 fi
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-echo "$NEW_VERSION"
+echo "New Version: $NEW_VERSION"
 git add ${VERSION_FILE}
 git commit -m "Updating version and pushing to Docker Hub"
 git push
