@@ -4,3 +4,7 @@ pylint==3.2.6
 pytest==8.3.2
 flake8==7.1.1
 starlette~=0.37.2
+motor~=3.5.1
+pydantic~=2.8.2
+prefect~=2.20.0
+uvicorn~=0.30.5
