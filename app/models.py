@@ -14,7 +14,9 @@ class Player(Document):
     email: str
     discord_id: int
 
+# pylint: disable=too-few-public-methods
     class Settings:
+        """ The settings class """
         name = "players"
 
 
