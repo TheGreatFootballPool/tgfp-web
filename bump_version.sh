@@ -7,12 +7,6 @@ then
   exit 1
 fi
 
-if ! test $# -eq 2
-then
-  echo "This script needs to arguments [major, minor, patch] and \"commit message\""
-  exit 1
-fi
-
 # shellcheck disable=SC1090
 source ${VERSION_FILE}
 echo "Previous Version: $MAJOR.$MINOR.$PATCH"
@@ -47,8 +41,8 @@ then
 fi
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 echo "$NEW_VERSION"
-git add .
-git commit -m "$2"
+git add ${VERSION_FILE}
+git commit -m "Updating version and pushing to Docker Hub"
 git push
 git tag "v${NEW_VERSION}"
 git push origin "v${NEW_VERSION}"
