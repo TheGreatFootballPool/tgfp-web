@@ -4,7 +4,7 @@ from typing import List
 
 import uvicorn
 from fastapi import FastAPI
-from app.models import init, Player
+from app.models import init, Player, Team, Game, Pick
 
 
 @asynccontextmanager
@@ -24,10 +24,28 @@ def read_root():
 @app.get("/players", response_model=List[Player])
 async def get_all_players():
     """ Returns a list of all players """
-    players: List[Player] = await Player.find_all().to_list()
-    a_player: Player = await Player.find_one(Player.id == players[0].id)
-    print(len(players))
-    return [a_player]
+    return await Player.find_all().to_list()
+
+
+@app.get("/teams", response_model=List[Team])
+async def get_all_teams():
+    """ Returns a list of all teams """
+    return await Team.find_all().to_list()
+
+
+@app.get("/games", response_model=List[Game])
+async def get_all_games():
+    """ Returns a list of all games """
+    games = await Game.find(Game.season == 2023, Game.week_no == 1).to_list()
+    return games
+
+
+@app.get("/picks", response_model=List[Pick])
+async def get_all_picks():
+    """ Returns a list of all picks """
+    picks = Pick.find(Pick.season == 2023, Pick.week_no == 2)
+    return picks.to_list()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
