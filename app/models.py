@@ -3,8 +3,7 @@ from datetime import datetime
 from typing import List
 
 from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import Document, init_beanie, PydanticObjectId
-from pydantic import BaseModel
+from beanie import Document, init_beanie, Link
 
 
 # pylint: disable=too-many-ancestors
@@ -43,11 +42,11 @@ class Team(Document):
 
 
 class Game(Document):
-    """ Game model """
+    """ Game model class"""
     game_status: str
-    favorite_team_id: PydanticObjectId
-    road_team_id: PydanticObjectId
-    home_team_id: PydanticObjectId
+    favorite_team: Link[Team]
+    road_team: Link[Team]
+    home_team: Link[Team]
     spread: float
     start_time: datetime
     week_no: int
@@ -62,18 +61,18 @@ class Game(Document):
         name = "games"
 
 
-class PickDetail(BaseModel):
+class PickDetail(Document):
     """ PickDetail model """
-    game_id: PydanticObjectId
-    winner_id: PydanticObjectId
+    game: Link[Game]
+    winning_team: Link[Team]
 
 
 class Pick(Document):
     """ Pick model """
-    player_id: PydanticObjectId
+    player: Link[Player]
     week_no: int
-    lock_team_id: PydanticObjectId
-    upset_team_id: PydanticObjectId
+    lock_team: Link[Team]
+    upset_team: Link[Team]
     bonus: int
     wins: int
     losses: int
@@ -86,8 +85,10 @@ class Pick(Document):
         name = "picks"
 
 
-async def init():
+async def init(models=None):
     """ Create the client connection"""
+    if models is None:
+        models = [Pick, PickDetail, Game, Team, Player]
     client = AsyncIOMotorClient("mongodb://tgfp:development@localhost:27017/")
 
-    await init_beanie(database=client.tgfp, document_models=[Player, Team, Pick, Game])
+    await init_beanie(database=client.tgfp, document_models=models)
