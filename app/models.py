@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List
 
 from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import Document, init_beanie, PydanticObjectId, Link
+from beanie import Document, init_beanie, Link
 
 
 # pylint: disable=too-many-ancestors
