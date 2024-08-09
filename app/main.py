@@ -36,15 +36,21 @@ async def get_all_teams():
 @app.get("/games", response_model=List[Game])
 async def get_all_games():
     """ Returns a list of all games """
-    games = await Game.find(Game.season == 2023, Game.week_no == 1).to_list()
+    games = await Game.find(Game.season == 2023, Game.week_no == 2, fetch_links=True).to_list()
     return games
 
 
 @app.get("/picks", response_model=List[Pick])
 async def get_all_picks():
     """ Returns a list of all picks """
-    picks = Pick.find(Pick.season == 2023, Pick.week_no == 2)
-    return picks.to_list()
+    picks = await Pick.find(
+        Pick.season == 2023,
+        Pick.week_no == 2,
+        fetch_links=True).to_list()
+    for pick in picks:
+        for detail in pick.pick_detail:
+            await detail.fetch_all_links()
+    return picks
 
 
 if __name__ == "__main__":
