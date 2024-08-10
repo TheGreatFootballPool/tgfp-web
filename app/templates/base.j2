@@ -1,8 +1,3 @@
-{% if request.session['login_status'] == 'incorrect login' -%}
-    {% set login_status_class='subhead red' -%}
-{% else -%}
-    {% set login_status_class='subhead' -%}
-{% endif -%}
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,16 +7,6 @@
     <script type=text/javascript src="{{ url_for('static', path='/jquery.js') }}"></script>
     <script src="{{ url_for('static', path='/sorttable.js') }}"></script>
     <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
-    <script>
-    $(document).ready(function(){
-        $("td").click(function () {
-            let myButton = $(this).find('input:radio');
-            if (myButton.is(':enabled')) {
-               $(this).find('input:radio').attr('checked', true);
-           }
-        });
-    });
-    </script>
  </head>
   <body>
     <div id="topBar"></div>
@@ -31,18 +16,21 @@
     </div>
     <div id="mainContent">
         <div id="left">
-        {% block content %} {% endblock %}
+        {% block content %}
+        {% endblock %}
         <hr size="1">
         </div>
         <div id="right">
-            <div id="loginStatus" class=" {{ login_status_class }}">{{ request.session['login_status'] }}</div>
-            <div id="loginName" class="content">{{ request.session['player_name'] }}</div>
+{#            <div id="loginStatus" class=" {{ login_status_class }}">{{ request.session['login_status'] }}</div>#}
+{#            <div id="loginName" class="content">{{ request.session['player_name'] }}</div>#}
+            <div id="loginStatus"></div>
+            <div id="loginName" class="content"></div>
             <div id="linksTitle" class="subhead">links</div>
             <div id="links" class="content">
-            {% if player in session %}
-                {{ request.session['player'] }}
-            {% endif %}
-            <a href="{{ url_for('index') }}">Home</a><br />
+{#            {% if player in session %}#}
+{#                {{ request.session['player'] }}#}
+{#            {% endif %}#}
+            <a href="{{ url_for('read_root') }}">Home</a><br />
 {#            <a href="{{ url_for('picks') }}">The Picks Page</a><br />#}
 {#            <a href="{{ url_for('allpicks') }}">Everybody's Picks</a><br />#}
 {#            <a href="{{ url_for('standings') }}">Standings</a><br />#}

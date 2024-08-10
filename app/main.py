@@ -3,7 +3,11 @@ from contextlib import asynccontextmanager
 from typing import List
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from starlette.responses import HTMLResponse
+from starlette.staticfiles import StaticFiles
+
 from app.models import init, Player, Team, Game, Pick
 
 
@@ -13,12 +17,16 @@ async def lifespan(_: FastAPI):
     await init()
     yield
 app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
-@app.get("/")
-def read_root():
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
     """ Hello World """
-    return {"Hello": "World"}
+    return templates.TemplateResponse(
+            request=request, name="index.j2", context={"id": id}
+        )
 
 
 @app.get("/players", response_model=List[Player])
