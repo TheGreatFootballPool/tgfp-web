@@ -5,16 +5,32 @@ from typing import List
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
+from fastapi_discord import DiscordOAuthClient
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 
-from app.models import init, Player, Team, Game, Pick
+from app.config import Config
+from app.models import db_init, Player, Team, Game, Pick
+
+config: Config
+discord: DiscordOAuthClient
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    """ Initialize the model / DB connection """
-    await init()
+    """ Perform all app initialization before 'yield' """
+    # pylint: disable=global-statement
+    global config, discord
+    config = await Config.get_config()
+    # Initialize the model / DB connection
+    await db_init()
+    discord = DiscordOAuthClient(
+        config.DISCORD_CLIENT_ID,
+        config.DISCORD_CLIENT_SECRET,
+        "http://localhost:8000/callback",
+        ("identify", "guilds", "email")
+    )
+    await discord.init()
     yield
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")

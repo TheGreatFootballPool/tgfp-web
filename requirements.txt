@@ -1,4 +1,4 @@
-fastapi[standard]>=0.112.0,<0.114.0
+fastapi[standard]>=0.111.0,<0.114.0
 beanie==1.26.0
 pylint==3.2.6
 pytest==8.3.2
@@ -9,3 +9,5 @@ pydantic~=2.8.2
 prefect~=2.20.0
 uvicorn~=0.30.5
 j2lint==1.1.0
+fastapi-discord==0.2.6
+onepassword @ git+ssh://git@github.com/1Password/onepassword-sdk-python.git@main
