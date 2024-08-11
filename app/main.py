@@ -1,36 +1,28 @@
 """ Main entry point for website """
 from contextlib import asynccontextmanager
-from typing import List
+from typing import List, Optional
 
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
-from fastapi_discord import DiscordOAuthClient
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 
 from app.config import Config
 from app.models import db_init, Player, Team, Game, Pick
 
-config: Config
-discord: DiscordOAuthClient
+config: Optional[Config] = None
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """ Perform all app initialization before 'yield' """
     # pylint: disable=global-statement
-    global config, discord
+    global config
     config = await Config.get_config()
     # Initialize the model / DB connection
     await db_init()
-    discord = DiscordOAuthClient(
-        config.DISCORD_CLIENT_ID,
-        config.DISCORD_CLIENT_SECRET,
-        config.DISCORD_REDIRECT_URI,
-        ("identify", "guilds", "email")
-    )
-    await discord.init()
+    await config.DISCORD_CLIENT.init()
     yield
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -39,12 +31,14 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/login")
 async def login():
-    return {"url": discord.oauth_login_url}
+    """ Login url for discord """
+    return {"url": config.DISCORD_CLIENT.oauth_login_url}
 
 
 @app.get("/callback")
 async def callback(code: str):
-    token, refresh_token = await discord.get_access_token(code)
+    """ Callback url for discord """
+    token, refresh_token = await config.DISCORD_CLIENT.get_access_token(code)
     return {"access_token": token, "refresh_token": refresh_token}
 
 
