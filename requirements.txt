@@ -10,4 +10,4 @@ prefect~=2.20.0
 uvicorn~=0.30.5
 j2lint==1.1.0
 fastapi-discord==0.2.6
-onepassword @ git+ssh://git@github.com/1Password/onepassword-sdk-python.git@main
+onepassword @ git+https://git@github.com/1Password/onepassword-sdk-python.git@main
