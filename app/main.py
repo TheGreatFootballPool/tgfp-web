@@ -27,7 +27,7 @@ async def lifespan(_: FastAPI):
     discord = DiscordOAuthClient(
         config.DISCORD_CLIENT_ID,
         config.DISCORD_CLIENT_SECRET,
-        "http://localhost:8000/callback",
+        config.DISCORD_REDIRECT_URI,
         ("identify", "guilds", "email")
     )
     await discord.init()
@@ -35,6 +35,17 @@ async def lifespan(_: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/login")
+async def login():
+    return {"url": discord.oauth_login_url}
+
+
+@app.get("/callback")
+async def callback(code: str):
+    token, refresh_token = await discord.get_access_token(code)
+    return {"access_token": token, "refresh_token": refresh_token}
 
 
 @app.get("/", response_class=HTMLResponse)
