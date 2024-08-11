@@ -85,7 +85,7 @@ class Pick(Document):
         name = "picks"
 
 
-async def init(models=None):
+async def db_init(models=None):
     """ Create the client connection"""
     if models is None:
         models = [Pick, PickDetail, Game, Team, Player]
