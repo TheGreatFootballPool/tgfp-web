@@ -1,85 +1,150 @@
 """ Main entry point for website """
+import asyncio
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import Optional, Final
 
+import pydantic_core
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
-from starlette.responses import HTMLResponse
+
+# pylint: disable=ungrouped-imports
+from starlette import status
+from starlette.middleware.sessions import SessionMiddleware
+from starlette_discord import DiscordOAuthClient
+from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
 from app.config import Config
-from app.models import db_init, Player, Team, Game, Pick
+from app.models import db_init, Player
 
-config: Optional[Config] = None
+SECONDS: Final[int] = 60*60*24
+DAYS: Final[int] = 365
+COOKIE_TIME_OUT = DAYS * SECONDS
+
+
+def init_config() -> Config:
+    """ Initialize the config object """
+    async def asyncfunc() -> Config:
+        return await Config.get_config()
+    return asyncio.run(asyncfunc())
+
+
+config: Config = init_config()
+
+discord: DiscordOAuthClient = DiscordOAuthClient(
+    config.DISCORD_CLIENT_ID,
+    config.DISCORD_CLIENT_SECRET,
+    config.DISCORD_REDIRECT_URI
+)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """ Perform all app initialization before 'yield' """
-    # pylint: disable=global-statement
-    global config
-    config = await Config.get_config()
     # Initialize the model / DB connection
     await db_init()
-    await config.DISCORD_CLIENT.init()
     yield
 app = FastAPI(lifespan=lifespan)
+# noinspection PyTypeChecker
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=config.SESSION_SECRET_KEY,
+    max_age=None)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-@app.get("/login")
-async def login():
+def get_player_from_request(request: Request) -> Optional[Player]:
+    """ Return the deserialized player object from the request session """
+    player: Optional[Player] = None
+    if request.scope.get('session') is not None:
+        player_json: str = request.session.get('player')
+        if player_json and 'name' in player_json:
+            player = Player.model_validate(
+                pydantic_core.from_json(player_json)
+            )
+    return player
+
+
+async def verify_player(request: Request):
+    """ Make sure we have a player session, otherwise, get one"""
+    player: Player = get_player_from_request(request)
+    if player:
+        return player
+    discord_id = request.cookies.get("tgfp-discord-id")
+    if discord_id:
+        player = await get_player_by_discord_id(int(discord_id))
+        request.session["player"] = player.model_dump_json()
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={'Location': '/login'})
+    return player
+
+
+@app.get("/discord_login")
+async def discord_login():
     """ Login url for discord """
-    return {"url": config.DISCORD_CLIENT.oauth_login_url}
+    return discord.redirect()
+
+
+@app.get("/login")
+async def login(request: Request):
+    """ Login page for discord """
+    return templates.TemplateResponse(request=request, name="login.j2")
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    """ Logs the user out and clears the session """
+    request.session.clear()
+    redirect_url = request.url_for('login')
+    response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+    response.delete_cookie('tgfp-discord-id')
+    return response
 
 
 @app.get("/callback")
-async def callback(code: str):
+async def callback(code: str, request: Request):
     """ Callback url for discord """
-    token, refresh_token = await config.DISCORD_CLIENT.get_access_token(code)
-    return {"access_token": token, "refresh_token": refresh_token}
+    user = await discord.login(code)
+    player: Player = await get_player_by_discord_id(user.id)
+    if player:
+        redirect_url = request.url_for('home')
+        response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+        response.set_cookie(
+            key='tgfp-discord-id',
+            value=str(user.id),
+            max_age=COOKIE_TIME_OUT,
+        )
+    else:
+        redirect_url = request.url_for('login')
+        response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+    return response
 
 
-@app.get("/", response_class=HTMLResponse)
-def read_root(request: Request):
-    """ Hello World """
+@app.get("/")
+def root(request: Request):
+    """ Redirect '/' to /home """
+    return RedirectResponse(request.url_for('home'), status.HTTP_301_MOVED_PERMANENTLY)
+
+
+@app.get("/home", response_class=HTMLResponse)
+def home(request: Request, player: Player = Depends(verify_player)):
+    """ Home page """
+    context = {
+        'player': player,
+    }
     return templates.TemplateResponse(
-            request=request, name="index.j2", context={"id": id}
+            request=request, name="home.j2", context=context
         )
 
 
-@app.get("/players", response_model=List[Player])
-async def get_all_players():
-    """ Returns a list of all players """
-    return await Player.find_all().to_list()
-
-
-@app.get("/teams", response_model=List[Team])
-async def get_all_teams():
-    """ Returns a list of all teams """
-    return await Team.find_all().to_list()
-
-
-@app.get("/games", response_model=List[Game])
-async def get_all_games():
-    """ Returns a list of all games """
-    games = await Game.find(Game.season == 2023, Game.week_no == 2, fetch_links=True).to_list()
-    return games
-
-
-@app.get("/picks", response_model=List[Pick])
-async def get_all_picks():
-    """ Returns a list of all picks """
-    picks = await Pick.find(
-        Pick.season == 2023,
-        Pick.week_no == 2,
-        fetch_links=True).to_list()
-    for pick in picks:
-        for detail in pick.pick_detail:
-            await detail.fetch_all_links()
-    return picks
+async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
+    """ Returns a player by their discord ID """
+    player: Player = await Player.find_one(Player.discord_id == discord_id)
+    return player
 
 
 if __name__ == "__main__":
