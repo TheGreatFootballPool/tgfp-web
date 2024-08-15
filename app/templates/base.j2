@@ -21,22 +21,25 @@
         <hr size="1">
         </div>
         <div id="right">
-{#            <div id="loginStatus" class=" {{ login_status_class }}">{{ request.session['login_status'] }}</div>#}
-{#            <div id="loginName" class="content">{{ request.session['player_name'] }}</div>#}
-            <div id="loginStatus"></div>
-            <div id="loginName" class="content"></div>
-            <div id="linksTitle" class="subhead">links</div>
+            {% if player %}
+                <div id="loginStatus" class="subhead">Logged In</div>
+                <div id="loginName" class="content">{{ player.full_name }}</div>
+            {% else %}
+                <div id="loginStatus" class="subhead">Not Logged In</div>
+                <div id="loginName" class="content"></div>
+            {% endif %}
+            <div id="linksTitle" class="subhead">Links</div>
             <div id="links" class="content">
 {#            {% if player in session %}#}
 {#                {{ request.session['player'] }}#}
 {#            {% endif %}#}
-            <a href="{{ url_for('read_root') }}">Home</a><br />
+            <a href="{{ url_for('home') }}">Home</a><br />
 {#            <a href="{{ url_for('picks') }}">The Picks Page</a><br />#}
 {#            <a href="{{ url_for('allpicks') }}">Everybody's Picks</a><br />#}
 {#            <a href="{{ url_for('standings') }}">Standings</a><br />#}
 {#            <a href="{{ url_for('clan_standings') }}">Clan Standings</a><br />#}
 {#            <a href="{{ url_for('rules') }}">Rules</a><br />#}
-{#            <a href="{{ url_for('logout') }}">Logout</a><br />#}
+              <a href="{{ url_for('logout') }}">Logout</a><br />
             </div>
             <div id="currentWeek" class="subhead">Current Week: {{ week_no }} </div>
         </div>

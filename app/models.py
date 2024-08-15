@@ -21,6 +21,11 @@ class Player(Document):
         """ The settings class """
         name = "players"
 
+    @property
+    def full_name(self):
+        """ Returns player's full name """
+        return self.first_name + ' ' + self.last_name
+
 
 class Team(Document):
     """ Team model """
