@@ -16,6 +16,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
 from app.config import Config
+from app.model_helper import current_week
 from app.models import db_init, Player
 
 SECONDS: Final[int] = 60*60*24
@@ -45,6 +46,7 @@ async def lifespan(_: FastAPI):
     # Initialize the model / DB connection
     await db_init()
     yield
+
 app = FastAPI(lifespan=lifespan)
 # noinspection PyTypeChecker
 app.add_middleware(
@@ -53,6 +55,17 @@ app.add_middleware(
     max_age=None)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+async def get_current_week(request: Request) -> int:
+    """ Set week_no in the session if it's not set """
+    week_no = ""
+    if request.scope.get('session') is not None:
+        week_no = request.session.get('week_no')
+        if week_no is None:
+            week_no = await current_week()
+            request.session['week_no'] = week_no
+    return week_no
 
 
 def get_player_from_request(request: Request) -> Optional[Player]:
@@ -131,10 +144,15 @@ def root(request: Request):
 
 
 @app.get("/home", response_class=HTMLResponse)
-def home(request: Request, player: Player = Depends(verify_player)):
+def home(
+        request: Request,
+        player: Player = Depends(verify_player),
+        week_no=Depends(get_current_week)
+):
     """ Home page """
     context = {
         'player': player,
+        'week_no': week_no,
     }
     return templates.TemplateResponse(
             request=request, name="home.j2", context=context
