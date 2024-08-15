@@ -61,6 +61,12 @@ class Game(Document):
     tgfp_nfl_game_id: str
 
     # pylint: disable=too-few-public-methods
+
+    @property
+    def is_final(self):
+        """ Returns true if the game is final """
+        return self.game_status == 'STATUS_FINAL'
+
     class Settings:
         """ The settings class """
         name = "games"
