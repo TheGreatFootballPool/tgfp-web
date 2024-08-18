@@ -1,0 +1,53 @@
+{% extends "base.j2" %}
+{% set page_title="Standings Page" %}
+{% set page_description="The Standings Page - " %}
+{% macro row_with_style(row_number) %}
+{%     if row_number%2 == 0 %}
+        <tr style="border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
+{%     else %}
+        <tr>
+{%     endif %}
+{% endmacro %}
+{% macro close_tr() %}
+    </tr>
+{% endmacro %}
+{% block content %}
+    <div style="color:#a32f31;padding: 8px 8px 12px 0;">Click on a table header to sort by that column.</div>
+    <table id=standings_table class="sortable">
+        <tr>
+            <td class="standings_head" nowrap>Name</td>
+            <td class="standings_head" nowrap>Wins</td>
+            <td class="standings_head" nowrap>Losses</td>
+            <td class="standings_head" nowrap>Bonus</td>
+            <td class="standings_head" nowrap>Last<br/>Wins</td>
+            <td class="standings_head" nowrap>Last<br/>Losses</td>
+            <td class="standings_head" nowrap>Last<br/>Bonus</td>
+            <td class="standings_head" nowrap>Total</td>
+            <td class="standings_head" nowrap>Win %</td>
+            <td class="standings_head" nowrap>Games<br/>Back</td>
+        </tr>
+{% set row_number=0 %}
+{% for player in active_players %}
+            {{ row_with_style(row_number) }}
+{%     set games_back = active_players[0].total_points - player.total_points %}
+            <td>{{ player.nick_name }}</td>
+            <td style="text-align: right;">{{ player.wins() }}</td>
+            <td style="text-align: right;">{{ player.losses() }}</td>
+            <td style="text-align: right;">{{ player.bonus() }}</td>
+            <td style="text-align: right;">{{ player.wins(week_no=info.active_week) }}</td>
+            <td style="text-align: right;">{{ player.losses(week_no=info.active_week) }}</td>
+            <td style="text-align: right;">{{ player.bonus(week_no=info.active_week) }}</td>
+            <td style="text-align: right;">{{ player.total_points }}</td>
+            <td style="text-align: right;">{{ '%.3f' | format(player.winning_pct | float) }}</td>
+            <td style="text-align: center;">
+{%     if games_back == 0 %}
+    -
+{%     else %}
+    {{ games_back }}
+{%     endif %}
+            </td>
+    {{ close_tr() }}
+{%     set row_number = row_number + 1 %}
+{% endfor %}
+    </table>
+{% endblock %}

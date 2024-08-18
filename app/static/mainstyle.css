@@ -104,7 +104,12 @@ A:hover     { color: #FF9966;  }
 
 #standings_table { width:480px; font: 12px arial, sans-serif;border-spacing:0; border-collapse: collapse;}
 #standings_table td { border:solid 1px gray; padding:4px;}
-.standings_head { font: bold 12px arial, sans-serif; border:solid 1px black; padding-top: 0px; padding-bottom: 0px; padding-left:4px; padding-right:4px;}
+.standings_head {
+    font: bold 12px arial, sans-serif;
+    border:solid 1px black;
+    padding: 0 4px;
+    background-color: #CCCCCC;
+}
 
 table.sortable tbody tr:nth-child(2n) td {
   background: #ffffff;
