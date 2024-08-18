@@ -1,7 +1,7 @@
 """ Main entry point for website """
 import asyncio
 from contextlib import asynccontextmanager
-from typing import Optional, Final
+from typing import Optional, Final, List
 
 import pydantic_core
 import uvicorn
@@ -16,8 +16,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
 from app.config import Config
-from app.model_helper import current_week
-from app.models import db_init, Player
+from app.models import db_init, Player, TGFPInfo, get_tgfp_info
 
 SECONDS: Final[int] = 60*60*24
 DAYS: Final[int] = 365
@@ -57,15 +56,16 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-async def get_current_week(request: Request) -> int:
-    """ Set week_no in the session if it's not set """
-    week_no = ""
+def get_tgfp_info_from_request(request: Request) -> Optional[TGFPInfo]:
+    """ Return the deserialized TGFPInfo object """
+    tgfp_info: Optional[TGFPInfo] = None
     if request.scope.get('session') is not None:
-        week_no = request.session.get('week_no')
-        if week_no is None:
-            week_no = await current_week()
-            request.session['week_no'] = week_no
-    return week_no
+        tgfp_json: str = request.session.get('tgfp_info')
+        if tgfp_json and 'season' in tgfp_json:
+            tgfp_info = TGFPInfo.model_validate(
+                pydantic_core.from_json(tgfp_json)
+            )
+    return tgfp_info
 
 
 def get_player_from_request(request: Request) -> Optional[Player]:
@@ -80,7 +80,7 @@ def get_player_from_request(request: Request) -> Optional[Player]:
     return player
 
 
-async def verify_player(request: Request):
+async def verify_player(request: Request) -> Player:
     """ Make sure we have a player session, otherwise, get one"""
     player: Player = get_player_from_request(request)
     if player:
@@ -88,12 +88,24 @@ async def verify_player(request: Request):
     discord_id = request.cookies.get("tgfp-discord-id")
     if discord_id:
         player = await get_player_by_discord_id(int(discord_id))
-        request.session["player"] = player.model_dump_json()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-            headers={'Location': '/login'})
-    return player
+        if player:
+            request.session["player"] = player.model_dump_json()
+            return player
+        # clear the discord id and fall through to exception
+        request.cookies.pop("tgfp-discord-id")
+    raise HTTPException(
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        headers={'Location': '/login'})
+
+
+async def get_latest_info(request: Request) -> Optional[TGFPInfo]:
+    """ Returns the current TGFPInfo object """
+    info: TGFPInfo = get_tgfp_info_from_request(request)
+    if info:
+        return info
+    info = await get_tgfp_info()
+    request.session['tgfp_info'] = info.model_dump_json()
+    return info
 
 
 @app.get("/discord_login")
@@ -103,9 +115,12 @@ async def discord_login():
 
 
 @app.get("/login")
-async def login(request: Request):
+async def login(request: Request, info: TGFPInfo = Depends(get_tgfp_info)):
     """ Login page for discord """
-    return templates.TemplateResponse(request=request, name="login.j2")
+    context = {
+        'info': info
+    }
+    return templates.TemplateResponse(request=request, name="login.j2", context=context)
 
 
 @app.get("/logout")
@@ -147,16 +162,35 @@ def root(request: Request):
 def home(
         request: Request,
         player: Player = Depends(verify_player),
-        week_no=Depends(get_current_week)
+        info: TGFPInfo = Depends(get_tgfp_info)
 ):
     """ Home page """
     context = {
         'player': player,
-        'week_no': week_no,
+        'info': info
     }
     return templates.TemplateResponse(
             request=request, name="home.j2", context=context
         )
+
+
+@app.get('/standings')
+async def standings(
+        request: Request,
+        player: Player = Depends(verify_player),
+        info: TGFPInfo = Depends(get_tgfp_info)
+):
+    """ Returns the standings page """
+    players: List[Player] = await Player.find({'active': True}).to_list()
+    players.sort(key=lambda x: x.total_points, reverse=True)
+    context = {
+        'player': player,
+        'info': info,
+        'active_players': players
+    }
+    return templates.TemplateResponse(
+        request=request, name="standings.j2", context=context
+    )
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:

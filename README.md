@@ -31,12 +31,10 @@ Instructions below are for 'full stack' dev -- for DB only, just execute steps w
    - `python prefect_fetch.py mongo-root-password-production`
 
 ### Set up the discord redirect URI
-
 1. go to 'prefect cloud' and change the variable `discord_redirect_uri_development` to `http://<dev_ip_address>:6701/callback` (assuming same port)
 2. add the redirect URI to the [Discord Developer Portal](https://discord.com/developers/applications) 
 
 ### Start and Initialize the database
-
 1. [DB] Use the [dev docker compose](dev-docker-compose.yaml) file for development
 2. [DB] Start the mongo-db service from `dev-docker-compose`
 3. [DB] Connect to the terminal of the container
@@ -47,9 +45,13 @@ Instructions below are for 'full stack' dev -- for DB only, just execute steps w
 5. [DB] Confirm the DB looks good by checking with mongo compass gui
 
 ### Start the web server and log in to test
-
 1. Run the `Flask` Configuration (drop down menu PyCharm)
 2. Test log in to Discord
+
+### Back / restore up the Dev DB before making destructive changes
+1. [DB] From any shell `mongodump --username tgfp --password development --host="localhost:27017"`
+2. Do damage to your dev DB
+3. [DB] From any shell `mongorestore --username tgfp --password development dump/ --host="localhost:27017" --authenticationDatabase=admin --drop`
 
 # 2024 TODOS
 - [ ] Migrate secrets to 1Password
