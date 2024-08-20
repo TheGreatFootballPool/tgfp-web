@@ -1,0 +1,72 @@
+{% extends "base.j2" %}
+{% set page_title="Rules Page" %}
+{% set page_description="Rules Page - The Basic rules of the great football pool." %}
+{% block content %}
+    <H2>Objective</H2>
+    <p>
+        Hopefully this should be fairly obvious. The objective is to finish the season with more <B>Total Points </B>than
+        any other person participating in the pool.
+    <p>
+        Each week (around Wednesday at 6am) I will publish the new picks page. Simply choose who you think will be the winner
+        straight up. The point spread is there to assist you, and to allow you to pick an upset. But if you pick an
+        underdog you <b>do not</b> get the vegas points.
+    </p>
+    <H2>Scoring</H2>
+    <p>
+        <B>Total Points</B> are the points scored when you add your wins, and your <B>bonus points.</b>
+    </p>
+    <h3>Bonus Points are calculated as follows:</h3>
+    <P>
+        You pick <B>ONE</B> upset (optional) - if it hits, you get one bonus point. If
+        the upset does not happen, you don't lose a bonus point, but you do lose
+        the game.</P>
+    <P>
+        You pick <B>ONE </B>lock (not optional) - if it hits, you get a bonus pt, but, if
+        you lock loses, then you LOSE a bonus pt.</p>
+
+    <p>For example, let's say you pick:<br>
+        <B>Lock:</B> Ravens<br>
+        <B>Upset:</B> Falcons<br>
+    <div style="text-align: center;">
+        <TABLE BORDER=0>
+            <TR>
+                <TD><b>Ravens</b></TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Win (<b>+1</b>)</TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Win (<b>+1</b>)</TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Lose (<b>-1</b>)</TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Lose (<b>-1</b>)</TD>
+            </TR>
+            <TR>
+
+                <TD style="text-align: right;"><b>Falcons</b></TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Win (<b>+1</b>)</TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Lose (<b>0</b>)</TD>
+                <TD BGCOLOR="Silver" style="text-align: right;">Win (<b>+1</b>)</TD>
+
+                <TD style="text-align: right;" BGCOLOR="Silver">Lose (<b>0</b>)</TD>
+            </TR>
+            <TR>
+                <TD><b>Totals</b></TD>
+                <TD style="text-align: right;"><b>+2</b></TD>
+                <TD style="text-align: right;"><b>+1</b></TD>
+                <TD style="text-align: right;"><b>0</b></TD>
+                <TD style="text-align: right;"><b>-1</b></TD>
+            </TR>
+        </TABLE>
+    </div>
+    <h2>Autopick rules</h2>
+    <blockquote>
+        Autopicks are when you still do your picks but after the first game has kicked off. Kickoff will 'lock' a game
+        so that you cannot choose it as your upset or lock,
+        You also cannot pick a winner, your pick will default to the 'home' team. If the home team wins, you get a win,
+        if they lose... well... you get a loss.
+    </blockquote>
+    <h2>Additional Notes</h2>
+    <blockquote>
+        You <b>must</b> pick a lock every week.<br>
+        You don't have to pick an upset.
+        <P>At the end of the season, bonus pts will be added to the Wins to determine
+            who wins the league.</P>
+
+    </blockquote>
+{% endblock %}
