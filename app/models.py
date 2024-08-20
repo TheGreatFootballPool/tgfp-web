@@ -46,7 +46,22 @@ class Team(Document):
 
 
 class Game(Document):
-    """Game model"""
+    """
+    NFL Game model
+    Attributes:
+
+    - :class:`str` game_status
+    - :class:`Team` favorite_team
+    - :class:`Team` road_team
+    - :class:`Team` home_team
+    - :class:`float` spread
+    - :class:`datetime` start_time
+    - :class:`int` week_no
+    - :class:`int` road_team_score
+    - :class:`int` home_team_score
+    - :class:`int` season
+    - :class:`str` tgfp_nfl_game_id
+    """
     game_status: str
     favorite_team: Link[Team]
     road_team: Link[Team]

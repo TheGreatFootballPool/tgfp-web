@@ -14,9 +14,19 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette_discord import DiscordOAuthClient
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
+import sentry_sdk
+
 
 from app.config import Config
 from app.models import db_init, Player, TGFPInfo, get_tgfp_info
+from app.api.create_picks import create_picks, CreatePicksException
+
+sentry_sdk.init(
+    dsn="https://df0bb7eec46f36b0bf27935fba45470e@sentry.sturgeonfamily.com/2",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+)
 
 SECONDS: Final[int] = 60*60*24
 DAYS: Final[int] = 365
@@ -46,7 +56,7 @@ async def lifespan(_: FastAPI):
     await db_init()
     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
 # noinspection PyTypeChecker
 app.add_middleware(
     SessionMiddleware,
@@ -191,6 +201,17 @@ async def standings(
     return templates.TemplateResponse(
         request=request, name="standings.j2", context=context
     )
+
+
+@app.post("/api/create_picks_page")
+async def create_picks_page():
+    """ API for creating the picks page """
+    try:
+        await create_picks()
+    except CreatePicksException as e:
+        # pylint: disable=raise-missing-from
+        raise HTTPException(status_code=500, detail=str(e))
+    return {'success': True}
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
