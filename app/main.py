@@ -168,6 +168,20 @@ def root(request: Request):
     return RedirectResponse(request.url_for('home'), status.HTTP_301_MOVED_PERMANENTLY)
 
 
+@app.get("/rules")
+def rules(
+        request: Request,
+        player: Player = Depends(verify_player),
+        info: TGFPInfo = Depends(get_tgfp_info)
+):
+    """ Rules page """
+    context = {
+        'player': player,
+        'info': info
+    }
+    return templates.TemplateResponse(request=request, name="rules.j2", context=context)
+
+
 @app.get("/home", response_class=HTMLResponse)
 def home(
         request: Request,
