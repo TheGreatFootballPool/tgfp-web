@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="HttpClientEndpointsTabState">
+    <option name="requestToText" value="&lt;CachedHttpClientTabRequests&gt;&#10;  &lt;entry key=&quot;6e4e1137ae66f03d7c24f48aea643b0197086fc2&quot; value=&quot;###&amp;#10;POST http://localhost:8000/api/create_picks_page&quot; /&gt;&#10;  &lt;entry key=&quot;26d7d2466cb5c5f10048322496bcc979dad0e613&quot; value=&quot;###&amp;#10;GET http://localhost:8000/standings&quot; /&gt;&#10;  &lt;entry key=&quot;23a81194a4c914e7f5ea69de064cbf2cd997cf3d&quot; value=&quot;###&amp;#10;GET http://localhost:8000/sentry-debug&quot; /&gt;&#10;&lt;/CachedHttpClientTabRequests&gt;" />
+  </component>
+</project>

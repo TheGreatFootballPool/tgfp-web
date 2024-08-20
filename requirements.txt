@@ -6,8 +6,10 @@ flake8==7.1.1
 starlette~=0.37.2
 motor~=3.5.1
 pydantic~=2.8.2
-prefect~=2.20.0
 uvicorn~=0.30.5
 j2lint==1.1.0
 starlette-discord~=0.2.1
 onepassword @ git+https://git@github.com/1Password/onepassword-sdk-python.git@main
+itsdangerous==2.2.0
+tgfp-nfl==6.2.1
+sentry-sdk[fastapi]~=2.13.0

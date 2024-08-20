@@ -10,6 +10,7 @@ team_data.json
 games_data.json
 .DS_Store
 env
+venv
 logs
 .nova
 .env
