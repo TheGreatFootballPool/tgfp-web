@@ -1,0 +1,75 @@
+{% extends "base.j2" %}
+{% set page_title="Picks Page" %}
+{% set page_description="The Picks Page - Make your selections here" %}
+{% macro pick_radio_button(team, win_team_id, game_id, disabled, opacity) %}
+    <td class="border" style="text-align:left;opacity:{{ opacity }}">
+        <img style="vertical-align:middle;border:0;" src="{{ url_for('static', path='images/' + team.short_name + '.small.gif') }}" alt="team helmet image">
+        ({{ team.wins }}-{{ team.losses }})<br>
+{# j2lint: disable=S7 #}
+        <input class="myradio" type="radio" name="game_{{ game_id }}" value="{{ team.id }}" {% if team.id == win_team_id %}checked{% endif %} {% if disabled %}disabled{% endif %}>{{ team.long_name }}
+    </td>
+{% endmacro %}
+{% block content %}
+{% if not started_games and not valid_games %}
+    The picks page is not ready for week {{ g.current_week }} yet.
+    <p>
+    If you think it should be up by now, that means there is a problem, and you should probably pester John.
+{% else %}
+    <form id="awesome_form" action="{{ url_for('picks_form') }}" method="POST">
+    <table>
+    <tr>
+        <td bgcolor="#CCCCCC" class="subhead" nowrap>Visitor</td>
+        <td bgcolor="#CCCCCC" class="subhead" nowrap>Home</td>
+        <td bgcolor="#CCCCCC" class="subhead" nowrap>Favorite</td>
+    </tr>
+{%     for game in started_games %}
+{%         set roadteam=game.road_team %}
+{%         set home_team=game.home_team %}
+{%         set fav_team=game.favorite_team %}
+{%         set win_team_id = home_team.id %}
+       <tr>
+            {{ pick_radio_button(road_team, win_team_id, game.id, true, 0.5) }}
+            {{ pick_radio_button(home_team, win_team_id, game.id, true, 0.5) }}
+            <td align="center" class="border">
+               Game started<br>auto picked<br>{{ home_team.long_name }}
+            </td>
+        </tr>
+{%     endfor %}
+{%     for game in valid_games %}
+{%         set win_team_id = 0 %}
+{%         if pick %}
+{%             set win_team_id = pick.winner_for_game_id(game.id) %}
+{%         endif %}
+       <tr>
+            {{ pick_radio_button(game.road_team, win_team_id, game.id, false, 1.0) }}
+            {{ pick_radio_button(game.home_team, win_team_id, game.id, false, 1.0) }}
+            <td align="center" class="border">
+                {{ game.favorite_team.long_name }}<br>{{ game.spread }}
+            </td>
+        </tr>
+{%     endfor %}
+    </table>
+    <br>Select your Lock:
+    <select id="lock" name="lock"><option value=""></option>
+{%     for team in valid_lock_teams %}
+        <option value="{{ team.id }}">{{ team.long_name }}</option>
+{%     endfor %}
+    </select>
+    <br>Select your Upset:
+    <select id="lock" name="upset"><option value=""></option>
+{%     for team in valid_upset_teams %}
+        <option value="{{ team.id }}">{{ team.long_name }}</option>
+{%     endfor %}
+    </select><br>
+    <input class="submitbutton"  name="commit" type="submit" value="Submit Picks" />
+     </form>
+ <script>
+    $('#awesome_form').submit(function( event ) {
+        $('.myradio').attr('disabled', false);
+        $( "#awesome_form" ).submit();
+    });
+    
+</script>
+
+{% endif %}
+{% endblock %}
