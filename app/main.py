@@ -1,5 +1,6 @@
 """ Main entry point for website """
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from typing import Optional, Final, List
 
@@ -26,15 +27,7 @@ SECONDS: Final[int] = 60*60*24
 DAYS: Final[int] = 365
 COOKIE_TIME_OUT = DAYS * SECONDS
 
-
-def init_config() -> Config:
-    """ Initialize the config object """
-    async def asyncfunc() -> Config:
-        return await Config.get_config()
-    return asyncio.run(asyncfunc())
-
-
-config: Config = init_config()
+config: Config = Config.get_config()
 
 sentry_sdk.init(
     dsn="https://df0bb7eec46f36b0bf27935fba45470e@sentry.sturgeonfamily.com/2",
@@ -396,4 +389,5 @@ def get_error_messages(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    reload: bool = True if os.getenv('ENVIRONMENT') == 'development' else False
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=reload, access_log=False)

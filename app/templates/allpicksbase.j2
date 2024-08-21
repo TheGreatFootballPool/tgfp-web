@@ -1,0 +1,37 @@
+{% set login_status_class='subhead' %}
+{% macro week_no_link(index) %}
+    {% if week_no == index %}week {{ index }}{% else %}<a href="/allpicks/{{ index }}">week {{ index }}</a>{% endif %}{% if index != info.display_week %} - {% endif %}
+{% endmacro %}
+
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title>The Great Football Pool - {{ page_title }}</title>
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='mainstyle.css') }}">
+    <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
+</head>
+  <body>
+    <div id="topBar"></div>
+    <div id="headerBar">
+        <div class="title">The Great Football Pool</div>
+        <div class="description">{{ page_description }}</div>
+        <div class="description_sub">Choose week number: ({% for i in range(info.display_week) %}{{ week_no_link(i + 1) }}{% endfor %})</div>
+    </div>
+    <div id="mainContent">
+        {% set found_picks = tgfp.find_picks(player_id=player.id, week_no=info.display_week) %}
+        {% if not found_picks %}
+            <h1>You must enter your <a href="{{ url_for('picks') }}">picks</a> before seeing this page</h1>
+         {% else %}
+            {% block content %} {% endblock %}
+        {% endif %}
+    </div>
+    <div>
+        <ul>
+            <li><span class="lock">lock</span> - <span class="upset">upset</span> - <span class="lockupset">lock and upset</span></li>
+            <li><a href="{{ url_for('home') }}">Go Back to Home Page</a></li>
+        </ul>
+    </div>
+
+  </body>
+</html>

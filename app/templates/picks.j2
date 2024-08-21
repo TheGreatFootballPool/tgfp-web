@@ -11,7 +11,7 @@
 {% endmacro %}
 {% block content %}
 {% if not started_games and not valid_games %}
-    The picks page is not ready for week {{ g.current_week }} yet.
+    The picks page is not ready for week {{ info.display_week }} yet.
     <p>
     If you think it should be up by now, that means there is a problem, and you should probably pester John.
 {% else %}
