@@ -1,0 +1,13 @@
+{% extends "base.j2" %}
+{% set page_title="Picks Page - results" %}
+{% set page_description="The Picks Page results page" %}
+{% block content %}
+Thank you for your picks, they have been entered.  You can now proceed to see <a href="{{ url_for('allpicks') }}">everybody's picks</a>
+<p>
+Please remember, for the time being you are on your honor to follow these few rules:
+<ol>
+<li>Once you see anybody else's picks, do not change your picks</li>
+<li>Once a game starts you cannot change that game's pick</li>
+</ol>
+Eventually, the football pool will automatically disable these things, but in the mean time, it's a game of trust.
+{% endblock %}

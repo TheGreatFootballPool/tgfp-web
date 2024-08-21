@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Final
+from typing import List, Final, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import Document, init_beanie, Link
 from pydantic import BaseModel
@@ -83,24 +83,54 @@ class Game(Document):
         """ Returns true if the game is final """
         return self.game_status == 'STATUS_FINAL'
 
+    @property
+    def is_pregame(self):
+        """ Returns true if the game is pregame """
+        return self.game_status == 'STATUS_SCHEDULED'
+
+    @property
+    def underdog_team(self) -> Link[Team]:
+        """ Returns the underdog """
+        if self.favorite_team == self.home_team:
+            return self.road_team
+
+        return self.home_team
+
 
 class PickDetail(Document):
-    """ PickDetail model """
+    """
+    Pick Detail Model
+    Attributes:
+
+    - :class:`Link` [ :class:`Game` ] game
+    - :class:`Link` [ :class:`Team` ] winning_team
+    """
     game: Link[Game]
     winning_team: Link[Team]
 
 
 class Pick(Document):
-    """ Pick model """
-    player: Link[Player]
+    """
+    Player Pick Model
+    Attributes:
+
+    - :class:`int` week_no
+    - :class:`int` season
+    - :class:`Link` [ :class:`Team` ] lock_team
+    - :class:`Optional` [ :class:`Link` [ :class:`Team` ]] upset_team
+    - :class:`int` bonus = 0
+    - :class:`int` wins = 0
+    - :class:`int` losses = 0
+    - :class:`List` [ :class:`PickDetail` ] pick_detail = []
+    """
     week_no: int
     lock_team: Link[Team]
-    upset_team: Link[Team]
-    bonus: int
-    wins: int
-    losses: int
+    upset_team: Optional[Link[Team]]
+    bonus: int = 0
+    wins: int = 0
+    losses: int = 0
     season: int
-    pick_detail: List[PickDetail]
+    pick_detail: List[PickDetail] = []
 
     class Settings:
         """ The settings class """
@@ -109,6 +139,8 @@ class Pick(Document):
 
 class PickHistory(Pick):
     """Model class for saving picks from previous seasons in a table"""
+    player: Link[Player]
+
     class Settings:
         """ The settings class """
         name = "picks_history"

@@ -18,15 +18,9 @@ import sentry_sdk
 
 
 from app.config import Config
-from app.models import db_init, Player, TGFPInfo, get_tgfp_info
+from app.models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick
 from app.api.create_picks import create_picks, CreatePicksException
 
-sentry_sdk.init(
-    dsn="https://df0bb7eec46f36b0bf27935fba45470e@sentry.sturgeonfamily.com/2",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
-    traces_sample_rate=1.0,
-)
 
 SECONDS: Final[int] = 60*60*24
 DAYS: Final[int] = 365
@@ -41,6 +35,15 @@ def init_config() -> Config:
 
 
 config: Config = init_config()
+
+sentry_sdk.init(
+    dsn="https://df0bb7eec46f36b0bf27935fba45470e@sentry.sturgeonfamily.com/2",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+    environment=config.ENVIRONMENT,
+)
 
 discord: DiscordOAuthClient = DiscordOAuthClient(
     config.DISCORD_CLIENT_ID,
@@ -217,6 +220,127 @@ async def standings(
     )
 
 
+@app.get('/allpicks')
+async def allpicks(
+        _: Request,
+        __: Player = Depends(verify_player),
+        ___: TGFPInfo = Depends(get_tgfp_info)
+):
+    """ All Picks page """
+    return {'status': True}
+
+
+@app.get("/picks")
+async def picks(
+        request: Request,
+        player: Player = Depends(verify_player),
+        info: TGFPInfo = Depends(get_tgfp_info)
+):
+    """ Picks page """
+    if len(player.picks) > 0:
+        context = {
+            'error_messages': [
+                "Sorry, you can't change your picks.  If you think this is a problem, contact John"
+            ],
+            'goto_route': 'allpicks',
+            'player': player,
+            'info': info
+        }
+        return templates.TemplateResponse(
+            request=request, name="error_picks.j2", context=context
+        )
+    games: List[Game] = await Game.find(
+        Game.week_no == info.display_week,
+        Game.season == info.season
+    ).sort("-start_time").to_list()
+    valid_games = []
+    started_games = []
+    game: Game
+    for game in games:
+        if game.is_pregame:
+            valid_games.append(game)
+        else:
+            started_games.append(game)
+    valid_lock_teams = []
+    valid_upset_teams = []
+    for game in valid_games:
+        valid_upset_teams.append(game.underdog_team)
+        valid_lock_teams.append(game.home_team)
+        valid_lock_teams.append(game.road_team)
+    valid_lock_teams.sort(key=lambda x: x.long_name, reverse=False)
+    valid_upset_teams.sort(key=lambda x: x.long_name, reverse=False)
+    pick = None
+    context = {
+        'valid_games': valid_games,
+        'started_games': started_games,
+        'valid_lock_teams': valid_lock_teams,
+        'valid_upset_teams': valid_upset_teams,
+        'info': info,
+        'player': player,
+        'pick': pick
+    }
+    return templates.TemplateResponse(
+            request=request, name="picks.j2", context=context
+        )
+
+
+# pylint: disable=too-many-locals
+@app.post('/picks_form')
+async def picks_form(
+        request: Request,
+        player: Player = Depends(verify_player),
+        info: TGFPInfo = Depends(get_tgfp_info)):
+    """ This is the form route that handles processing the form data from the picks page """
+    games: List[Game] = await Game.find(
+        Game.week_no == info.display_week,
+        Game.season == info.season
+    ).sort("-start_time").to_list()
+    form = await request.form()
+    # now get the form variables
+    lock_id = form.get('lock')
+    upset_id = form.get('upset')
+    pick_detail: List[PickDetail] = []
+    for game in games:
+        key = f"game_{game.id}"
+        if key in form:
+            winner_id = form.get(key)
+            winning_team: Team = await Team.get(winner_id)
+            detail: PickDetail = PickDetail(
+                game=game,
+                winning_team=winning_team,
+            )
+            pick_detail.append(detail)
+
+    # Below is where we check for errors
+    error_messages = get_error_messages(pick_detail, games, upset_id, lock_id)
+    if error_messages:
+        context = {
+            'error_messages': error_messages,
+            'goto_route': 'picks',
+            'player': player,
+            'info': info
+        }
+        return templates.TemplateResponse(
+            request=request, name="error_picks.j2", context=context
+        )
+
+    lock_team: Team = await Team.get(lock_id)
+    if upset_id:
+        upset_team = await Team.get(upset_id)
+    else:
+        upset_team = None
+    pick: Pick = Pick(
+        week_no=info.display_week,
+        season=info.season,
+        lock_team=lock_team,
+        upset_team=upset_team
+    )
+
+    pick.pick_detail = pick_detail
+    player.picks.append(pick)
+    await player.save()
+
+
 @app.post("/api/create_picks_page")
 async def create_picks_page():
     """ API for creating the picks page """
@@ -232,6 +356,43 @@ async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
     """ Returns a player by their discord ID """
     player: Player = await Player.find_one(Player.discord_id == discord_id)
     return player
+
+
+def get_error_messages(
+        pick_detail: List[PickDetail],
+        games: List[Game],
+        upset_id: str,
+        lock_id: str
+) -> List:
+    """
+     Get Error Messages
+    Args:
+       pick_detail: list of all the picks details
+       games: all the current week's games
+       upset_id: team_id of the upset team
+       lock_id: lock_id of the lock team
+    Returns:
+        :class:`List` - error_message array (empty array if none)
+    """
+    errors = []
+    if len(pick_detail) != len(games):
+        errors.append("You missed a pick")
+    if not lock_id:
+        errors.append("You missed your lock.  (You must choose a lock)")
+    for game in games:
+        if upset_id:
+            if str(game.favorite_team.id) == upset_id:
+                errors.append("You cannot pick a favorite as your upset")
+    if upset_id:
+        pick_is_ok = False
+        for pick_item in pick_detail:
+            if upset_id == str(pick_item.winning_team.id):
+                pick_is_ok = True
+
+        if not pick_is_ok:
+            errors.append("You cannot choose an upset that you didn't choose as a winner")
+
+    return errors
 
 
 if __name__ == "__main__":
