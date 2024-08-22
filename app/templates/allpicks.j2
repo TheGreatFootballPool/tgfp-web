@@ -4,58 +4,55 @@
 
 {% macro row_with_style(player_pick, row_number) -%}
     {% if row_number%2 == 0 -%}
-        <tr style="{% if player_pick is not defined %}opacity:0.4{% endif %};border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
-    {% else -%}
         <tr {% if player_pick is not defined %}style="opacity:0.4"{% endif %}>
+    {% else -%}
+        <tr style="{% if player_pick is not defined %}opacity:0.4{% endif %};border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
     {% endif -%}
 {% endmacro -%}
-{% macro team_with_upset_lock_style(team,pick, win_team_id) -%}
+{% macro team_with_upset_lock_style(team, pick) -%}
     {% set span_class = None -%}
-    {% if pick.lock_team_id == win_team_id -%}
+    {% if pick.lock_team.id == team.id -%}
         {% set span_class = "lock" -%}
     {% endif -%}
-    {% if pick.upset_team_id == win_team_id -%}
+    {% if pick.upset_team.id == team.id -%}
         {% set span_class = "upset" -%}
     {% endif -%}
-    {% if pick.upset_team_id == win_team_id and pick.lock_team_id == win_team_id %}
+    {% if pick.upset_team.id == team.id and pick.lock_team.id == team.id %}
         {% set span_class = "lockupset" -%}
     {% endif %}
     <span {% if span_class -%} class="{{ span_class }}"{% endif -%}>{{ team.long_name }}</span>
 {% endmacro -%}
 {% macro score(is_pregame, points) %}
-{% if not is_pregame %}
-({{points}})
-{% endif %}
+    {% if not is_pregame %}
+        ({{points}})
+    {% endif %}
 {% endmacro %}
-{% macro win_loss_icon(team,pick) %}
-{# <i style="color:green" class="fa fa-thumbs-up"></i> #}
-{% endmacro %}
-
 {% block content -%}
   <table cellspacing=0  width="100%">
     <tr><td>&nbsp;</td>
     {% for game in games -%}
-        {% set road_team=tgfp.find_teams(game.road_team_id)[0] -%}
-        {% set home_team=tgfp.find_teams(game.home_team_id)[0] -%}
+        {% set road_team=game.road_team -%}
+        {% set home_team=game.home_team -%}
             {% set opacity=1 %}
             {% if game.is_final %}
-                {% if  week_no == g.current_week %}
+                {% if  week_no == info.display_week %}
                     {% set opacity=0.5 %}
                 {% else %}
                     {% set opacity=0.7 %}
                 {% endif %}
             {% endif %}
             <td style="opacity:{{ opacity }};text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">
-                <img align="absmiddle" src="{{ url_for('static', filename='images/' + road_team.short_name + '.small.gif') }}" border="0">{{ score(game.is_pregame, game.road_team_score) }}
+                <img align="absmiddle" src="{{ url_for('static', path='images/' + road_team.short_name + '.small.gif') }}" border="0" alt="helmet">
+                {{ score(game.is_pregame, game.road_team_score) }}
                 <div>at</div>
-                <img align="absmiddle" src="{{ url_for('static', filename='images/' + home_team.short_name + '.small.gif') }}" border="0">{{ score(game.is_pregame, game.home_team_score) }}
+                <img align="absmiddle" src="{{ url_for('static', path='images/' + home_team.short_name + '.small.gif') }}" border="0" alt="helmet">
+                {{ score(game.is_pregame, game.home_team_score) }}
             </td>
     {% endfor -%}
     </tr>
     {% for player in active_players -%}
-        {% set player_pick = None -%}
-        {% set player_pick=tgfp.find_picks(player_id=player._id, week_no=week_no)[0] -%}
-        {{ row_with_style(player_pick, loop.index + 1) }}
+        {% set player_pick = player.pick_for_week(week_no=week_no) -%}
+        {{ row_with_style(player_pick, loop.index) }}
         <td style="overflow:hidden; border-top:solid 1px #888;border-left:solid 1px #888;">
             <div style="white-space: nowrap;float:left;width:50%;">&nbsp;{{ player.nick_name }}</div>
             <div align="right" style="white-space: nowrap;float:right;width:50%;">({{ player.wins(week_no=week_no) }}-{{ player.losses(week_no=week_no) }}) {% if player.bonus(week_no=week_no) > 0 %}+{% endif %}{{ player.bonus(week_no=week_no) }}&nbsp;</div></td>
@@ -63,9 +60,8 @@
             {% if not player_pick %}
                 <td style="color:green;text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">--no pick--</td>
             {% else %}
-                {% set win_team_id = player_pick.winner_for_game_id(game._id) %}
-                {% set team=tgfp.find_teams(team_id=win_team_id)[0] -%}
-                <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ win_loss_icon(team,player_pick) }}{{ team_with_upset_lock_style(team, player_pick, win_team_id) }}</td>
+                {% set team = player_pick.winner_for_game(game) %}
+                <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ team_with_upset_lock_style(team, player_pick) }}</td>
             {% endif %}
         {% endfor %}
     {% endfor -%}

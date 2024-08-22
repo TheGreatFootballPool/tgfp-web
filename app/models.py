@@ -22,9 +22,9 @@ class TGFPInfo(BaseModel):
     - :class:`int` display_week --> This is the more comment week used.
     - :class:`int` active_week --> Used for last_wins, last_losses etc.
     """
-    season: int
-    display_week: int
-    active_week: int
+    season: int = 2023
+    display_week: int = 14
+    active_week: int = 14
 
 
 class Team(Document):
@@ -135,6 +135,22 @@ class Pick(Document):
     class Settings:
         """ The settings class """
         name = "picks"
+
+    def winner_for_game(self, game: Game) -> Optional[Team]:
+        """
+        Go through each game in the picks for the week, and
+        when we have a match, return the winner for that game
+        :param game:
+        :return:
+        """
+        winning_team: Optional[Team] = None
+        detail: PickDetail
+        for detail in self.pick_detail:
+            if detail.game.id == game.id:
+                # noinspection PyTypeChecker
+                winning_team = detail.winning_team
+                break
+        return winning_team
 
 
 class PickHistory(Pick):
@@ -250,6 +266,28 @@ class Player(Document):
 
         return 0
 
+    def pick_for_week(self, week_no: int) -> Optional[Pick]:
+        """
+        Returns the picks for the given week
+        :param week_no:
+        :return:
+        """
+        pick: Optional[Pick] = None
+        for a_pick in self.picks:
+            if a_pick.week_no is week_no:
+                pick = a_pick
+                break
+        return pick
+
+    async def fetch_pick_links_for_week(self, week_no: int):
+        """ Fetches all links for the pick for the week given """
+        for pick in self.picks:
+            if pick.week_no == week_no:
+                await pick.fetch_all_links()
+                detail: PickDetail
+                for detail in pick.pick_detail:
+                    await detail.fetch_all_links()
+
 
 PickHistory.model_rebuild()
 Player.model_rebuild()
@@ -272,6 +310,7 @@ async def get_tgfp_info() -> TGFPInfo:
         {'season': current_season}
     ).sort("-_id").limit(1).first_or_none()
     if a_game is None:
+        # EARLY RETURN
         return TGFPInfo(
             season=current_season,
             display_week=1,

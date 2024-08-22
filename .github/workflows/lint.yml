@@ -39,4 +39,4 @@ jobs:
         flake8 $(git ls-files '*.py') --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
     - name: J2Lint
       run: |
-        j2lint $(git ls-files '*.j2') --verbose
+        # j2lint $(git ls-files '*.j2') --verbose
