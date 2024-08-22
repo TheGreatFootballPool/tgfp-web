@@ -1,8 +1,7 @@
 """ Configuration file """
 import os
 from dataclasses import dataclass
-
-from app.config.one_password_helpers import OnePasswordHelper
+from dotenv import load_dotenv
 
 
 # pylint: disable=too-few-public-methods
@@ -12,31 +11,23 @@ class Config:
     # pylint: disable=invalid-name
     ENVIRONMENT: str
     MONGO_URI: str
-    SECRET_KEY: str
+    WEB_SECRET_KEY: str
     DISCORD_CLIENT_ID: str
     DISCORD_CLIENT_SECRET: str
     DISCORD_REDIRECT_URI: str
     SESSION_SECRET_KEY: str
 
     @classmethod
-    async def get_config(cls):
+    def get_config(cls):
         """ Factory method for returning the correct config"""
-        env: str = os.getenv('ENVIRONMENT')
-        assert env is not None
-        helper = OnePasswordHelper(env)
-        mongo_uri: str = await helper.get_setting('mongo-uri')
-        secret_key: str = await helper.get_setting('web-secret-key')
-        discord_client_id: str = await helper.get_setting('discord-client-id')
-        discord_client_secret: str = await helper.get_setting('discord-client-secret')
-        discord_redirect_uri: str = await helper.get_setting('discord-redirect-uri')
-        session_secret_key: str = await helper.get_setting('session-secret-key')
+        load_dotenv()
         config = cls(
-            ENVIRONMENT=env,
-            MONGO_URI=mongo_uri,
-            SECRET_KEY=secret_key,
-            DISCORD_CLIENT_ID=discord_client_id,
-            DISCORD_CLIENT_SECRET=discord_client_secret,
-            DISCORD_REDIRECT_URI=discord_redirect_uri,
-            SESSION_SECRET_KEY=session_secret_key
+            ENVIRONMENT=os.getenv('ENVIRONMENT'),
+            MONGO_URI=os.getenv('MONGO_URI'),
+            WEB_SECRET_KEY=os.getenv('WEB_SECRET_KEY'),
+            DISCORD_CLIENT_ID=os.getenv('DISCORD_CLIENT_ID'),
+            DISCORD_CLIENT_SECRET=os.getenv('DISCORD_CLIENT_SECRET'),
+            DISCORD_REDIRECT_URI=os.getenv('DISCORD_REDIRECT_URI'),
+            SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY')
         )
         return config

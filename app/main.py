@@ -1,10 +1,11 @@
 """ Main entry point for website """
-import asyncio
+import os
 from contextlib import asynccontextmanager
 from typing import Optional, Final, List
 
 import pydantic_core
 import uvicorn
+from beanie import PydanticObjectId
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
 
@@ -26,15 +27,7 @@ SECONDS: Final[int] = 60*60*24
 DAYS: Final[int] = 365
 COOKIE_TIME_OUT = DAYS * SECONDS
 
-
-def init_config() -> Config:
-    """ Initialize the config object """
-    async def asyncfunc() -> Config:
-        return await Config.get_config()
-    return asyncio.run(asyncfunc())
-
-
-config: Config = init_config()
+config: Config = Config.get_config()
 
 sentry_sdk.init(
     dsn="https://df0bb7eec46f36b0bf27935fba45470e@sentry.sturgeonfamily.com/2",
@@ -81,28 +74,26 @@ def get_tgfp_info_from_request(request: Request) -> Optional[TGFPInfo]:
     return tgfp_info
 
 
-def get_player_from_request(request: Request) -> Optional[Player]:
+async def get_player_from_request(request: Request) -> Optional[Player]:
     """ Return the deserialized player object from the request session """
     player: Optional[Player] = None
     if request.scope.get('session') is not None:
-        player_json: str = request.session.get('player')
-        if player_json and 'name' in player_json:
-            player = Player.model_validate(
-                pydantic_core.from_json(player_json)
-            )
+        player_id: str = request.session.get('player_id')
+        if player_id:
+            player = await Player.get(PydanticObjectId(player_id))
     return player
 
 
 async def verify_player(request: Request) -> Player:
     """ Make sure we have a player session, otherwise, get one"""
-    player: Player = get_player_from_request(request)
+    player: Player = await get_player_from_request(request)
     if player:
         return player
     discord_id = request.cookies.get("tgfp-discord-id")
     if discord_id:
         player = await get_player_by_discord_id(int(discord_id))
         if player:
-            request.session["player"] = player.model_dump_json()
+            request.session["player_id"] = str(player.id)
             return player
         # clear the discord id and fall through to exception
         request.cookies.pop("tgfp-discord-id")
@@ -222,12 +213,38 @@ async def standings(
 
 @app.get('/allpicks')
 async def allpicks(
-        _: Request,
-        __: Player = Depends(verify_player),
-        ___: TGFPInfo = Depends(get_tgfp_info)
+        request: Request,
+        player: Player = Depends(verify_player),
+        info: TGFPInfo = Depends(get_tgfp_info),
+        week_no: int = None,
 ):
     """ All Picks page """
-    return {'status': True}
+    picks_week_no = info.display_week
+    if week_no:
+        picks_week_no = week_no
+    # pylint: disable=singleton-comparison
+    active_players: List[Player] = await Player.find(
+        Player.active == True,  # noqa: E712
+    ).to_list()
+    active_players.sort(key=lambda x: x.total_points, reverse=True)
+    for a_player in active_players:
+        await a_player.fetch_pick_links_for_week(picks_week_no)
+    await player.fetch_pick_links_for_week(picks_week_no)
+    games: List[Game] = await Game.find(
+        Game.week_no == picks_week_no,
+        Game.season == info.season,
+        fetch_links=True
+    ).sort("-start_time").to_list()
+    context = {
+        'player': player,
+        'info': info,
+        'active_players': active_players,
+        'week_no': picks_week_no,
+        'games': games
+    }
+    return templates.TemplateResponse(
+        request=request, name="allpicks.j2", context=context
+    )
 
 
 @app.get("/picks")
@@ -237,7 +254,7 @@ async def picks(
         info: TGFPInfo = Depends(get_tgfp_info)
 ):
     """ Picks page """
-    if len(player.picks) > 0:
+    if player.pick_for_week(info.display_week):
         context = {
             'error_messages': [
                 "Sorry, you can't change your picks.  If you think this is a problem, contact John"
@@ -251,7 +268,8 @@ async def picks(
         )
     games: List[Game] = await Game.find(
         Game.week_no == info.display_week,
-        Game.season == info.season
+        Game.season == info.season,
+        fetch_links=True
     ).sort("-start_time").to_list()
     valid_games = []
     started_games = []
@@ -293,7 +311,8 @@ async def picks_form(
     """ This is the form route that handles processing the form data from the picks page """
     games: List[Game] = await Game.find(
         Game.week_no == info.display_week,
-        Game.season == info.season
+        Game.season == info.season,
+        fetch_links=True
     ).sort("-start_time").to_list()
     form = await request.form()
     # now get the form variables
@@ -312,7 +331,7 @@ async def picks_form(
             pick_detail.append(detail)
 
     # Below is where we check for errors
-    error_messages = get_error_messages(pick_detail, games, upset_id, lock_id)
+    error_messages = await get_error_messages(pick_detail, games, upset_id, lock_id)
     if error_messages:
         context = {
             'error_messages': error_messages,
@@ -339,6 +358,13 @@ async def picks_form(
     pick.pick_detail = pick_detail
     player.picks.append(pick)
     await player.save()
+    context = {
+        'player': player,
+        'info': info
+    }
+    return templates.TemplateResponse(
+        request=request, name="picks_form.j2", context=context
+    )
 
 
 @app.post("/api/create_picks_page")
@@ -358,7 +384,7 @@ async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
     return player
 
 
-def get_error_messages(
+async def get_error_messages(
         pick_detail: List[PickDetail],
         games: List[Game],
         upset_id: str,
@@ -380,12 +406,14 @@ def get_error_messages(
     if not lock_id:
         errors.append("You missed your lock.  (You must choose a lock)")
     for game in games:
+        await game.fetch_link('favorite_team')
         if upset_id:
             if str(game.favorite_team.id) == upset_id:
                 errors.append("You cannot pick a favorite as your upset")
     if upset_id:
         pick_is_ok = False
         for pick_item in pick_detail:
+            await pick_item.fetch_link('winning_team')
             if upset_id == str(pick_item.winning_team.id):
                 pick_is_ok = True
 
@@ -396,4 +424,5 @@ def get_error_messages(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    reload: bool = os.getenv('ENVIRONMENT') == 'development'
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=reload, access_log=False)
