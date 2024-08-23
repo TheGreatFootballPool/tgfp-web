@@ -11,6 +11,6 @@ j2lint==1.1.0
 starlette-discord~=0.2.1
 onepassword @ git+https://git@github.com/1Password/onepassword-sdk-python.git@main
 itsdangerous==2.2.0
-tgfp-nfl==6.2.1
+tgfp-nfl==6.3.0
 sentry-sdk[fastapi]~=2.13.0
 python-dotenv==1.0.1

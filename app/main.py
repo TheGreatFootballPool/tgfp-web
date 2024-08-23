@@ -1,6 +1,7 @@
 """ Main entry point for website """
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Optional, Final, List
 
 import pydantic_core
@@ -376,6 +377,25 @@ async def create_picks_page():
         # pylint: disable=raise-missing-from
         raise HTTPException(status_code=500, detail=str(e))
     return {'success': True}
+
+
+@app.post("/api/unmonitored_started_games")
+async def unmonitored_started_games(
+        info: TGFPInfo = Depends(get_tgfp_info),
+):
+    """ API for returning a list of games that have started, but are not yet monitored  """
+    unmonitored_games: List[Game] = await Game.find_many(
+        Game.week_no == info.display_week,
+        Game.season == info.season,
+        Game.game_status == 'STATUS_SCHEDULED',
+        Game.monitored_status == 'UNMONITORED'
+    ).to_list()
+    game_ids: List[str] = []
+    present: datetime = datetime.utcnow()
+    for game in unmonitored_games:
+        if present > game.start_time:
+            game_ids.append(str(game.id))
+    return {'active_games': game_ids}
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
