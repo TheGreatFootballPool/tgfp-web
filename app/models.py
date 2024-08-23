@@ -61,6 +61,7 @@ class Game(Document):
     - :class:`int` home_team_score
     - :class:`int` season
     - :class:`str` tgfp_nfl_game_id
+    - :class:`str` monitored_statusm
     """
     game_status: str
     favorite_team: Link[Team]
@@ -73,6 +74,7 @@ class Game(Document):
     home_team_score: int
     season: int
     tgfp_nfl_game_id: str
+    monitored_status: str
 
     class Settings:
         """ The settings class """
@@ -293,12 +295,18 @@ PickHistory.model_rebuild()
 Player.model_rebuild()
 
 
-async def get_tgfp_info() -> TGFPInfo:
+async def get_tgfp_info(debug: bool = True) -> TGFPInfo:
     """ Returns the TGFPInfo object filled w/values """
     # Get the current season.
     # NOTE: The current season is the year in which the season starts.
     #  -- if the month Jan - May (1-5) then consider the year before the starting
     #  season.
+    if debug:
+        return TGFPInfo(
+            season=2024,
+            display_week=4,
+            active_week=4
+        )
     year = datetime.now().year
     month = datetime.now().month
     if month < 6:
