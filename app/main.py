@@ -400,19 +400,26 @@ async def api_unmonitored_started_games(
     return {'active_games': game_ids}
 
 
-@app.post("/api/update_game/{game_id}")
+@app.get("/api/update_game/{game_id}", response_model=Game)
 async def api_update_game(
-        game_id: str,
-        monitored: bool = False,
+        game_id: str
 ):
     """ API to tell trigger a game update (given the game ID) """
     game: Game = await Game.get(PydanticObjectId(game_id))
-    if monitored and not game.monitored:
-        game.monitored = True
-        # noinspection PyArgumentList
-        await game.replace()
-    game_status: str = await update_game(game_id)
-    return {'game_status': game_status}
+    return await update_game(game)
+
+
+@app.get("/api/set_monitored", response_model=Game)
+async def api_set_monitored(
+        game_id: str,
+        monitored: bool
+):
+    """ API to tell trigger a game update (given the game ID) """
+    game: Game = await Game.get(PydanticObjectId(game_id))
+    game.monitored = monitored
+    # noinspection PyArgumentList
+    await game.replace()
+    return game
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
