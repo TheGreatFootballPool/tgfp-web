@@ -18,7 +18,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 import sentry_sdk
 
-
+from app.api.update_scores import update_game
 from app.config import Config
 from app.models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick
 from app.api.create_picks import create_picks, CreatePicksException
@@ -229,8 +229,8 @@ async def allpicks(
     ).to_list()
     active_players.sort(key=lambda x: x.total_points, reverse=True)
     for a_player in active_players:
-        await a_player.fetch_pick_links_for_week(picks_week_no)
-    await player.fetch_pick_links_for_week(picks_week_no)
+        await a_player.fetch_pick_links(picks_week_no)
+    await player.fetch_pick_links(picks_week_no)
     games: List[Game] = await Game.find(
         Game.week_no == picks_week_no,
         Game.season == info.season,
@@ -358,6 +358,7 @@ async def picks_form(
 
     pick.pick_detail = pick_detail
     player.picks.append(pick)
+    # noinspection PyArgumentList
     await player.save()
     context = {
         'player': player,
@@ -369,7 +370,7 @@ async def picks_form(
 
 
 @app.post("/api/create_picks_page")
-async def create_picks_page():
+async def api_create_picks_page():
     """ API for creating the picks page """
     try:
         await create_picks()
@@ -379,16 +380,17 @@ async def create_picks_page():
     return {'success': True}
 
 
-@app.post("/api/unmonitored_started_games")
-async def unmonitored_started_games(
+@app.get("/api/unmonitored_started_games")
+async def api_unmonitored_started_games(
         info: TGFPInfo = Depends(get_tgfp_info),
 ):
     """ API for returning a list of games that have started, but are not yet monitored  """
+    # pylint: disable=singleton-comparison
     unmonitored_games: List[Game] = await Game.find_many(
         Game.week_no == info.display_week,
         Game.season == info.season,
         Game.game_status == 'STATUS_SCHEDULED',
-        Game.monitored_status == 'UNMONITORED'
+        Game.monitored == False  # noqa E712
     ).to_list()
     game_ids: List[str] = []
     present: datetime = datetime.utcnow()
@@ -396,6 +398,21 @@ async def unmonitored_started_games(
         if present > game.start_time:
             game_ids.append(str(game.id))
     return {'active_games': game_ids}
+
+
+@app.post("/api/update_game/{game_id}")
+async def api_update_game(
+        game_id: str,
+        monitored: bool = False,
+):
+    """ API to tell trigger a game update (given the game ID) """
+    game: Game = await Game.get(PydanticObjectId(game_id))
+    if monitored and not game.monitored:
+        game.monitored = True
+        # noinspection PyArgumentList
+        await game.replace()
+    game_status: str = await update_game(game_id)
+    return {'game_status': game_status}
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
