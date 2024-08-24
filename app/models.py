@@ -74,7 +74,7 @@ class Game(Document):
     home_team_score: int
     season: int
     tgfp_nfl_game_id: str
-    monitored_status: str
+    monitored: bool
 
     class Settings:
         """ The settings class """
@@ -153,6 +153,50 @@ class Pick(Document):
                 winning_team = detail.winning_team
                 break
         return winning_team
+
+    def load_record(self):
+        """
+        This method goes through the current pick's games, determines the winner and
+        updates the score of the week's pick object.
+        """
+        # go through each game in pick_detail
+        self.wins = 0
+        self.losses = 0
+        self.bonus = 0
+
+        detail: PickDetail
+        for detail in self.pick_detail:
+            # noinspection PyTypeChecker
+            game: Game = detail.game
+            if not game.is_final:
+                continue
+            if game.road_team_score == game.home_team_score:
+                self.losses += 1
+            else:
+                if game.road_team_score > game.home_team_score:
+                    winning_team = game.road_team
+                    losing_team = game.home_team
+                else:
+                    winning_team = game.home_team
+                    losing_team = game.road_team
+                # noinspection PyTypeChecker
+                self._update_wins(detail, winning_team)
+                # noinspection PyTypeChecker
+                self._update_bonus(winning_team, losing_team)
+
+    def _update_wins(self, pick: PickDetail, winning_team: Team):
+        if winning_team.id == pick.winning_team.id:
+            self.wins += 1
+        else:
+            self.losses += 1
+
+    def _update_bonus(self, winning_team: Team, losing_team: Team):
+        if winning_team.id == self.lock_team.id:
+            self.bonus += 1
+        if losing_team.id == self.lock_team.id:
+            self.bonus -= 1
+        if winning_team.id == self.upset_team.id:
+            self.bonus += 1
 
 
 class PickHistory(Pick):
@@ -281,10 +325,10 @@ class Player(Document):
                 break
         return pick
 
-    async def fetch_pick_links_for_week(self, week_no: int):
+    async def fetch_pick_links(self, week_no: Optional[int] = None):
         """ Fetches all links for the pick for the week given """
         for pick in self.picks:
-            if pick.week_no == week_no:
+            if week_no is None or pick.week_no == week_no:
                 await pick.fetch_all_links()
                 detail: PickDetail
                 for detail in pick.pick_detail:
