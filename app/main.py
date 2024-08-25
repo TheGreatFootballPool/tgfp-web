@@ -49,7 +49,6 @@ discord: DiscordOAuthClient = DiscordOAuthClient(
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """ Perform all app initialization before 'yield' """
-    # Initialize the model / DB connection
     await db_init()
     yield
 
@@ -380,24 +379,21 @@ async def api_create_picks_page():
     return {'success': True}
 
 
-@app.get("/api/unmonitored_started_games")
-async def api_unmonitored_started_games(
+@app.get("/api/live_games")
+async def api_live_games(
         info: TGFPInfo = Depends(get_tgfp_info),
 ):
-    """ API for returning a list of games that have started, but are not yet monitored  """
-    # pylint: disable=singleton-comparison
-    unmonitored_games: List[Game] = await Game.find_many(
+    """ API for returning a list of games that have started, and not marked as 'final'  """
+    this_weeks_games: List[Game] = await Game.find_many(
         Game.week_no == info.display_week,
-        Game.season == info.season,
-        Game.game_status == 'STATUS_SCHEDULED',
-        Game.monitored == False  # noqa E712
+        Game.season == info.season
     ).to_list()
-    game_ids: List[str] = []
+    live_game_ids: List[str] = []
     present: datetime = datetime.utcnow()
-    for game in unmonitored_games:
-        if present > game.start_time:
-            game_ids.append(str(game.id))
-    return {'active_games': game_ids}
+    for game in this_weeks_games:
+        if present > game.start_time and not game.is_final:
+            live_game_ids.append(str(game.id))
+    return {'live_game_ids': live_game_ids}
 
 
 @app.get("/api/update_game/{game_id}", response_model=Game)
@@ -407,19 +403,6 @@ async def api_update_game(
     """ API to tell trigger a game update (given the game ID) """
     game: Game = await Game.get(PydanticObjectId(game_id))
     return await update_game(game)
-
-
-@app.get("/api/set_monitored", response_model=Game)
-async def api_set_monitored(
-        game_id: str,
-        monitored: bool
-):
-    """ API to tell trigger a game update (given the game ID) """
-    game: Game = await Game.get(PydanticObjectId(game_id))
-    game.monitored = monitored
-    # noinspection PyArgumentList
-    await game.replace()
-    return game
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
