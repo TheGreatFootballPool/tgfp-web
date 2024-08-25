@@ -61,7 +61,6 @@ class Game(Document):
     - :class:`int` home_team_score
     - :class:`int` season
     - :class:`str` tgfp_nfl_game_id
-    - :class:`str` monitored_statusm
     """
     game_status: str
     favorite_team: Link[Team]
@@ -74,7 +73,6 @@ class Game(Document):
     home_team_score: int
     season: int
     tgfp_nfl_game_id: str
-    monitored: bool
 
     class Settings:
         """ The settings class """
