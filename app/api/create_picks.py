@@ -3,9 +3,8 @@ from typing import List
 
 from tgfp_nfl import TgfpNfl, TgfpNflGame
 
-from app.models import Team, TGFPInfo, get_tgfp_info, Game
+from models import Team, TGFPInfo, get_tgfp_info, Game
 
-DEBUG = True
 # from send_picks_ready_campaign import send_campaign_email
 
 
@@ -21,12 +20,9 @@ class CreatePicksException(Exception):
 
 async def create_picks() -> dict:
     """ Creates the weekly picks page """
-    info: TGFPInfo = await get_tgfp_info(debug=DEBUG)
+    info: TGFPInfo = await get_tgfp_info()
     week_no: int = info.display_week
-    if DEBUG:
-        nfl = TgfpNfl(season_type=1, week_no=week_no)
-    else:
-        nfl: TgfpNfl = TgfpNfl(week_no=week_no)
+    nfl: TgfpNfl = TgfpNfl(week_no=week_no)
     nfl_games: List[TgfpNflGame] = nfl.games()
     if not nfl_games:
         raise CreatePicksException("There should have been games!!!")
@@ -45,7 +41,7 @@ async def create_picks() -> dict:
             game_status=nfl_game.game_status_type,
             home_team_score=0,
             road_team_score=0,
-            spread=nfl_game.spread + .5,
+            spread=nfl_game.spread,
             start_time=nfl_game.start_time,
             week_no=int(week_no),
             tgfp_nfl_game_id=nfl_game.id,

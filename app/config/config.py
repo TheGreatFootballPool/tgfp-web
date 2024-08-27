@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 
 # pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class Config:
     """ Base configuration class """
@@ -16,6 +17,7 @@ class Config:
     DISCORD_CLIENT_SECRET: str
     DISCORD_REDIRECT_URI: str
     SESSION_SECRET_KEY: str
+    SENTRY_DSN: str
 
     @classmethod
     def get_config(cls):
@@ -28,6 +30,7 @@ class Config:
             DISCORD_CLIENT_ID=os.getenv('DISCORD_CLIENT_ID'),
             DISCORD_CLIENT_SECRET=os.getenv('DISCORD_CLIENT_SECRET'),
             DISCORD_REDIRECT_URI=os.getenv('DISCORD_REDIRECT_URI'),
-            SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY')
+            SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY'),
+            SENTRY_DSN=os.getenv('SENTRY_DSN')
         )
         return config
