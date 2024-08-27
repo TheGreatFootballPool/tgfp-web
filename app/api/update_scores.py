@@ -3,7 +3,7 @@ from typing import List
 
 from tgfp_nfl import TgfpNfl
 
-from app.models import TGFPInfo, get_tgfp_info, Game, Player
+from models import TGFPInfo, get_tgfp_info, Game, Player
 
 
 async def update_game(game: Game) -> Game:
@@ -12,14 +12,8 @@ async def update_game(game: Game) -> Game:
     @param game:
     @return: The current live status of the game
     """
-    debug = False
-    info: TGFPInfo = await get_tgfp_info(debug=debug)
-    week_no = info.display_week
-    if debug:
-        season_type = 1
-    else:
-        season_type = 0
-    nfl_data_source = TgfpNfl(week_no=week_no, season_type=season_type)
+    info: TGFPInfo = await get_tgfp_info()
+    nfl_data_source = TgfpNfl(week_no=info.display_week)
     await _update_scores(nfl_data_source, game)
     if game.is_final:
         await _update_player_win_loss()
