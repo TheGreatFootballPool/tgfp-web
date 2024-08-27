@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 
 # pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class Config:
     """ Base configuration class """
