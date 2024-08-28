@@ -5,12 +5,10 @@ cd $INSTALL_DIR || exit
 # Install packages
 echo "TGFP: Updating installed packages"
 apt update && apt upgrade -y
-if ! dpkg -s python3.11 > /dev/null 2>&1
+if ! dpkg -s python3.11 python3.11-venv python3-pip python-is-python3 > /dev/null 2>&1
 then
   echo "TGFP: Installing Python"
-  apt install python3.11 python3.11-venv -y
-  apt install python3-pip -y
-  apt install python-is-python3 -y
+  apt install python3.11 python3.11-venv python3-pip python-is-python3 -y
 fi
 
 echo "TGFP: Fetching / installing web site"
@@ -25,7 +23,6 @@ mv tgfp-web-main/app ${INSTALL_DIR}
 mv tgfp-web-main/config/requirements.txt ${INSTALL_DIR}
 mv tgfp-web-main/config/op.env ${INSTALL_DIR}
 mv tgfp-web-main/config/tgfp-web.service /etc/systemd/system
-mv tgfp-web-main/scripts/update.sh ${INSTALL_DIR}
 rm -rf tgfp-web-main
 
 # install python virtualenv and requirements
