@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # usage: [major, minor, patch] "commit message"
-VERSION_FILE=version.env
+cd "$(dirname "$0")" || exit
+
+# move to the project root
+cd ..
+VERSION_FILE=config/version.env
 if ! test -e ${VERSION_FILE}
 then
   echo "You need to run this from the root directory.  File ${VERSION_FILE} is not found"

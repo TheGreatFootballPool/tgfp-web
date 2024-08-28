@@ -15,5 +15,3 @@ logs
 .nova
 .env
 db/*
-stack.env
-archived_code
