@@ -3,20 +3,24 @@ INSTALL_DIR=/opt/tgfp
 cd $INSTALL_DIR || exit
 
 # Install packages
+echo "TGFP: Updating installed packages"
 apt update && apt upgrade -y
 if ! dpkg -s python3.11 > /dev/null 2>&1
 then
+  echo "TGFP: Installing Python"
   apt -y install python3.11 python3.11-venv
   apt install python3-pip -y
   apt install python-is-python3
 fi
 
+echo "TGFP: Fetching / installing web site"
 # fetch the tgfp code
 wget https://github.com/TheGreatFootballPool/tgfp-web/archive/main.zip
 unzip main.zip
 rm main.zip
 
 # grab the important bits
+rm -rf ${INSTALL_DIR}/app
 mv tgfp-web-main/app ${INSTALL_DIR}
 mv tgfp-web-main/config/requirements.txt ${INSTALL_DIR}
 mv tgfp-web-main/config/op.env ${INSTALL_DIR}
@@ -30,10 +34,12 @@ python -m venv venv
 source venv/bin/activate
 pip install -U pip
 pip install -r ${INSTALL_DIR}/requirements.txt
+rm ${INSTALL_DIR}/requirements.txt
 
 # install op so we can create the .env
 if ! dpkg -s 1password-cli > /dev/null 2>&1
 then
+  echo "TGFP: Installing 1password-cli"
   apt install gpg
   curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
   gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
@@ -51,6 +57,7 @@ fi
 
 if ! test -e ${INSTALL_DIR}/op-token.env
 then
+  echo "TGFP: Getting 1password token"
   read -r -p "Enter 1password auth token: " onepassword_auth_token
   export OP_SERVICE_ACCOUNT_TOKEN=${onepassword_auth_token}
   echo "OP_SERVICE_ACCOUNT_TOKEN=${onepassword_auth_token}" > ${INSTALL_DIR}/op-token.env
@@ -58,9 +65,9 @@ else
   source ${INSTALL_DIR}/op-token.env
 fi
 
-
 if ! test -e ${INSTALL_DIR}/environment.env
 then
+  echo "TGFP: Getting env"
   echo "Choose to run as dev env or prod"
   read -r -p "Default is to run in production, deploy to DEVELOPMENT env[Y/y]: " dev_env
   if [[ $dev_env == "y" || $dev_env == "Y" ]] ; then
