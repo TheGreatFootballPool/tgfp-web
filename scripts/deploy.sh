@@ -2,6 +2,7 @@
 INSTALL_DIR=/opt/tgfp
 cd $INSTALL_DIR || exit
 
+systemctl stop tgfp-web.service
 # Install packages
 echo "TGFP: Updating installed packages"
 apt update && apt upgrade -y
