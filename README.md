@@ -8,8 +8,8 @@ I am going to install this on a Debian 12 LXC hosted by a proxmox instance.  I'm
 
 On a fresh debian 12 install
 
+### Run the following script as root
 ```bash
-# Run as root
 mkdir /opt/tgfp
 cd /opt/tgfp
 bash -c "$(wget -qLO - https://github.com/TheGreatFootballPool/tgfp-web/raw/main/scripts/deploy.sh)"

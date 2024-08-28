@@ -57,7 +57,7 @@ then
   echo "TGFP: Getting 1password token"
   read -r -p "Enter 1password auth token: " onepassword_auth_token
   export OP_SERVICE_ACCOUNT_TOKEN=${onepassword_auth_token}
-  echo "OP_SERVICE_ACCOUNT_TOKEN=${onepassword_auth_token}" > ${INSTALL_DIR}/op-token.env
+  echo "export OP_SERVICE_ACCOUNT_TOKEN=${onepassword_auth_token}" > ${INSTALL_DIR}/op-token.env
 else
   source ${INSTALL_DIR}/op-token.env
 fi
@@ -72,7 +72,7 @@ then
   else
     ENV="production"
   fi
-  echo "ENV=${ENV}" > ${INSTALL_DIR}/environment.env
+  echo "export ENV=${ENV}" > ${INSTALL_DIR}/environment.env
 else
   source ${INSTALL_DIR}/environment.env
 fi
