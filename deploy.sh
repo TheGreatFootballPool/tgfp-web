@@ -15,6 +15,7 @@ unzip main.zip
 mv tgfp-web-main/app ${INSTALL_DIR}
 mv tgfp-web-main/requirements.txt ${INSTALL_DIR}
 mv tgfp-web-main/op.env ${INSTALL_DIR}
+mv tgfp-web-main/tgfp-web.service /etc/systemd/system
 rm -rf tgfp-web-main
 
 # install python virtualenv and requirements
@@ -54,6 +55,7 @@ echo "ENV set to ${ENV}"
 APP_ENV=${ENV} op inject -f -i ${INSTALL_DIR}/op.env -o ${INSTALL_DIR}/app/.env
 echo "ENVIRONMENT=${ENV}" >> ${INSTALL_DIR}/app/.env
 
-# fire up the app
-# uvicorn --host 0.0.0.0 --port 6701 main:app
+systemctl daemon-reload
+systemctl enable tgfp-web.service
+systemctl start tgfp-web.service
 
