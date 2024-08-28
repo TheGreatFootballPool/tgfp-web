@@ -7,6 +7,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import Document, init_beanie, Link
 from pydantic import BaseModel
 
+from config import Config
+
 PRO_BOWL_WEEK: Final[int] = 22
 
 # pylint: disable=too-many-ancestors
@@ -388,10 +390,10 @@ async def get_tgfp_info() -> TGFPInfo:
     )
 
 
-async def db_init(models=None):
+async def db_init(config: Config, models=None):
     """ Create the client connection"""
     if models is None:
         models = [Pick, PickDetail, Game, Team, Player, PickHistory]
-    client = AsyncIOMotorClient("mongodb://tgfp:development@localhost:27017/")
+    client = AsyncIOMotorClient(config.MONGO_URI)
 
     await init_beanie(database=client.tgfp, document_models=models)

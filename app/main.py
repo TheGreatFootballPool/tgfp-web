@@ -49,7 +49,7 @@ discord: DiscordOAuthClient = DiscordOAuthClient(
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """ Perform all app initialization before 'yield' """
-    await db_init()
+    await db_init(config)
     yield
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)

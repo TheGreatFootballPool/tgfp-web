@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="HttpClientEndpointsTabState">
-    <option name="requestToText" value="&lt;CachedHttpClientTabRequests&gt;&#10;  &lt;entry key=&quot;dea37f11303ed64404ae377e338bb0c68a703128&quot; value=&quot;###&amp;#10;POST http://localhost:8000/api/unmonitored_started_games&quot; /&gt;&#10;  &lt;entry key=&quot;53e24fa1bb3d06efb902f34b409d8a811451438f&quot; value=&quot;###&amp;#10;POST http://localhost:8000/api/s&quot; /&gt;&#10;  &lt;entry key=&quot;25410f1a33486b90cdab9f41ac210e666c6b7c4a&quot; value=&quot;###&amp;#10;GET http://localhost:8000/api/unmonitored_started_games&quot; /&gt;&#10;&lt;/CachedHttpClientTabRequests&gt;" />
+    <option name="requestToText" value="&lt;CachedHttpClientTabRequests&gt;&#10;  &lt;entry key=&quot;6e4e1137ae66f03d7c24f48aea643b0197086fc2&quot; value=&quot;###&amp;#10;POST http://localhost:8000/api/create_picks_page&quot; /&gt;&#10;&lt;/CachedHttpClientTabRequests&gt;" />
   </component>
 </project>
