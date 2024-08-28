@@ -10,7 +10,10 @@ On a fresh debian 12 install
 
 ### Run the following script as root
 ```bash
-mkdir /opt/tgfp
+if ! test -e /opt/tgfp
+then
+  mkdir /opt/tgfp
+fi
 cd /opt/tgfp
 bash -c "$(wget -qLO - https://github.com/TheGreatFootballPool/tgfp-web/raw/main/scripts/deploy.sh)"
 ```
