@@ -78,6 +78,7 @@ else
 fi
 APP_ENV=${ENV} op inject -f -i ${INSTALL_DIR}/op.env -o ${INSTALL_DIR}/app/.env
 echo "ENVIRONMENT=${ENV}" >> ${INSTALL_DIR}/app/.env
+rm ${INSTALL_DIR}/op.env
 
 systemctl daemon-reload
 systemctl enable tgfp-web.service
