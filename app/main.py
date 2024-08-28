@@ -19,9 +19,9 @@ from starlette.staticfiles import StaticFiles
 import sentry_sdk
 
 from api.update_scores import update_game
-from config import Config
 from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick
 from api.create_picks import create_picks, CreatePicksException
+from config import Config
 
 
 SECONDS: Final[int] = 60*60*24
