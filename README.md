@@ -12,7 +12,7 @@ On a fresh debian 12 install
 # Run as root
 mkdir /opt/tgfp
 cd /opt/tgfp
-bash -c "$(wget -qLO - https://github.com/tteck/Proxmox/raw/main/ct/mongodb.sh)"
+bash -c "$(wget -qLO - https://github.com/TheGreatFootballPool/tgfp-web/raw/main/deploy.sh)"
 ```
 
 ## Script Prompts
