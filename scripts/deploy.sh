@@ -22,6 +22,7 @@ rm main.zip
 rm -rf ${INSTALL_DIR}/app
 mv tgfp-web-main/app ${INSTALL_DIR}
 mv tgfp-web-main/config/requirements.txt ${INSTALL_DIR}
+mv tgfp-web-main/scripts/update.sh ${INSTALL_DIR}
 mv tgfp-web-main/config/op.env ${INSTALL_DIR}
 mv tgfp-web-main/config/tgfp-web.service /etc/systemd/system
 rm -rf tgfp-web-main
