@@ -8,6 +8,7 @@ import pydantic_core
 import uvicorn
 from beanie import PydanticObjectId
 from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 
 # pylint: disable=ungrouped-imports
@@ -19,7 +20,7 @@ from starlette.staticfiles import StaticFiles
 import sentry_sdk
 
 from api.update_scores import update_game
-from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick
+from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick, ApiKey
 from api.create_picks import create_picks, CreatePicksException
 from config import Config
 
@@ -45,6 +46,15 @@ discord: DiscordOAuthClient = DiscordOAuthClient(
     config.DISCORD_REDIRECT_URI
 )
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # use token authentication
+
+async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
+    found_key: Optional[ApiKey] = await ApiKey.find_one(ApiKey.token == api_key)
+    if found_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Forbidden"
+        )
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -368,7 +378,7 @@ async def picks_form(
     )
 
 
-@app.post("/api/create_picks_page")
+@app.post("/api/create_picks_page", dependencies=[Depends(api_key_auth)])
 async def api_create_picks_page():
     """ API for creating the picks page """
     try:
@@ -379,10 +389,8 @@ async def api_create_picks_page():
     return {'success': True}
 
 
-@app.get("/api/live_games")
-async def api_live_games(
-        info: TGFPInfo = Depends(get_tgfp_info),
-):
+@app.get("/api/live_games", dependencies=[Depends(api_key_auth)])
+async def api_live_games(info: TGFPInfo = Depends(get_tgfp_info)):
     """ API for returning a list of games that have started, and not marked as 'final'  """
     this_weeks_games: List[Game] = await Game.find_many(
         Game.week_no == info.display_week,
@@ -396,10 +404,12 @@ async def api_live_games(
     return {'live_game_ids': live_game_ids}
 
 
-@app.get("/api/update_game/{game_id}", response_model=Game)
-async def api_update_game(
-        game_id: str
-):
+@app.get(
+    "/api/update_game/{game_id}",
+    response_model=Game,
+    dependencies=[Depends(api_key_auth)]
+)
+async def api_update_game(game_id: str):
     """ API to tell trigger a game update (given the game ID) """
     game: Game = await Game.get(PydanticObjectId(game_id))
     return await update_game(game)
@@ -452,4 +462,4 @@ async def get_error_messages(
 
 if __name__ == "__main__":
     reload: bool = os.getenv('ENVIRONMENT') == 'development'
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=reload, access_log=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=6170, reload=reload, access_log=False)

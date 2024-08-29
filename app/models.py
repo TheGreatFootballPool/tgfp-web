@@ -15,6 +15,14 @@ PRO_BOWL_WEEK: Final[int] = 22
 # pylint: disable=too-few-public-methods
 
 
+class ApiKey(Document):
+    """ Model for all API Keys """
+    token: str
+    description: str
+
+    class Settings:
+        name = "api_keys"
+
 class TGFPInfo(BaseModel):
     """
     It's required to have a DB init called already to use this class
@@ -393,7 +401,7 @@ async def get_tgfp_info() -> TGFPInfo:
 async def db_init(config: Config, models=None):
     """ Create the client connection"""
     if models is None:
-        models = [Pick, PickDetail, Game, Team, Player, PickHistory]
+        models = [Pick, PickDetail, Game, Team, Player, PickHistory, ApiKey]
     client = AsyncIOMotorClient(config.MONGO_URI)
 
     await init_beanie(database=client.tgfp, document_models=models)
