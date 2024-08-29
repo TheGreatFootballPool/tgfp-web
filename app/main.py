@@ -48,13 +48,16 @@ discord: DiscordOAuthClient = DiscordOAuthClient(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # use token authentication
 
+
 async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
+    """ Check to see if we have an authorized token """
     found_key: Optional[ApiKey] = await ApiKey.find_one(ApiKey.token == api_key)
     if found_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Forbidden"
         )
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):

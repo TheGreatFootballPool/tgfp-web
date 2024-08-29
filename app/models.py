@@ -21,7 +21,9 @@ class ApiKey(Document):
     description: str
 
     class Settings:
+        """ The settings class """
         name = "api_keys"
+
 
 class TGFPInfo(BaseModel):
     """
