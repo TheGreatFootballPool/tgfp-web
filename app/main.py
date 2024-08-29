@@ -465,4 +465,4 @@ async def get_error_messages(
 
 if __name__ == "__main__":
     reload: bool = os.getenv('ENVIRONMENT') == 'development'
-    uvicorn.run("main:app", host="0.0.0.0", port=6170, reload=reload, access_log=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=6701, reload=reload, access_log=False)

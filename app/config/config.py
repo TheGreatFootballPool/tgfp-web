@@ -16,6 +16,8 @@ class Config:
     DISCORD_CLIENT_ID: str
     DISCORD_CLIENT_SECRET: str
     DISCORD_REDIRECT_URI: str
+    DISCORD_GUILD_ID: str
+    DISCORD_AUTH_TOKEN: str
     SESSION_SECRET_KEY: str
     SENTRY_DSN: str
 
@@ -28,8 +30,10 @@ class Config:
             MONGO_URI=os.getenv('MONGO_URI'),
             WEB_SECRET_KEY=os.getenv('WEB_SECRET_KEY'),
             DISCORD_CLIENT_ID=os.getenv('DISCORD_CLIENT_ID'),
+            DISCORD_GUILD_ID=os.getenv('DISCORD_GUILD_ID'),
             DISCORD_CLIENT_SECRET=os.getenv('DISCORD_CLIENT_SECRET'),
             DISCORD_REDIRECT_URI=os.getenv('DISCORD_REDIRECT_URI'),
+            DISCORD_AUTH_TOKEN=os.getenv('DISCORD_AUTH_TOKEN'),
             SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY'),
             SENTRY_DSN=os.getenv('SENTRY_DSN')
         )

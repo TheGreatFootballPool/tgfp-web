@@ -1,20 +1,22 @@
-# library
+""" Used for returning the donut graphic """
 from io import BytesIO
+from urllib.request import urlopen
 
 import matplotlib.pyplot as plt
 from PIL import Image
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from tgfp_nfl import TgfpNflGame
-from urllib.request import urlopen
 
 
 def get_image(url) -> Image:
     """ Returns an image from the url """
-    response = urlopen(url)
-    img_data = BytesIO(response.read())
+    with urlopen(url) as response:
+        img_data = BytesIO(response.read())
+
     return Image.open(img_data)
 
 
+# pylint: disable=too-many-locals
 def get_matchup_chart(espn_game: TgfpNflGame) -> str:
     """
     Get a chart for a matchup of espn and tgfp games

@@ -3,6 +3,9 @@ import asyncio
 # pylint: disable=F0401
 from typing import List, Tuple, Optional
 from datetime import datetime
+import discord
+from discord.ext import commands
+from discord import app_commands
 
 import sentry_sdk
 
@@ -10,12 +13,8 @@ from donut import get_matchup_chart
 import pytz
 from tgfp_nfl import TgfpNfl, TgfpNflGame
 
-from config import Config
-import discord
-from discord.ext import commands
-from discord import app_commands
-
 from models import db_init, Game, TGFPInfo, get_tgfp_info, Team
+from config import Config
 
 
 class GameCommand:
@@ -32,7 +31,9 @@ class GameCommand:
         if self._games_values is None:
             games: List = []
             values: List = []
-            game_list: List[Game] = await Game.find_many(Game.week_no == info.display_week).to_list()
+            game_list: List[Game] = await Game.find_many(
+                Game.week_no == info.display_week
+            ).to_list()
             for game in game_list:
                 if game.is_pregame:
                     games.append(game.extra_info['description'])
@@ -42,6 +43,7 @@ class GameCommand:
         return self._games_values
 
     async def get_embed(self, tgfp_nfl_game_id: str) -> Tuple[discord.Embed, discord.File]:
+        """ Returns the discord 'embed' for the game """
         game: Game = await Game.find_one(
             Game.tgfp_nfl_game_id == tgfp_nfl_game_id,
             fetch_links=True
@@ -93,6 +95,7 @@ class GameCommand:
         return embed, file
 
     def reset(self):
+        """ resets game values """
         self._games_values = None
 
 
@@ -123,6 +126,7 @@ async def run(info: TGFPInfo, config: Config):
     @bot.tree.command()
     @app_commands.autocomplete(picked_game=game_autocomplete)
     async def game(interaction: discord.Interaction, picked_game: str):
+        """ game command """
         game_command.reset()
         await interaction.response.defer(thinking=True, ephemeral=True)  # noqa
         embed, file = await game_command.get_embed(picked_game)
@@ -132,6 +136,7 @@ async def run(info: TGFPInfo, config: Config):
 
 
 async def main():
+    """ Main function """
     config: Config = Config.get_config()
     sentry_sdk.init(
         dsn=config.SENTRY_DSN,
