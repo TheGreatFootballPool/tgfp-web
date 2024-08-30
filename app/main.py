@@ -21,6 +21,7 @@ from starlette.staticfiles import StaticFiles
 import sentry_sdk
 
 from api.update_scores import update_game
+from api.update_team_records import update_team_records
 from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick, ApiKey
 from api.create_picks import create_picks, CreatePicksException
 from config import Config
@@ -133,7 +134,7 @@ async def discord_login():
     return RedirectResponse(discord.oauth_login_url)
 
 
-@app.get("/login")
+@app.get("/login", response_class=HTMLResponse)
 async def login(request: Request, info: TGFPInfo = Depends(get_tgfp_info)):
     """ Login page for discord """
     context = {
@@ -183,7 +184,7 @@ def root(request: Request):
     return RedirectResponse(request.url_for('home'), status.HTTP_301_MOVED_PERMANENTLY)
 
 
-@app.get("/rules")
+@app.get("/rules", response_class=HTMLResponse)
 def rules(
         request: Request,
         player: Player = Depends(verify_player),
@@ -213,7 +214,7 @@ def home(
         )
 
 
-@app.get('/standings')
+@app.get('/standings', response_class=HTMLResponse)
 async def standings(
         request: Request,
         player: Player = Depends(verify_player),
@@ -232,7 +233,7 @@ async def standings(
     )
 
 
-@app.get('/allpicks')
+@app.get('/allpicks', response_class=HTMLResponse)
 async def allpicks(
         request: Request,
         player: Player = Depends(verify_player),
@@ -268,7 +269,7 @@ async def allpicks(
     )
 
 
-@app.get("/picks")
+@app.get("/picks", response_class=HTMLResponse)
 async def picks(
         request: Request,
         player: Player = Depends(verify_player),
@@ -424,6 +425,13 @@ async def api_update_game(game_id: str):
     """ API to tell trigger a game update (given the game ID) """
     game: Game = await Game.get(PydanticObjectId(game_id))
     return await update_game(game)
+
+
+@app.post("/api/update_team_records", dependencies=[Depends(api_key_auth)])
+async def api_update_team_records():
+    """ When called, will update all the team's win / loss record """
+    await update_team_records()
+    return {'success': True}
 
 
 async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:

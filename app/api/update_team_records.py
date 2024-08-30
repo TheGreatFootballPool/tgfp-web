@@ -5,7 +5,7 @@ from models import TGFPInfo, get_tgfp_info, Team, db_init
 from config import Config
 
 
-async def update_team_record():
+async def update_team_records():
     """
     Update all the wins / losses / ties of each team
     """
@@ -18,14 +18,14 @@ async def update_team_record():
         team.ties = nfl_team.ties
         team.logo_url = nfl_team.logo_url
         # noinspection PyArgumentList
-        team.save()
+        await team.save()
 
 
 async def main():
     """ Here so that I can run this manually if I need to """
     config: Config = Config.get_config()
     await db_init(config)
-    await update_team_record()
+    await update_team_records()
 
 
 if __name__ == '__main__':
