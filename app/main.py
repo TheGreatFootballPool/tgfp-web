@@ -10,11 +10,12 @@ from beanie import PydanticObjectId
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
+from fastapi_discord import DiscordOAuthClient, User
 
 # pylint: disable=ungrouped-imports
 from starlette import status
+from starlette.datastructures import MutableHeaders
 from starlette.middleware.sessions import SessionMiddleware
-from starlette_discord import DiscordOAuthClient
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 import sentry_sdk
@@ -63,6 +64,7 @@ async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
 async def lifespan(_: FastAPI):
     """ Perform all app initialization before 'yield' """
     await db_init(config)
+    await discord.init()
     yield
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
@@ -128,7 +130,7 @@ async def get_latest_info(request: Request) -> Optional[TGFPInfo]:
 @app.get("/discord_login")
 async def discord_login():
     """ Login url for discord """
-    return discord.redirect()
+    return RedirectResponse(discord.oauth_login_url)
 
 
 @app.get("/login")
@@ -153,14 +155,20 @@ async def logout(request: Request):
 @app.get("/callback")
 async def callback(code: str, request: Request):
     """ Callback url for discord """
-    user = await discord.login(code)
-    player: Player = await get_player_by_discord_id(user.id)
+    token, _ = await discord.get_access_token(code)
+    new_header = MutableHeaders(request.headers)
+    new_header["Authorization"] = f"Bearer {token}"
+    # pylint: disable=protected-access
+    request._headers = new_header
+    request.scope.update(headers=request.headers.raw)
+    user: User = await discord.user(request)
+    player: Player = await get_player_by_discord_id(int(user.id))
     if player:
         redirect_url = request.url_for('home')
         response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
         response.set_cookie(
             key='tgfp-discord-id',
-            value=str(user.id),
+            value=user.id,
             max_age=COOKIE_TIME_OUT,
         )
     else:

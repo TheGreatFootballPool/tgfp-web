@@ -8,7 +8,6 @@ motor~=3.5.1
 pydantic~=2.8.2
 uvicorn~=0.30.5
 j2lint==1.1.0
-starlette-discord~=0.2.1
 itsdangerous==2.2.0
 tgfp-nfl==6.3.0
 sentry-sdk[fastapi]~=2.13.0
@@ -16,4 +15,4 @@ python-dotenv==1.0.1
 matplotlib==3.9.2
 pytz==2024.1
 discord.py==2.4.0
-starlette-discord==0.2.1
+fastapi-discord==0.2.6.1
