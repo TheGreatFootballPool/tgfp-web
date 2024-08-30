@@ -6,7 +6,7 @@ After=network-online.target
 WorkingDirectory=/opt/tgfp/app
 Type=simple
 Restart=always
-ExecStart=/opt/tgfp/app/venv/bin/python /opt/tgfp/app/bots/discord_command.py
+ExecStart=/usr/bin/env -i PYTHONPATH=/opt/tgfp/app /opt/tgfp/app/venv/bin/python /opt/tgfp/app/bots/discord_command.py
 
 [Install]
 WantedBy=multi-user.target
