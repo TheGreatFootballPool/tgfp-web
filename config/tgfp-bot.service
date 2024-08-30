@@ -1,0 +1,12 @@
+[Unit]
+Description=The Great Football Pool Bot
+After=network-online.target
+
+[Service]
+WorkingDirectory=/opt/tgfp/app
+Type=simple
+Restart=always
+ExecStart=/opt/tgfp/app/venv/bin/python /opt/tgfp/app/bots/discord_command.py
+
+[Install]
+WantedBy=multi-user.target

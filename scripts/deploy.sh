@@ -25,6 +25,7 @@ mv tgfp-web-main/config/requirements.txt ${INSTALL_DIR}
 mv tgfp-web-main/scripts/update.sh ${INSTALL_DIR}
 mv tgfp-web-main/config/op.env ${INSTALL_DIR}
 mv tgfp-web-main/config/tgfp-web.service /etc/systemd/system
+mv tgfp-web-main/config/tgfp-bot.service /etc/systemd/system
 rm -rf tgfp-web-main
 
 # install python virtualenv and requirements
@@ -85,4 +86,6 @@ rm ${INSTALL_DIR}/op.env
 systemctl daemon-reload
 systemctl enable tgfp-web.service
 systemctl start tgfp-web.service
+systemctl enable tgfp-bot.service
+systemctl start tgfp-bot.service
 
