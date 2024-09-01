@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from fastapi_discord import DiscordOAuthClient, User
+from sentry_sdk import set_user
 
 # pylint: disable=ungrouped-imports
 from starlette import status
@@ -59,6 +60,7 @@ async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Forbidden"
         )
+    set_user({"email": "kestra@sturgeon.me", "username": "kestra"})
 
 
 @asynccontextmanager
@@ -110,6 +112,7 @@ async def verify_player(request: Request) -> Player:
         player = await get_player_by_discord_id(int(discord_id))
         if player:
             request.session["player_id"] = str(player.id)
+            set_user({"email": player.email, "username": player.nick_name})
             return player
         # clear the discord id and fall through to exception
         request.cookies.pop("tgfp-discord-id")
