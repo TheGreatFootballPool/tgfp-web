@@ -245,7 +245,7 @@ async def allpicks(
         Game.week_no == picks_week_no,
         Game.season == info.season,
         fetch_links=True
-    ).sort("-start_time").to_list()
+    ).sort("+start_time").to_list()
     context = {
         'player': player,
         'info': info,
@@ -281,7 +281,7 @@ async def picks(
         Game.week_no == info.display_week,
         Game.season == info.season,
         fetch_links=True
-    ).sort("-start_time").to_list()
+    ).sort("+start_time").to_list()
     valid_games = []
     started_games = []
     game: Game
