@@ -33,10 +33,14 @@ class TGFPInfo(BaseModel):
     - :class:`int` season --> The current season (YYYY)
     - :class:`int` display_week --> This is the more comment week used.
     - :class:`int` active_week --> Used for last_wins, last_losses etc.
+    - :class:`str` app_version --> Debug information containing the app version
+    - :class:`str` app_env --> Debug information containing the app environment
     """
     season: int = 2023
     display_week: int = 14
     active_week: int = 14
+    app_version: str = "not_set"
+    app_env: str = "not_set"
 
 
 class Team(Document):
@@ -396,7 +400,7 @@ async def get_tgfp_info() -> TGFPInfo:
     return TGFPInfo(
         season=current_season,
         display_week=display_week,
-        active_week=current_active_week,
+        active_week=current_active_week
     )
 
 

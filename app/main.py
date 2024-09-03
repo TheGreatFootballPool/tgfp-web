@@ -127,6 +127,8 @@ async def get_latest_info(request: Request) -> Optional[TGFPInfo]:
     if info:
         return info
     info = await get_tgfp_info()
+    info.app_version = config.APP_VERSION
+    info.app_env = config.ENVIRONMENT
     request.session['tgfp_info'] = info.model_dump_json()
     return info
 
@@ -138,7 +140,7 @@ async def discord_login():
 
 
 @app.get("/login", response_class=HTMLResponse)
-async def login(request: Request, info: TGFPInfo = Depends(get_tgfp_info)):
+async def login(request: Request, info: TGFPInfo = Depends(get_latest_info)):
     """ Login page for discord """
     context = {
         'info': info
@@ -191,7 +193,7 @@ def root(request: Request):
 def rules(
         request: Request,
         player: Player = Depends(verify_player),
-        info: TGFPInfo = Depends(get_tgfp_info)
+        info: TGFPInfo = Depends(get_latest_info)
 ):
     """ Rules page """
     context = {
@@ -205,7 +207,7 @@ def rules(
 def home(
         request: Request,
         player: Player = Depends(verify_player),
-        info: TGFPInfo = Depends(get_tgfp_info)
+        info: TGFPInfo = Depends(get_latest_info)
 ):
     """ Home page """
     context = {
@@ -221,7 +223,7 @@ def home(
 async def standings(
         request: Request,
         player: Player = Depends(verify_player),
-        info: TGFPInfo = Depends(get_tgfp_info)
+        info: TGFPInfo = Depends(get_latest_info)
 ):
     """ Returns the standings page """
     players: List[Player] = await Player.find({'active': True}).to_list()
@@ -240,7 +242,7 @@ async def standings(
 async def allpicks(
         request: Request,
         player: Player = Depends(verify_player),
-        info: TGFPInfo = Depends(get_tgfp_info),
+        info: TGFPInfo = Depends(get_latest_info),
         week_no: int = None,
 ):
     """ All Picks page """
@@ -276,7 +278,7 @@ async def allpicks(
 async def picks(
         request: Request,
         player: Player = Depends(verify_player),
-        info: TGFPInfo = Depends(get_tgfp_info)
+        info: TGFPInfo = Depends(get_latest_info)
 ):
     """ Picks page """
     if player.pick_for_week(info.display_week):
@@ -332,7 +334,7 @@ async def picks(
 async def picks_form(
         request: Request,
         player: Player = Depends(verify_player),
-        info: TGFPInfo = Depends(get_tgfp_info)):
+        info: TGFPInfo = Depends(get_latest_info)):
     """ This is the form route that handles processing the form data from the picks page """
     games: List[Game] = await Game.find(
         Game.week_no == info.display_week,
@@ -405,7 +407,7 @@ async def api_create_picks_page():
 
 
 @app.get("/api/live_games", dependencies=[Depends(api_key_auth)])
-async def api_live_games(info: TGFPInfo = Depends(get_tgfp_info)):
+async def api_live_games(info: TGFPInfo = Depends(get_latest_info)):
     """ API for returning a list of games that have started, and not marked as 'final'  """
     this_weeks_games: List[Game] = await Game.find_many(
         Game.week_no == info.display_week,

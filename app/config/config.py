@@ -20,6 +20,7 @@ class Config:
     DISCORD_AUTH_TOKEN: str
     SESSION_SECRET_KEY: str
     SENTRY_DSN: str
+    APP_VERSION: str
 
     @classmethod
     def get_config(cls):
@@ -35,6 +36,7 @@ class Config:
             DISCORD_REDIRECT_URI=os.getenv('DISCORD_REDIRECT_URI'),
             DISCORD_AUTH_TOKEN=os.getenv('DISCORD_AUTH_TOKEN'),
             SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY'),
-            SENTRY_DSN=os.getenv('SENTRY_DSN')
+            SENTRY_DSN=os.getenv('SENTRY_DSN'),
+            APP_VERSION=os.getenv('APP_VERSION')
         )
         return config
