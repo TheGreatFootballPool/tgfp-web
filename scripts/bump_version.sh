@@ -46,7 +46,7 @@ fi
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 echo "New Version: $NEW_VERSION"
 git add ${VERSION_FILE}
-git commit -m "Updating version and pushing to Docker Hub"
+git commit -m "Updating version and pushing to production"
 git push
 git tag "v${NEW_VERSION}"
 git push origin "v${NEW_VERSION}"
