@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional, Final, List
 
-import pydantic_core
 import uvicorn
 from beanie import PydanticObjectId
 from fastapi import FastAPI, Request, Depends, HTTPException
@@ -80,18 +79,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-def get_tgfp_info_from_request(request: Request) -> Optional[TGFPInfo]:
-    """ Return the deserialized TGFPInfo object """
-    tgfp_info: Optional[TGFPInfo] = None
-    if request.scope.get('session') is not None:
-        tgfp_json: str = request.session.get('tgfp_info')
-        if tgfp_json and 'season' in tgfp_json:
-            tgfp_info = TGFPInfo.model_validate(
-                pydantic_core.from_json(tgfp_json)
-            )
-    return tgfp_info
-
-
 async def get_player_from_request(request: Request) -> Optional[Player]:
     """ Return the deserialized player object from the request session """
     player: Optional[Player] = None
@@ -123,9 +110,6 @@ async def verify_player(request: Request) -> Player:
 
 async def get_latest_info(request: Request) -> Optional[TGFPInfo]:
     """ Returns the current TGFPInfo object """
-    info: TGFPInfo = get_tgfp_info_from_request(request)
-    if info:
-        return info
     info = await get_tgfp_info()
     info.app_version = config.APP_VERSION
     info.app_env = config.ENVIRONMENT
