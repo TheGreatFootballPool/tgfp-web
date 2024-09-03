@@ -24,6 +24,7 @@ mv tgfp-web-main/app ${INSTALL_DIR}
 mv tgfp-web-main/config/requirements.txt ${INSTALL_DIR}
 mv tgfp-web-main/scripts/update.sh ${INSTALL_DIR}
 mv tgfp-web-main/config/op.env ${INSTALL_DIR}
+mv tgfp-web-main/config/version.env ${INSTALL_DIR}
 mv tgfp-web-main/config/tgfp-web.service /etc/systemd/system
 mv tgfp-web-main/config/tgfp-bot.service /etc/systemd/system
 rm -rf tgfp-web-main
@@ -79,8 +80,16 @@ then
 else
   source ${INSTALL_DIR}/environment.env
 fi
+
+# Create the .env file
 APP_ENV=${ENV} op inject -f -i ${INSTALL_DIR}/op.env -o ${INSTALL_DIR}/app/.env
+# Add the current run env to the .env file
 echo "ENVIRONMENT=${ENV}" >> ${INSTALL_DIR}/app/.env
+
+# Add the current VERSION to the .env file
+source ${INSTALL_DIR}/version.env
+NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+echo "APP_VERSION=${NEW_VERSION}" >> ${INSTALL_DIR}/app/.env
 rm ${INSTALL_DIR}/op.env
 
 systemctl daemon-reload
