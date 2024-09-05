@@ -18,6 +18,12 @@ class Config:
     DISCORD_REDIRECT_URI: str
     DISCORD_GUILD_ID: str
     DISCORD_AUTH_TOKEN: str
+    DISCORD_NAG_BOT_CHANNEL_ID: str
+    DISCORD_NAG_BOT_WEBHOOK_URL: str
+    MQTT_HOST: str
+    MQTT_TOPIC: str
+    MQTT_USERNAME: str
+    MQTT_PASSWORD: str
     SESSION_SECRET_KEY: str
     SENTRY_DSN: str
     APP_VERSION: str
@@ -35,6 +41,12 @@ class Config:
             DISCORD_CLIENT_SECRET=os.getenv('DISCORD_CLIENT_SECRET'),
             DISCORD_REDIRECT_URI=os.getenv('DISCORD_REDIRECT_URI'),
             DISCORD_AUTH_TOKEN=os.getenv('DISCORD_AUTH_TOKEN'),
+            DISCORD_NAG_BOT_CHANNEL_ID=os.getenv('DISCORD_NAG_BOT_CHANNEL_ID'),
+            DISCORD_NAG_BOT_WEBHOOK_URL=os.getenv('DISCORD_NAG_BOT_WEBHOOK_URL'),
+            MQTT_HOST=os.getenv('MQTT_HOST'),
+            MQTT_TOPIC=os.getenv('MQTT_TOPIC'),
+            MQTT_USERNAME=os.getenv('MQTT_USERNAME'),
+            MQTT_PASSWORD=os.getenv('MQTT_PASSWORD'),
             SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY'),
             SENTRY_DSN=os.getenv('SENTRY_DSN'),
             APP_VERSION=os.getenv('APP_VERSION')
