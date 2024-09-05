@@ -20,6 +20,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 import sentry_sdk
 
+from api.nag_players import nag_players
 from api.update_scores import update_game
 from api.update_team_records import update_team_records
 from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick, ApiKey
@@ -403,6 +404,13 @@ async def api_live_games(info: TGFPInfo = Depends(get_latest_info)):
         if present > game.start_time and not game.is_final:
             live_game_ids.append(str(game.id))
     return {'live_game_ids': live_game_ids}
+
+
+@app.post("/api/nag_players", dependencies=[Depends(api_key_auth)])
+async def api_nag_players(info: TGFPInfo = Depends(get_latest_info)):
+    """ Sends a message to discord to nag the players that haven't done their picks yet """
+    await nag_players(info)
+    return {'success': True}
 
 
 @app.get(
