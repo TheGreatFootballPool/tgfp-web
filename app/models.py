@@ -112,6 +112,15 @@ class Game(Document):
 
         return self.home_team
 
+    @staticmethod
+    async def get_first_game_of_the_week(info: TGFPInfo) -> Game:
+        """ Returns the 'first' game of a week given the info  """
+        games: List[Game] = await Game.find_many(
+            Game.season == info.season, Game.week_no == info.display_week
+        ).to_list()
+        games.sort(key=lambda x: x.start_time, reverse=True)
+        return games[-1]
+
 
 class PickDetail(Document):
     """
