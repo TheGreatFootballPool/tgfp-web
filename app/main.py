@@ -1,7 +1,7 @@
 """ Main entry point for website """
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Final, List
 
 import uvicorn
@@ -404,6 +404,17 @@ async def api_live_games(info: TGFPInfo = Depends(get_latest_info)):
         if present > game.start_time and not game.is_final:
             live_game_ids.append(str(game.id))
     return {'live_game_ids': live_game_ids}
+
+
+@app.get("/api/nag_times", dependencies=[Depends(api_key_auth)])
+async def api_nag_times(info: TGFPInfo = Depends(get_latest_info)):
+    """ Gets the three nag times """
+    first_game: Game = await Game.get_first_game_of_the_week(info)
+    nag_times: List[datetime] = []
+    for delta in [60, 20, 7]:
+        nag_time: datetime = first_game.start_time - timedelta(hours=0, minutes=delta)
+        nag_times.append(nag_time)
+    return {'nag_times': nag_times}
 
 
 @app.post("/api/nag_players", dependencies=[Depends(api_key_auth)])
