@@ -415,7 +415,7 @@ async def api_nag_times(info: TGFPInfo = Depends(get_latest_info)):
         nag_time: datetime = first_game.start_time - timedelta(hours=0, minutes=delta)
         nag_dict: dict = {
             'key': f"nag_time_{index}",
-            'value': nag_time
+            'value': str(nag_time)
         }
         nag_times.append(nag_dict)
     return {'nag_times': nag_times}
