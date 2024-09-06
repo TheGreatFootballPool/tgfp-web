@@ -410,10 +410,14 @@ async def api_live_games(info: TGFPInfo = Depends(get_latest_info)):
 async def api_nag_times(info: TGFPInfo = Depends(get_latest_info)):
     """ Gets the three nag times """
     first_game: Game = await Game.get_first_game_of_the_week(info)
-    nag_times: List[datetime] = []
-    for delta in [60, 20, 7]:
+    nag_times: List[dict] = []
+    for index, delta in enumerate([60, 20, 7]):
         nag_time: datetime = first_game.start_time - timedelta(hours=0, minutes=delta)
-        nag_times.append(nag_time)
+        nag_dict: dict = {
+            'key': f"nag_time_{index}",
+            'value': nag_time
+        }
+        nag_times.append(nag_dict)
     return {'nag_times': nag_times}
 
 
