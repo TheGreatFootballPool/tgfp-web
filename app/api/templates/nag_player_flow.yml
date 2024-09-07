@@ -1,0 +1,16 @@
+id: $flow_id
+namespace: $namespace
+tasks:
+  - id: $task_id
+    type: io.kestra.plugin.core.http.Request
+    uri: $uri
+    method: $method
+    headers:
+      authorization: "Bearer {{ secret('TGFP_API_TOKEN') }}"
+    contentType: application/json
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    timezone: US/Pacific
+    cron: "$cron"
+
