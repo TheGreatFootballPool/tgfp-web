@@ -1,7 +1,6 @@
 """ Main entry point for website """
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 from typing import Optional, Final, List
 
 import uvicorn
@@ -21,6 +20,7 @@ from starlette.staticfiles import StaticFiles
 import sentry_sdk
 
 from api.nag_players import nag_players
+from api.schedule_kestra_flows import schedule_kestra_flows
 from api.update_scores import update_game
 from api.update_team_records import update_team_records
 from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick, ApiKey
@@ -391,36 +391,6 @@ async def api_create_picks_page():
     return {'success': True}
 
 
-@app.get("/api/live_games", dependencies=[Depends(api_key_auth)])
-async def api_live_games(info: TGFPInfo = Depends(get_latest_info)):
-    """ API for returning a list of games that have started, and not marked as 'final'  """
-    this_weeks_games: List[Game] = await Game.find_many(
-        Game.week_no == info.display_week,
-        Game.season == info.season
-    ).to_list()
-    live_game_ids: List[str] = []
-    present: datetime = datetime.utcnow()
-    for game in this_weeks_games:
-        if present > game.start_time and not game.is_final:
-            live_game_ids.append(str(game.id))
-    return {'live_game_ids': live_game_ids}
-
-
-@app.get("/api/nag_times", dependencies=[Depends(api_key_auth)])
-async def api_nag_times(info: TGFPInfo = Depends(get_latest_info)):
-    """ Gets the three nag times """
-    first_game: Game = await Game.get_first_game_of_the_week(info)
-    nag_times: List[dict] = []
-    for index, delta in enumerate([60, 20, 7]):
-        nag_time: datetime = first_game.start_time - timedelta(hours=0, minutes=delta)
-        nag_dict: dict = {
-            'key': f"nag_time_{index}",
-            'value': str(nag_time)
-        }
-        nag_times.append(nag_dict)
-    return {'nag_times': nag_times}
-
-
 @app.post("/api/nag_players", dependencies=[Depends(api_key_auth)])
 async def api_nag_players(info: TGFPInfo = Depends(get_latest_info)):
     """ Sends a message to discord to nag the players that haven't done their picks yet """
@@ -428,15 +398,22 @@ async def api_nag_players(info: TGFPInfo = Depends(get_latest_info)):
     return {'success': True}
 
 
+@app.post("/api/schedule_kestra_flows", dependencies=[Depends(api_key_auth)])
+async def api_schedule_kestra_flows(info: TGFPInfo = Depends(get_latest_info)):
+    """ Schedule all the kestra flows"""
+    await schedule_kestra_flows(info)
+    return {'success': True}
+
+
 @app.get(
     "/api/update_game/{game_id}",
-    response_model=Game,
     dependencies=[Depends(api_key_auth)]
 )
 async def api_update_game(game_id: str):
     """ API to tell trigger a game update (given the game ID) """
     game: Game = await Game.get(PydanticObjectId(game_id))
-    return await update_game(game)
+    await update_game(game)
+    return {'game_status': game.game_status}
 
 
 @app.post("/api/update_team_records", dependencies=[Depends(api_key_auth)])
@@ -492,5 +469,5 @@ async def get_error_messages(
 
 
 if __name__ == "__main__":
-    reload: bool = os.getenv('ENVIRONMENT') == 'development'
+    reload: bool = os.getenv('ENVIRONMENT') != 'production'
     uvicorn.run("main:app", host="0.0.0.0", port=6701, reload=reload, access_log=False)

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Final, Optional
+
+import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import Document, init_beanie, Link
 from pydantic import BaseModel
@@ -111,6 +113,13 @@ class Game(Document):
             return self.road_team
 
         return self.home_team
+
+    @property
+    def pacific_start_time(self):
+        """ Returns the start time in the US/Pacific timezone"""
+        utc_dt = self.start_time.replace(tzinfo=pytz.utc)
+        pac_dt = pytz.timezone('US/Pacific')
+        return pac_dt.normalize(utc_dt.astimezone(pac_dt))
 
     @staticmethod
     async def get_first_game_of_the_week(info: TGFPInfo) -> Game:
