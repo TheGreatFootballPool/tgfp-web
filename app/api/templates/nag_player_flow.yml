@@ -1,10 +1,10 @@
 id: $flow_id
 namespace: $namespace
 tasks:
-  - id: $task_id
+  - id: nag_players
     type: io.kestra.plugin.core.http.Request
     uri: $uri
-    method: $method
+    method: POST
     headers:
       authorization: "Bearer {{ secret('TGFP_API_TOKEN') }}"
     contentType: application/json

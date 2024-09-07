@@ -1,0 +1,25 @@
+id: $flow_id
+namespace: $namespace
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.WaitFor
+    condition: "{{ outputs.update_game.body | jq('.game_status') | first == 'STATUS_FINAL'}}"
+    checkFrequency:
+      maxIterations: 100
+      maxDuration: "PT4H30M"
+      interval: "PT5M"
+    tasks:
+    - id: update_game
+      type: io.kestra.plugin.core.http.Request
+      uri: $uri
+      method: GET
+      headers:
+        authorization: "Bearer {{ secret('TGFP_API_TOKEN') }}"
+      contentType: application/json
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    timezone: US/Pacific
+    cron: "$cron"
+
