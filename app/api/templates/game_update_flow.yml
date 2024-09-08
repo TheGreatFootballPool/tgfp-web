@@ -20,7 +20,7 @@ tasks:
         game = response.json()
         print(game)
         game_status = game['game_status']
-        time.sleep(5)
+        time.sleep(300)
 
 triggers:
   - id: schedule
