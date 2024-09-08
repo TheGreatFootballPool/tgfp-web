@@ -32,10 +32,10 @@ SECONDS: Final[int] = 60*60*24
 DAYS: Final[int] = 365
 COOKIE_TIME_OUT = DAYS * SECONDS
 
+# pylint: disable=duplicate-code
 config: Config = Config.get_config()
-
 sentry_sdk.init(
-    dsn="https://df0bb7eec46f36b0bf27935fba45470e@sentry.sturgeonfamily.com/2",
+    dsn=config.SENTRY_DSN,
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for tracing.
     traces_sample_rate=1.0,
