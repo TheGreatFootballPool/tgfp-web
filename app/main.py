@@ -41,6 +41,7 @@ sentry_sdk.init(
     traces_sample_rate=1.0,
     profiles_sample_rate=1.0,
     environment=config.ENVIRONMENT,
+    release=f"tgfp@{config.APP_VERSION}"
 )
 
 discord: DiscordOAuthClient = DiscordOAuthClient(
