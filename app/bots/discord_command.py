@@ -137,6 +137,7 @@ async def run(info: TGFPInfo, config: Config):
 
 async def main():
     """ Main function """
+    # pylint: disable=duplicate-code
     config: Config = Config.get_config()
     sentry_sdk.init(
         dsn=config.SENTRY_DSN,
