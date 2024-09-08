@@ -407,13 +407,14 @@ async def api_schedule_kestra_flows(info: TGFPInfo = Depends(get_latest_info)):
 
 @app.get(
     "/api/update_game/{game_id}",
+    response_model=Game,
     dependencies=[Depends(api_key_auth)]
 )
 async def api_update_game(game_id: str):
     """ API to tell trigger a game update (given the game ID) """
     game: Game = await Game.get(PydanticObjectId(game_id))
     await update_game(game)
-    return {'game_status': game.game_status}
+    return game
 
 
 @app.post("/api/update_team_records", dependencies=[Depends(api_key_auth)])
