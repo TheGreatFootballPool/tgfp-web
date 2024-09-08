@@ -64,10 +64,13 @@
     <input class="submitbutton"  name="commit" type="submit" value="Submit Picks" />
      </form>
  <script>
-    $('#awesome_form').submit(function( event ) {
-        $('.myradio').attr('disabled', false);
-        $( "#awesome_form" ).submit();
+     $("td").click(function () {
+       $(this).find('input:radio').prop("checked", true);
     });
+    $('#awesome_form').submit(function( event ) {
+    $('.myradio').prop('disabled', false);
+    $( "#awesome_form" ).submit();
+});
     
 </script>
 
