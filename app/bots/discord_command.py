@@ -143,6 +143,7 @@ async def main():
         dsn=config.SENTRY_DSN,
         traces_sample_rate=1.0,
         profiles_sample_rate=1.0,
+        release=f"tgfp@{config.APP_VERSION}"
     )
     await db_init(config)
     info: TGFPInfo = await get_tgfp_info()
