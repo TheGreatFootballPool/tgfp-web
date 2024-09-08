@@ -227,8 +227,9 @@ class Pick(Document):
             self.bonus += 1
         if losing_team.id == self.lock_team.id:
             self.bonus -= 1
-        if winning_team.id == self.upset_team.id:
-            self.bonus += 1
+        if self.upset_team is not None:
+            if winning_team.id == self.upset_team.id:
+                self.bonus += 1
 
 
 class PickHistory(Pick):
