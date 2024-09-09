@@ -22,9 +22,10 @@ tasks:
         if game_status != 'STATUS_FINAL':
           time.sleep(300)
         else:
+          print("JHS: Game is final, waiting two minutes, then updating the team record")
           time.sleep(120)
           response = requests.post(
-            url="https://tgfp.us/api/update_team_records",
+            url="$update_uri",
             headers={
               "Authorization": "Bearer {{ secret('TGFP_API_TOKEN') }}"
             },
