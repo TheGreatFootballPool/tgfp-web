@@ -80,6 +80,7 @@ async def schedule_update_games(info: TGFPInfo):
                 flow_id=f"update_game_{game.road_team.short_name}_{game.home_team.short_name}",
                 namespace=f"{config.KESTRA_NAMESPACE}.weekly",
                 uri=f"{config.API_BASE_URL}/update_game/{game.id}",
+                update_uri=f"{config.API_BASE_URL}/update_team_records",
                 cron=f"{d.minute} {d.hour} {d.day} {d.month} *"
             )
         create_flow(result)

@@ -11,15 +11,27 @@ tasks:
       game_status = 'STATUS_SCHEDULED'
       while game_status != 'STATUS_FINAL':
         response = requests.get(
-            url="$uri",
-            headers={
-                "Authorization": "Bearer {{ secret('TGFP_API_TOKEN') }}"
-            },
+          url="$uri",
+          headers={
+            "Authorization": "Bearer {{ secret('TGFP_API_TOKEN') }}"
+          },
         )
         game = response.json()
         print(game)
         game_status = game['game_status']
-        time.sleep(300)
+        if game_status != 'STATUS_FINAL':
+          time.sleep(300)
+        else:
+          print("JHS: Game is final, waiting two minutes, then updating the team record")
+          time.sleep(120)
+          response = requests.post(
+            url="$update_uri",
+            headers={
+              "Authorization": "Bearer {{ secret('TGFP_API_TOKEN') }}"
+            },
+          )
+
+
 
 triggers:
   - id: schedule
