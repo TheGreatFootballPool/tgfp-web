@@ -21,7 +21,7 @@
         <div class="description_sub">Choose week number: ({% for i in range(info.display_week) %}{{ week_no_link(i + 1) }}{% endfor %})</div>
     </div>
     <div id="mainContent">
-        {% set found_picks = player.pick_for_week(week_no=info.display_week) %}
+        {% set found_picks = player.pick_for_week(week_no=week_no) %}
         {% if not found_picks %}
             <h1>You must enter your <a href="{{ url_for('picks') }}">picks</a> before seeing this page</h1>
          {% else %}
