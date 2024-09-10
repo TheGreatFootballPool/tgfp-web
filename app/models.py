@@ -159,7 +159,7 @@ class Pick(Document):
     """
     week_no: int
     lock_team: Link[Team]
-    upset_team: Optional[Link[Team]]
+    upset_team: Optional[Link[Team]] = None
     bonus: int = 0
     wins: int = 0
     losses: int = 0
