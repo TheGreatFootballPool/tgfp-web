@@ -34,6 +34,11 @@
             <li><a href="{{ url_for('home') }}">Go Back to Home Page</a></li>
         </ul>
     </div>
-
+    <script>
+        function autoRefresh() {
+            window.location = window.location;
+        }
+        setInterval('autoRefresh()', 30000);
+    </script>
   </body>
 </html>
