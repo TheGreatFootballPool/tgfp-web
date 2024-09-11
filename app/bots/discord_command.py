@@ -24,19 +24,24 @@ class GameCommand:
         self._games_values: Optional[Tuple[List, List]] = None
         self.info: TGFPInfo = info
 
+    # noinspection PyTypeChecker
     @property
     async def games_values(self) -> Tuple[List, List]:
         """ Get all games and values for the week """
-        info: TGFPInfo = TGFPInfo()
         if self._games_values is None:
             games: List = []
             values: List = []
             game_list: List[Game] = await Game.find_many(
-                Game.week_no == info.display_week
+                Game.week_no == self.info.display_week,
+                Game.season == self.info.season,
+                fetch_links=True
             ).to_list()
             for game in game_list:
                 if game.is_pregame:
-                    games.append(game.extra_info['description'])
+                    home_team: Team = game.home_team
+                    road_team: Team = game.road_team
+                    description: str = f"{road_team.city} @ {home_team.city}"
+                    games.append(description)
                     values.append(game.tgfp_nfl_game_id)
             self._games_values = games, values
 
@@ -109,6 +114,7 @@ async def run(info: TGFPInfo, config: Config):
     @bot.event
     async def on_ready():
         print(f"User: {bot.user} (ID: {bot.user.id})")
+        # bot.tree.clear_commands(guild=None)
         bot.tree.copy_global_to(guild=guild_id)
         await bot.tree.sync(guild=guild_id)
 
