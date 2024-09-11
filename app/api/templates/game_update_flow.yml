@@ -31,8 +31,6 @@ tasks:
             },
           )
 
-
-
 triggers:
   - id: schedule
     type: io.kestra.plugin.core.trigger.Schedule

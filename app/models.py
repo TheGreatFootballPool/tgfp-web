@@ -157,6 +157,7 @@ class Pick(Document):
     - :class:`int` losses = 0
     - :class:`List` [ :class:`PickDetail` ] pick_detail = []
     """
+    created_at: Optional[datetime] = None
     week_no: int
     lock_team: Link[Team]
     upset_team: Optional[Link[Team]] = None
