@@ -1,6 +1,7 @@
 """ Main entry point for website """
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Optional, Final, List
 
 import uvicorn
@@ -362,6 +363,8 @@ async def picks_form(
     else:
         upset_team = None
     pick: Pick = Pick(
+        id=PydanticObjectId(),
+        created_at=datetime.now(),
         week_no=info.display_week,
         season=info.season,
         lock_team=lock_team,
