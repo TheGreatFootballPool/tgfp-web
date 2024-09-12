@@ -5,10 +5,9 @@ import httpx
 from discord_webhook import DiscordWebhook
 from tgfp_nfl import TgfpNfl, TgfpNflGame
 
-from config import Config
 from models import Team, TGFPInfo, get_tgfp_info, Game
+from config import Config
 
-# from send_picks_ready_campaign import send_campaign_email
 
 def _create_campaign(config: Config, week_no: int) -> int:
     """
@@ -54,6 +53,7 @@ def send_campaign_email(week_no: int):
 
 
 def send_discord_msg(week_no: int):
+    """ Send the 'picks page is ready' message to the discord server """
     config: Config = Config.get_config()
     msg: str = f"""Hey @everyone!
 
@@ -66,6 +66,7 @@ Go get 'em!"""
         content=msg
     )
     webhook.execute()
+
 
 class CreatePicksException(Exception):
     """ Exception class """
