@@ -1,12 +1,71 @@
 """ Used to create the picks page """
 from typing import List
 
+import httpx
+from discord_webhook import DiscordWebhook
 from tgfp_nfl import TgfpNfl, TgfpNflGame
 
+from config import Config
 from models import Team, TGFPInfo, get_tgfp_info, Game
 
 # from send_picks_ready_campaign import send_campaign_email
 
+def _create_campaign(config: Config, week_no: int) -> int:
+    """
+    Creates the listmonk campaign
+    @return: int ID of the campaign
+    """
+    auth_hash = config.LISTMONK_AUTH_HASH
+    list_id: int = int(config.LISTMONK_LIST_ID)
+    url = config.LISTMONK_API_URL + 'campaigns'
+    data = {
+        "lists": [
+            list_id
+        ],
+        "subject": f"Picks Page is READY for week {week_no}",
+        "template_id": 5,
+        "type": "regular",
+        "body": f"The Picks page is ready for week {week_no}",
+        "name": f"Picks Page is READY for week {week_no}",
+        "content_type": "richtext"
+    }
+    headers = {
+        "Authorization": f"Basic {auth_hash}",
+        "Content-Type": "application/json; charset=utf-8",
+    }
+    result = httpx.post(url=url, json=data, headers=headers)
+    json_result = result.json()
+    return json_result['data']['id']
+
+
+def send_campaign_email(week_no: int):
+    """ Send a 'picks page is ready email"""
+    config: Config = Config.get_config()
+    auth_hash = config.LISTMONK_AUTH_HASH
+    campaign_id = _create_campaign(config, week_no)
+
+    url = config.LISTMONK_API_URL + f"campaigns/{campaign_id}/status"
+    data = {"status": "running"}
+    headers = {
+        "Authorization": f"Basic {auth_hash}",
+        "Content-Type": "application/json; charset=utf-8",
+    }
+    httpx.put(url=url, json=data, headers=headers)
+
+
+def send_discord_msg(week_no: int):
+    config: Config = Config.get_config()
+    msg: str = f"""Hey @everyone!
+
+The picks page is ready for week {week_no}:
+https://tgfp.us/picks
+
+Go get 'em!"""
+    webhook = DiscordWebhook(
+        url=config.DISCORD_NAG_BOT_WEBHOOK_URL,
+        content=msg
+    )
+    webhook.execute()
 
 class CreatePicksException(Exception):
     """ Exception class """
@@ -49,6 +108,11 @@ async def create_picks() -> dict:
         )
         # noinspection PyArgumentList
         await tgfp_game.save()
+
+    send_campaign_email(week_no)
+    send_discord_msg(week_no)
     return {'success': True}
 
-    # send_campaign_email(week_no)
+if __name__ == '__main__':
+    send_discord_msg(2)
+    send_campaign_email(2)
