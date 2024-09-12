@@ -1,19 +1,20 @@
+""" Script will give me the player with the first pick for the current week """
 import asyncio
 from typing import List
 
-from fontTools.merge.util import first
-
-from config import Config
 from models import Player, TGFPInfo, get_tgfp_info, Pick, db_init
+from config import Config
 
 
 async def main():
+    """ Main method """
     config: Config = Config.get_config()
     await db_init(config)
     info: TGFPInfo = await get_tgfp_info()
     week_no: int = info.active_week
+    # pylint: disable=singleton-comparison
     players: List[Player] = await Player.find_many(
-        Player.active == True,
+        Player.active == True,  # noqa E712
         fetch_links=True
     ).to_list()
     players_with_picks: List[Player] = []
@@ -26,7 +27,8 @@ async def main():
     if players_with_picks:
         first_player: Player = players_with_picks[0]
         for player in players_with_picks:
-            if player.pick_for_week(week_no).created_at < first_player.pick_for_week(week_no).created_at:
+            if (player.pick_for_week(week_no).created_at <
+                    first_player.pick_for_week(week_no).created_at):
                 first_player = player
         print(first_player)
     else:
@@ -34,4 +36,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
