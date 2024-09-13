@@ -50,3 +50,5 @@ git commit -m "Updating version and pushing to production"
 git push
 git tag "v${NEW_VERSION}"
 git push origin "v${NEW_VERSION}"
+open https://github.com/TheGreatFootballPool/tgfp-web/releases/new
+

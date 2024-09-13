@@ -23,6 +23,9 @@ class Config:
     DISCORD_NAG_BOT_WEBHOOK_URL: str
     KESTRA_NAMESPACE: str
     KESTRA_HOST: str
+    LISTMONK_AUTH_HASH: str
+    LISTMONK_LIST_ID: str
+    LISTMONK_API_URL: str
     SESSION_SECRET_KEY: str
     SENTRY_DSN: str
     APP_VERSION: str
@@ -46,6 +49,9 @@ class Config:
             SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY'),
             KESTRA_NAMESPACE=os.getenv('KESTRA_NAMESPACE'),
             KESTRA_HOST=os.getenv('KESTRA_HOST'),
+            LISTMONK_AUTH_HASH=os.getenv('LISTMONK_AUTH_HASH'),
+            LISTMONK_LIST_ID=os.getenv('LISTMONK_LIST_ID'),
+            LISTMONK_API_URL=os.getenv('LISTMONK_API_URL'),
             SENTRY_DSN=os.getenv('SENTRY_DSN'),
             APP_VERSION=os.getenv('APP_VERSION')
         )
