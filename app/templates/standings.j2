@@ -12,7 +12,7 @@
     </tr>
 {% endmacro %}
 {% block content %}
-    <div style="color:#a32f31;padding: 8px 8px 12px 0;">Click on a table header to sort by that column.</div>
+    <div style="color:#a32f31;padding: 8px 8px 12px 0;">NEW!!! Click on a player's name to see their profile.</div>
     <table id=standings_table class="sortable">
         <tr>
             <td class="standings_head" nowrap>Name</td>
@@ -30,7 +30,7 @@
 {% for player in active_players %}
             {{ row_with_style(row_number) }}
 {%     set games_back = active_players[0].total_points - player.total_points %}
-            <td>{{ player.nick_name }}</td>
+            <td><a style="line-height: 14px" href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">{{ player.nick_name }}</a></td>
             <td style="text-align: right;">{{ player.wins() }}</td>
             <td style="text-align: right;">{{ player.losses() }}</td>
             <td style="text-align: right;">{{ player.bonus() }}</td>

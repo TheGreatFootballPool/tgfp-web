@@ -13,10 +13,9 @@ from config import Config
 
 PRO_BOWL_WEEK: Final[int] = 22
 
+
 # pylint: disable=too-many-ancestors
 # pylint: disable=too-few-public-methods
-
-
 class ApiKey(Document):
     """ Model for all API Keys """
     token: str
@@ -292,6 +291,19 @@ class Player(Document):
                 local_wins += pick.wins
         return local_wins
 
+    def wins_through(self, week_no: int) -> int:
+        """
+        Return total wins for all weeks up to and including given week_no
+        :param week_no:
+        :return:
+        """
+        wins: int = 0
+        pick: Pick
+        for pick in self.picks:
+            if pick.week_no <= week_no:
+                wins += pick.wins
+        return wins
+
     def losses(self, week_no: int = None) -> int:
         """
         Returns the number of losses for the specified week, or total losses
@@ -305,6 +317,19 @@ class Player(Document):
             if not week_no or pick.week_no == week_no:
                 local_losses += pick.losses
         return local_losses
+
+    def losses_through(self, week_no: int) -> int:
+        """
+        Return total losses for all weeks up to and including given week_no
+        :param week_no:
+        :return:
+        """
+        losses: int = 0
+        pick: Pick
+        for pick in self.picks:
+            if pick.week_no <= week_no:
+                losses += pick.losses
+        return losses
 
     # noinspection DuplicatedCode
     def bonus(self, week_no=None) -> int:
@@ -324,6 +349,19 @@ class Player(Document):
                 local_bonus += pick.bonus
         return local_bonus
 
+    def bonus_through(self, week_no: int) -> int:
+        """
+        Return total bonus points for all weeks up to and including given week_no
+        :param week_no:
+        :return:
+        """
+        bonus: int = 0
+        pick: Pick
+        for pick in self.picks:
+            if pick.week_no <= week_no:
+                bonus += pick.bonus
+        return bonus
+
     @property
     def total_points(self) -> int:
         """
@@ -333,6 +371,15 @@ class Player(Document):
          optionally for a single week, or all weeks
         """
         return self.wins() + self.bonus()
+
+    def total_points_through(self, week_no: int) -> int:
+        """
+        Returns the number of total for the season if `through_week_no` is not specified.
+        If the through_week_no is specified then total points through the given week
+        :return: :class:`int` - total number of points (wins + bonus)
+         optionally for a single week, or all weeks
+        """
+        return self.wins_through(week_no) + self.bonus_through(week_no)
 
     @property
     def winning_pct(self) -> float:
@@ -345,6 +392,32 @@ class Player(Document):
             return self.wins() / wins_and_losses
 
         return 0
+
+    @property
+    async def get_standings(self) -> int:
+        """ Returns the 'place' the player is (optionally for a given week) """
+        active_players: List[Player] = await Player.active_players()
+        player_count: int = 1
+        for player in active_players:
+            if self.total_points < player.total_points:
+                player_count += 1
+        return player_count
+
+    async def get_standings_through(self, week_no: int) -> int:
+        """ Returns the 'place' the player is (optionally for a given week) """
+        active_players: List[Player] = await Player.active_players()
+        # start out in first place
+        player_count: int = 1
+        for player in active_players:
+            if self.total_points_through(week_no) < player.total_points_through(week_no):
+                player_count += 1
+        return player_count
+
+    async def games_back(self) -> int:
+        """ Returns the number of games behind """
+        players: List[Player] = await Player.active_players()
+        players.sort(key=lambda x: x.total_points, reverse=True)
+        return players[0].total_points - self.total_points
 
     def pick_for_week(self, week_no: int) -> Optional[Pick]:
         """
@@ -368,11 +441,21 @@ class Player(Document):
                 for detail in pick.pick_detail:
                     await detail.fetch_all_links()
 
+    @staticmethod
+    async def active_players(fetch_links: bool = False) -> List[Player]:
+        """ returns a list of active players """
+        # pylint: disable=singleton-comparison
+        return await Player.find_many(
+            Player.active == True,  # noqa E712
+            fetch_links=fetch_links
+        ).to_list()
+
 
 PickHistory.model_rebuild()
 Player.model_rebuild()
 
 
+# Helper methods
 async def get_tgfp_info() -> TGFPInfo:
     """ Returns the TGFPInfo object filled w/values """
     # Get the current season.

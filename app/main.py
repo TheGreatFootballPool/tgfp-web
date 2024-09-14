@@ -54,6 +54,15 @@ discord: DiscordOAuthClient = DiscordOAuthClient(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # use token authentication
 
 
+def ordinal(n: int):
+    """ Returns the 'place' ordinal string for a given int """
+    if 11 <= (n % 100) <= 13:
+        suffix = 'th'
+    else:
+        suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
+    return str(n) + suffix
+
+
 async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
     """ Check to see if we have an authorized token """
     found_key: Optional[ApiKey] = await ApiKey.find_one(ApiKey.token == api_key)
@@ -206,6 +215,48 @@ def home(
         )
 
 
+@app.get("/profile", response_class=HTMLResponse)
+async def profile(
+        request: Request,
+        player: Player = Depends(verify_player),
+        info: TGFPInfo = Depends(get_latest_info),
+        profile_player_id: str = None
+):
+    """ Player Profile Page """
+    if profile_player_id:
+        profile_player: Player = await Player.get(
+            PydanticObjectId(profile_player_id)
+        )
+    else:
+        profile_player: Player = player
+    num_players: int = len(await Player.active_players())
+    games_back: int = await profile_player.games_back()
+    labels: List[str] = []
+    values: List[int] = []
+    for i in range(0, info.active_week):
+        week_no: int = i + 1
+        labels.append(f"Week {week_no}")
+        values.append(await profile_player.get_standings_through(week_no))
+    data: dict = {
+        'labels': labels,
+        'data': values
+    }
+    current_place: str = ordinal(values[-1])
+    context = {
+        'player': player,
+        'profile_player': profile_player,
+        'page_title': "Profile",
+        'info': info,
+        'the_data': data,
+        'num_players': num_players,
+        'games_back': games_back,
+        'current_place': current_place
+    }
+    return templates.TemplateResponse(
+        request=request, name="new_base.j2", context=context
+    )
+
+
 @app.get('/standings', response_class=HTMLResponse)
 async def standings(
         request: Request,
@@ -236,10 +287,7 @@ async def allpicks(
     picks_week_no = info.display_week
     if week_no:
         picks_week_no = week_no
-    # pylint: disable=singleton-comparison
-    active_players: List[Player] = await Player.find(
-        Player.active == True,  # noqa: E712
-    ).to_list()
+    active_players: List[Player] = await Player.active_players()
     active_players.sort(key=lambda x: x.total_points, reverse=True)
     for a_player in active_players:
         await a_player.fetch_pick_links(picks_week_no)
