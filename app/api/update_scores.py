@@ -37,10 +37,7 @@ async def _update_scores(nfl_data_source, game: Game) -> str:
 
 
 async def _update_player_win_loss():
-    # pylint: disable=singleton-comparison
-    active_players: List[Player] = await Player.find_many(
-        Player.active == True  # noqa E712
-    ).to_list()
+    active_players: List[Player] = await Player.active_players()
     player: Player
     for player in active_players:
         await player.fetch_pick_links()

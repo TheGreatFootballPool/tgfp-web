@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title>The Great Football Pool - {{ page_title }}</title>
+    <link rel=stylesheet type=text/css
+          href="{{ url_for('static', path='/css/app.css?' + range(1, 10000) | random | string) }}"/>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet"/>
+    <script type=text/javascript src="{{ url_for('static', path='/jquery.js?' + info.app_version) }}"></script>
+    <script src="{{ url_for('static', path='/sorttable.js?' + info.app_version) }}"></script>
+    <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://sentry.sturgeonfamily.com/js-sdk-loader/9e699032f7b3c81b263e1fccd8dfbbec.min.js?{{ info.app_version }}"
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="bg-black/80 w-full h-screen p-2 [&>*]:rounded-lg">
+    <div class="grid grid-cols-[40px_auto_auto] gap-3 bg-[#CC9] p-2 mb-2 min-w-[500px]">
+        <div class="flex items-center">
+            <img src="{{ url_for('static', path='/images/tgfp_logo.png') }}" class="object-scale-down" alt="tgfp logo">
+        </div>
+        <div class="whitespace-nowrap flex font-header font-bold text-[#444] text-2xl items-center">The Great Football
+            Pool
+        </div>
+        <div class="flex items-center justify-end text-[#555]/90 text-sm font-medium pr-4">{{ page_title }}</div>
+    </div>
+    <div class="grid grid-cols-[320px_auto_200px] gap-2 [&>*]:rounded-lg [&>*]:p-2  min-w-[600px]">
+        <div class="bg-gradient-to-b from-white to-[#ffffdd]">
+            <div class="mb-2 rounded-md bg-[#CC9]/50 font-medium flex items-center justify-center whitespace-nowrap">Profile</div>
+            <div class="flex items-center justify-center">
+                <img src="{{ url_for('static', path='/images/blank-profile.png') }}"
+                     class="shadow-lg rounded-full object-scale-down w-36" alt="profile image"/>
+            </div>
+            <div class="font-medium flex items-center justify-center whitespace-nowrap">{{ profile_player.full_name }}</div>
+            <div class="text-xs italic flex items-center justify-center whitespace-nowrap">
+                {{ profile_player.wins() }}-{{ profile_player.losses() }} ({{ '%.3f' | format(profile_player.winning_pct | float) }}) {{ profile_player.bonus() }} Bonus
+            </div>
+            <div class="text-xs italic flex items-center justify-center whitespace-nowrap">
+
+            </div>
+            <div class="text-xs italic flex items-center justify-center whitespace-nowrap">
+                {{ current_place }} Place ({{ games_back }} back)
+            </div>
+            <div class="h-[230px]">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+        <div class="bg-gradient-to-b from-white to-[#ffffdd]">
+             <div class="mb-2 rounded-md bg-[#CC9]/50 font-medium flex items-center justify-center whitespace-nowrap">Awards</div>
+        </div>
+        <div class="bg-gradient-to-b from-white to-[#ffffdd]">
+             <div class="mb-2 rounded-md bg-[#CC9]/50 font-medium flex items-center justify-center whitespace-nowrap">Menu</div>
+              <div id="links" class="p-2 *:text-sm *:font-medium *:text-[#CC6633]">
+              <a href="{{ url_for('home') }}">Home</a><br />
+              <a href="{{ url_for('profile') }}">My Profile</a><br />
+              <a href="{{ url_for('picks') }}">The Picks Page</a><br />
+              <a href="{{ url_for('allpicks') }}">Everybody's Picks</a><br />
+              <a href="{{ url_for('standings') }}">Standings</a><br />
+              <a href="{{ url_for('rules') }}">Rules</a><br />
+              <a href="{{ url_for('logout') }}">Logout</a><br />
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+<!--suppress JSUnresolvedReference -->
+<script>
+  const ctx = document.getElementById('myChart');
+  let the_data = {{ the_data |tojson }}
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: the_data['labels'],
+      datasets: [{
+        label: 'Place',
+        data: the_data['data'],
+        borderWidth: 2,
+        borderColor: "rgb(204, 102, 51)",
+        backgroundColor: "rgba(204,102,51,0.6)"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+          padding: 10
+      },
+      scales: {
+        y: {
+          reverse: true,
+          min: 1,
+          max: {{ num_players }},
+          ticks: {
+              callback: function(val, index) {
+                  let return_val = val;
+                  switch(val) {
+                      case 0:
+                          return_val = ''
+                          break;
+                      case 1:
+                          return_val = 'First'
+                          break;
+                      case {{ num_players }}:
+                          return_val = 'Last'
+                          break;
+                  }
+                  return return_val
+              }
+          }
+        }
+      }
+    }
+  });
+
+</script>
+</body>
+</html>
