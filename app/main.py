@@ -289,20 +289,19 @@ async def allpicks(
         picks_week_no = week_no
     active_players: List[Player] = await Player.active_players()
     active_players.sort(key=lambda x: x.total_points, reverse=True)
-    for a_player in active_players:
-        await a_player.fetch_pick_links(picks_week_no)
-    await player.fetch_pick_links(picks_week_no)
     games: List[Game] = await Game.find(
         Game.week_no == picks_week_no,
         Game.season == info.season,
         fetch_links=True
     ).sort("+start_time").to_list()
+    teams: List[Team] = await Team.find_all().to_list()
     context = {
         'player': player,
         'info': info,
         'active_players': active_players,
         'week_no': picks_week_no,
-        'games': games
+        'games': games,
+        'teams': teams
     }
     return templates.TemplateResponse(
         request=request, name="allpicks.j2", context=context
