@@ -37,15 +37,16 @@
             {% if game.is_final %}
                 {% if  week_no == info.display_week %}
                     {% set opacity=0.5 %}
+                    {% set opacity=0.5 %}
                 {% else %}
                     {% set opacity=0.7 %}
                 {% endif %}
             {% endif %}
             <td style="opacity:{{ opacity }};text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">
-                <img align="absmiddle" src="{{ url_for('static', path='images/' + road_team.short_name + '.small.gif') }}" border="0" alt="helmet">
+                <img width="36" height="36" align="absmiddle" src="{{ url_for('static', path='images/' + road_team.short_name + '.svg') }}" border="0" alt="helmet">
                 {{ score(game.is_pregame, game.road_team_score) }}
                 <div>at</div>
-                <img align="absmiddle" src="{{ url_for('static', path='images/' + home_team.short_name + '.small.gif') }}" border="0" alt="helmet">
+                <img width="36" height="36" align="absmiddle" src="{{ url_for('static', path='images/' + home_team.short_name + '.svg') }}" border="0" alt="helmet">
                 {{ score(game.is_pregame, game.home_team_score) }}
             </td>
     {% endfor -%}
