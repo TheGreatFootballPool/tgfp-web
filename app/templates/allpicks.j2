@@ -11,13 +11,13 @@
 {% endmacro -%}
 {% macro team_with_upset_lock_style(team, pick) -%}
     {% set span_class = None -%}
-    {% if pick.lock_team.id == team.id -%}
+    {% if pick.lock_team.ref.id == team.id -%}
         {% set span_class = "lock" -%}
     {% endif -%}
-    {% if pick.upset_team.id == team.id -%}
+    {% if pick.upset_team and pick.upset_team.ref.id == team.id -%}
         {% set span_class = "upset" -%}
     {% endif -%}
-    {% if pick.upset_team.id == team.id and pick.lock_team.id == team.id %}
+    {% if pick.upset_team and pick.upset_team.ref.id == team.id and pick.lock_team.ref.id == team.id %}
         {% set span_class = "lockupset" -%}
     {% endif %}
     <span {% if span_class -%} class="{{ span_class }}"{% endif -%}>{{ team.long_name }}</span>
@@ -61,7 +61,7 @@
             {% if not player_pick %}
                 <td style="color:green;text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">--no pick--</td>
             {% else %}
-                {% set team = player_pick.winner_for_game(game) %}
+                {% set team = player_pick.winning_team_for_game(game, teams) %}
                 <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ team_with_upset_lock_style(team, player_pick) }}</td>
             {% endif %}
         {% endfor %}

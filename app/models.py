@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List, Final, Optional
 
 import pytz
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import Document, init_beanie, Link
 from pydantic import BaseModel
@@ -170,20 +171,29 @@ class Pick(Document):
         """ The settings class """
         name = "picks"
 
-    def winner_for_game(self, game: Game) -> Optional[Team]:
+    def winning_team_for_game(self, game: Game, teams: List[Team]) -> Optional[Team]:
         """
         Go through each game in the picks for the week, and
         when we have a match, return the winner for that game
+        :param teams: Pre-fetched list of teams
         :param game:
         :return:
         """
         winning_team: Optional[Team] = None
         detail: PickDetail
+        winning_team_id: Optional[ObjectId] = None
         for detail in self.pick_detail:
-            if detail.game.id == game.id:
-                # noinspection PyTypeChecker
-                winning_team = detail.winning_team
-                break
+            if isinstance(detail.game, Link):
+                if str(detail.game.ref.id) == str(game.id):
+                    winning_team_id = detail.winning_team.ref.id
+                    break
+            else:
+                raise Exception("Picks was 'fetched' and I expected it not to be!")
+        if winning_team_id:
+            for team in teams:
+                if winning_team_id == team.id:
+                    winning_team = team
+                    break
         return winning_team
 
     def load_record(self):
