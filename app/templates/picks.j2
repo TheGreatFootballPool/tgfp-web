@@ -2,8 +2,9 @@
 {% set page_title="Picks Page" %}
 {% set page_description="The Picks Page - Make your selections here" %}
 {% macro pick_radio_button(team, win_team_id, game_id, disabled, opacity) %}
+    <!--suppress JSUnresolvedReference, JSCheckFunctionSignatures -->
     <td class="border" style="text-align:left;opacity:{{ opacity }}">
-        <img style="vertical-align:middle;border:0;" src="{{ url_for('static', path='images/' + team.short_name + '.small.gif') }}" alt="team helmet image">
+        <img width="36" height="36" style="vertical-align:middle;border:0;" src="{{ url_for('static', path='images/' + team.short_name + '.svg') }}" alt="team helmet image">
         ({{ team.wins }}-{{ team.losses }})<br>
 {# j2lint: disable=S7 #}
         <input class="myradio" type="radio" name="game_{{ game_id }}" value="{{ team.id }}" {% if team.id == win_team_id %}checked{% endif %} {% if disabled %}disabled{% endif %}>{{ team.long_name }}
@@ -56,7 +57,7 @@
 {%     endfor %}
     </select>
     <br>Select your Upset:
-    <select id="lock" name="upset"><option value=""></option>
+    <select id="upset" name="upset"><option value=""></option>
 {%     for team in valid_upset_teams %}
         <option value="{{ team.id }}">{{ team.long_name }}</option>
 {%     endfor %}
@@ -68,9 +69,11 @@
        $(this).find('input:radio').prop("checked", true);
     });
     $('#awesome_form').submit(function( event ) {
-    $('.myradio').prop('disabled', false);
-    $( "#awesome_form" ).submit();
-});
+        event.preventDefault();
+        const form = this;
+        $('.myradio').prop('disabled', false);
+        form.submit();
+    });
     
 </script>
 
