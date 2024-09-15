@@ -15,6 +15,10 @@ from config import Config
 PRO_BOWL_WEEK: Final[int] = 22
 
 
+class ModelException(Exception):
+    """ Any exception raised in the models """
+
+
 # pylint: disable=too-many-ancestors
 # pylint: disable=too-few-public-methods
 class ApiKey(Document):
@@ -188,7 +192,7 @@ class Pick(Document):
                     winning_team_id = detail.winning_team.ref.id
                     break
             else:
-                raise Exception("Picks was 'fetched' and I expected it not to be!")
+                raise ModelException("Picks was 'fetched' and I expected it not to be!")
         if winning_team_id:
             for team in teams:
                 if winning_team_id == team.id:
