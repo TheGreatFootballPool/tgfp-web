@@ -7,7 +7,7 @@ from typing import List, Final, Optional
 import pytz
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import Document, init_beanie, Link
+from beanie import Document, init_beanie, Link, PydanticObjectId
 from pydantic import BaseModel
 
 from config import Config
@@ -29,6 +29,18 @@ class ApiKey(Document):
     class Settings:
         """ The settings class """
         name = "api_keys"
+
+
+class Award(Document):
+    name: str
+    description: str
+    points: int
+    badge_icon: str
+    icon: str
+
+    class Settings:
+        """ The settings class """
+        name = "awards"
 
 
 class TGFPInfo(BaseModel):
@@ -275,6 +287,7 @@ class Player(Document):
     email: str
     discord_id: int
     picks: List[Pick] = []
+    _player_awards: Optional[List[PlayerAward]] = None
 
     class Settings:
         """ The settings class """
@@ -376,6 +389,26 @@ class Player(Document):
                 bonus += pick.bonus
         return bonus
 
+    async def load_player_awards(self, player_awards: List[PlayerAward]) -> None:
+        awards: List[PlayerAward] = []
+        for award in player_awards:
+            if award.player.id == self.id:
+                awards.append(award)
+        self._player_awards = awards
+
+    @property
+    def player_awards(self) -> List[PlayerAward]:
+        if self._player_awards is None:
+            raise ModelException("Please call `load_player_awards` before accessing this property.")
+        return self._player_awards
+
+    def awards_for_week(self, week_no: int) -> List[PlayerAward]:
+        awards: List[PlayerAward] = []
+        for award in self.player_awards:
+            if award.week_no == week_no:
+                awards.append(award)
+        return awards
+
     @property
     def total_points(self) -> int:
         """
@@ -465,6 +498,20 @@ class Player(Document):
         ).to_list()
 
 
+class PlayerAward(Document):
+    award: Link[Award]
+    player: Link[Player]
+    week_no: int
+    season: int
+
+    class Settings:
+        """ The settings class """
+        name = "player_awards"
+
+
+
+
+
 PickHistory.model_rebuild()
 Player.model_rebuild()
 
@@ -524,7 +571,7 @@ async def get_tgfp_info() -> TGFPInfo:
 async def db_init(config: Config, models=None):
     """ Create the client connection"""
     if models is None:
-        models = [Pick, PickDetail, Game, Team, Player, PickHistory, ApiKey]
+        models = [Pick, PickDetail, Game, Team, Player, PickHistory, ApiKey, Award, PlayerAward]
     client = AsyncIOMotorClient(config.MONGO_URI)
 
     await init_beanie(database=client.tgfp, document_models=models)

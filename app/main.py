@@ -3,7 +3,6 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional, Final, List
-
 import uvicorn
 from beanie import PydanticObjectId
 from fastapi import FastAPI, Request, Depends, HTTPException
@@ -24,7 +23,7 @@ from api.nag_players import nag_players
 from api.schedule_kestra_flows import schedule_kestra_flows
 from api.update_scores import update_game
 from api.update_team_records import update_team_records
-from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick, ApiKey
+from models import db_init, Player, TGFPInfo, get_tgfp_info, Game, PickDetail, Team, Pick, ApiKey, PlayerAward, Award
 from api.create_picks import create_picks, CreatePicksException
 from config import Config
 
@@ -223,6 +222,7 @@ async def profile(
         profile_player_id: str = None
 ):
     """ Player Profile Page """
+    profile_player: Optional[Player] = None
     if profile_player_id:
         profile_player: Player = await Player.get(
             PydanticObjectId(profile_player_id)
@@ -242,6 +242,8 @@ async def profile(
         'data': values
     }
     current_place: str = ordinal(values[-1])
+    awards: List[PlayerAward] = await PlayerAward.find_all(fetch_links=True).to_list()
+    await profile_player.load_player_awards(player_awards=awards)
     context = {
         'player': player,
         'profile_player': profile_player,
@@ -250,10 +252,9 @@ async def profile(
         'the_data': data,
         'num_players': num_players,
         'games_back': games_back,
-        'current_place': current_place
-    }
+        'current_place': current_place    }
     return templates.TemplateResponse(
-        request=request, name="new_base.j2", context=context
+        request=request, name="profile.j2", context=context
     )
 
 
@@ -265,6 +266,9 @@ async def standings(
 ):
     """ Returns the standings page """
     players: List[Player] = await Player.find({'active': True}).to_list()
+    player_awards: List[PlayerAward] = await PlayerAward.find_all(fetch_links=True).to_list()
+    for player in players:
+        await player.load_player_awards(player_awards)
     players.sort(key=lambda x: x.total_points, reverse=True)
     context = {
         'player': player,

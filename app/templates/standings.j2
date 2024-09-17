@@ -30,7 +30,18 @@
 {% for player in active_players %}
             {{ row_with_style(row_number) }}
 {%     set games_back = active_players[0].total_points - player.total_points %}
+{%     if player.awards_for_week(info.active_week) %}
+            <td>
+                <a style="line-height: 14px" href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">
+                    {{ player.nick_name }}
+                </a>
+                {% for award in player.awards_for_week(info.active_week) %}
+                    <img height=10 width=10 src="{{ url_for('static', path='/images/' + award.award.badge_icon) }}" alt="won awards">
+                {% endfor %}
+            </td>
+{%     else %}
             <td><a style="line-height: 14px" href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">{{ player.nick_name }}</a></td>
+{%     endif %}
             <td style="text-align: right;">{{ player.wins() }}</td>
             <td style="text-align: right;">{{ player.losses() }}</td>
             <td style="text-align: right;">{{ player.bonus() }}</td>
