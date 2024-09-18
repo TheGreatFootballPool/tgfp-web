@@ -2,7 +2,7 @@
 import asyncio
 from typing import List
 
-from models import Player, Pick, db_init, Award, PlayerAward, Game, Team
+from models import Player, Pick, db_init, Award, PlayerAward, Game, Team, TGFPInfo, get_tgfp_info, ModelException
 from config import Config
 
 
@@ -50,6 +50,10 @@ async def in_your_face(week_no: int, season: int):
 
 async def won_the_week(week_no: int, season: int):
     """ Determine if there was a 'won the week' award for the week """
+    info: TGFPInfo = await get_tgfp_info()
+    if info.display_week == info.current_week:
+        raise ModelException("We should only run this after the week has completed!")
+
 
 
 async def quick_pick(week_no: int, season: int):
