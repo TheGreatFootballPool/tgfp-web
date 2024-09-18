@@ -130,6 +130,19 @@ class Game(Document):
 
         return self.home_team
 
+    # noinspection PyTypeChecker
+    @property
+    def winning_team(self) -> Optional[Team]:
+        # first make sure the links have been fetched
+        if isinstance(self.home_team, Link) or isinstance(self.road_team, Link):
+            raise ModelException("home and road teams are links")
+        if self.is_final:
+            if self.home_team_score > self.road_team_score:
+                return self.home_team
+            return self.road_team
+        return None
+
+
     @property
     def pacific_start_time(self):
         """ Returns the start time in the US/Pacific timezone"""
