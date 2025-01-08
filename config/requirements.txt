@@ -9,7 +9,7 @@ pydantic~=2.8.2
 uvicorn~=0.30.5
 j2lint==1.1.0
 itsdangerous==2.2.0
-tgfp-nfl==6.3.2
+tgfp-nfl==6.3.3
 sentry-sdk[fastapi]~=2.13.0
 python-dotenv==1.0.1
 matplotlib==3.9.2
