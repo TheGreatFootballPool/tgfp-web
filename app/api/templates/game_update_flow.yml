@@ -3,7 +3,7 @@ namespace: $namespace
 tasks:
   - id: update_game_loop
     type: io.kestra.plugin.scripts.python.Script
-    timeout: "PT4.5H"
+    timeout: "PT6H"
     script: |
       import requests
       import time
