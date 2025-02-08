@@ -1,4 +1,5 @@
-""" All models for the great football pool """
+"""All models for the great football pool"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -16,18 +17,20 @@ PRO_BOWL_WEEK: Final[int] = 22
 
 
 class ModelException(Exception):
-    """ Any exception raised in the models """
+    """Any exception raised in the models"""
 
 
 # pylint: disable=too-many-ancestors
 # pylint: disable=too-few-public-methods
 class ApiKey(Document):
-    """ Model for all API Keys """
+    """Model for all API Keys"""
+
     token: str
     description: str
 
     class Settings:
-        """ The settings class """
+        """The settings class"""
+
         name = "api_keys"
 
 
@@ -42,6 +45,7 @@ class TGFPInfo(BaseModel):
     - :class:`str` app_version --> Debug information containing the app version
     - :class:`str` app_env --> Debug information containing the app environment
     """
+
     season: int = 2023
     display_week: int = 14
     active_week: int = 14
@@ -51,6 +55,7 @@ class TGFPInfo(BaseModel):
 
 class Team(Document):
     """Team model"""
+
     city: str
     long_name: str
     losses: int
@@ -63,7 +68,8 @@ class Team(Document):
     discord_emoji: str
 
     class Settings:
-        """ The settings class """
+        """The settings class"""
+
         name = "teams"
 
 
@@ -84,6 +90,7 @@ class Game(Document):
     - :class:`int` season
     - :class:`str` tgfp_nfl_game_id
     """
+
     game_status: str
     favorite_team: Link[Team]
     road_team: Link[Team]
@@ -97,22 +104,23 @@ class Game(Document):
     tgfp_nfl_game_id: str
 
     class Settings:
-        """ The settings class """
+        """The settings class"""
+
         name = "games"
 
     @property
     def is_final(self):
-        """ Returns true if the game is final """
-        return self.game_status == 'STATUS_FINAL'
+        """Returns true if the game is final"""
+        return self.game_status == "STATUS_FINAL"
 
     @property
     def is_pregame(self):
-        """ Returns true if the game is pregame """
-        return self.game_status == 'STATUS_SCHEDULED'
+        """Returns true if the game is pregame"""
+        return self.game_status == "STATUS_SCHEDULED"
 
     @property
     def underdog_team(self) -> Link[Team]:
-        """ Returns the underdog """
+        """Returns the underdog"""
         if self.favorite_team == self.home_team:
             return self.road_team
 
@@ -120,14 +128,14 @@ class Game(Document):
 
     @property
     def pacific_start_time(self):
-        """ Returns the start time in the US/Pacific timezone"""
+        """Returns the start time in the US/Pacific timezone"""
         utc_dt = self.start_time.replace(tzinfo=pytz.utc)
-        pac_dt = pytz.timezone('US/Pacific')
+        pac_dt = pytz.timezone("US/Pacific")
         return pac_dt.normalize(utc_dt.astimezone(pac_dt))
 
     @staticmethod
     async def get_first_game_of_the_week(info: TGFPInfo) -> Game:
-        """ Returns the 'first' game of a week given the info  """
+        """Returns the 'first' game of a week given the info"""
         games: List[Game] = await Game.find_many(
             Game.season == info.season, Game.week_no == info.display_week
         ).to_list()
@@ -143,6 +151,7 @@ class PickDetail(Document):
     - :class:`Link` [ :class:`Game` ] game
     - :class:`Link` [ :class:`Team` ] winning_team
     """
+
     game: Link[Game]
     winning_team: Link[Team]
 
@@ -161,6 +170,7 @@ class Pick(Document):
     - :class:`int` losses = 0
     - :class:`List` [ :class:`PickDetail` ] pick_detail = []
     """
+
     created_at: Optional[datetime] = None
     week_no: int
     lock_team: Link[Team]
@@ -172,7 +182,8 @@ class Pick(Document):
     pick_detail: List[PickDetail] = []
 
     class Settings:
-        """ The settings class """
+        """The settings class"""
+
         name = "picks"
 
     def winning_team_for_game(self, game: Game, teams: List[Team]) -> Optional[Team]:
@@ -248,10 +259,12 @@ class Pick(Document):
 
 class PickHistory(Pick):
     """Model class for saving picks from previous seasons in a table"""
+
     player: Link[Player]
 
     class Settings:
-        """ The settings class """
+        """The settings class"""
+
         name = "picks_history"
 
 
@@ -268,6 +281,7 @@ class Player(Document):
     - :class:`int` discord_id --> The discord id of the player
     - :class:`Pick` picks[] --> The list of all picks for the current season
     """
+
     first_name: str
     last_name: str
     nick_name: str
@@ -277,7 +291,8 @@ class Player(Document):
     picks: List[Pick] = []
 
     class Settings:
-        """ The settings class """
+        """The settings class"""
+
         name = "players"
 
     @property
@@ -286,7 +301,7 @@ class Player(Document):
         Full name of the player
         :returns: :class:`str` full_name - full name of the player (first + last)
         """
-        return self.first_name + ' ' + self.last_name
+        return self.first_name + " " + self.last_name
 
     # noinspection DuplicatedCode
     def wins(self, week_no=None) -> int:
@@ -409,7 +424,7 @@ class Player(Document):
 
     @property
     async def get_standings(self) -> int:
-        """ Returns the 'place' the player is (optionally for a given week) """
+        """Returns the 'place' the player is (optionally for a given week)"""
         active_players: List[Player] = await Player.active_players()
         player_count: int = 1
         for player in active_players:
@@ -418,17 +433,19 @@ class Player(Document):
         return player_count
 
     async def get_standings_through(self, week_no: int) -> int:
-        """ Returns the 'place' the player is (optionally for a given week) """
+        """Returns the 'place' the player is (optionally for a given week)"""
         active_players: List[Player] = await Player.active_players()
         # start out in first place
         player_count: int = 1
         for player in active_players:
-            if self.total_points_through(week_no) < player.total_points_through(week_no):
+            if self.total_points_through(week_no) < player.total_points_through(
+                week_no
+            ):
                 player_count += 1
         return player_count
 
     async def games_back(self) -> int:
-        """ Returns the number of games behind """
+        """Returns the number of games behind"""
         players: List[Player] = await Player.active_players()
         players.sort(key=lambda x: x.total_points, reverse=True)
         return players[0].total_points - self.total_points
@@ -447,7 +464,7 @@ class Player(Document):
         return pick
 
     async def fetch_pick_links(self, week_no: Optional[int] = None):
-        """ Fetches all links for the pick for the week given """
+        """Fetches all links for the pick for the week given"""
         for pick in self.picks:
             if week_no is None or pick.week_no == week_no:
                 await pick.fetch_all_links()
@@ -457,11 +474,11 @@ class Player(Document):
 
     @staticmethod
     async def active_players(fetch_links: bool = False) -> List[Player]:
-        """ returns a list of active players """
+        """returns a list of active players"""
         # pylint: disable=singleton-comparison
         return await Player.find_many(
             Player.active == True,  # noqa E712
-            fetch_links=fetch_links
+            fetch_links=fetch_links,
         ).to_list()
 
 
@@ -471,7 +488,7 @@ Player.model_rebuild()
 
 # Helper methods
 async def get_tgfp_info() -> TGFPInfo:
-    """ Returns the TGFPInfo object filled w/values """
+    """Returns the TGFPInfo object filled w/values"""
     # Get the current season.
     # NOTE: The current season is the year in which the season starts.
     #  -- if the month Jan - May (1-5) then consider the year before the starting
@@ -483,46 +500,38 @@ async def get_tgfp_info() -> TGFPInfo:
     current_season: int = year
 
     # get display_week and current_active_week
-    a_game: Game = await Game.find(
-        {'season': current_season}
-    ).sort("-_id").limit(1).first_or_none()
+    a_game: Game = (
+        await Game.find({"season": current_season})
+        .sort("-_id")
+        .limit(1)
+        .first_or_none()
+    )
     if a_game is None:
         # EARLY RETURN
-        return TGFPInfo(
-            season=current_season,
-            display_week=1,
-            active_week=1
-        )
-    last_weeks_games: List[Game] = await Game.find({
-        'season': a_game.season,
-        'week_no': a_game.week_no
-    }).to_list()
+        return TGFPInfo(season=current_season, display_week=1, active_week=1)
+    last_weeks_games: List[Game] = await Game.find(
+        {"season": a_game.season, "week_no": a_game.week_no}
+    ).to_list()
 
     all_complete = True
-    any_complete = False
     for g in last_weeks_games:
         if not g.is_final:
             all_complete = False
-        else:
-            any_complete = True
-    pro_bowl_adjustment: int = 1 if a_game.week_no == PRO_BOWL_WEEK else 0
     if all_complete:
-        display_week = a_game.week_no + 1 + pro_bowl_adjustment
+        display_week = a_game.week_no + 1
     else:
-        display_week = a_game.week_no + pro_bowl_adjustment
-    if any_complete:
-        current_active_week = a_game.week_no
-    else:
-        current_active_week = a_game.week_no
+        display_week = a_game.week_no
+    display_week += 1 if display_week == PRO_BOWL_WEEK else 0
+    current_active_week = a_game.week_no
     return TGFPInfo(
         season=current_season,
         display_week=display_week,
-        active_week=current_active_week
+        active_week=current_active_week,
     )
 
 
 async def db_init(config: Config, models=None):
-    """ Create the client connection"""
+    """Create the client connection"""
     if models is None:
         models = [Pick, PickDetail, Game, Team, Player, PickHistory, ApiKey]
     client = AsyncIOMotorClient(config.MONGO_URI)
