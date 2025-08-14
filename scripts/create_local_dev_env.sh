@@ -6,4 +6,4 @@ echo "ENVIRONMENT=${ENV}" >> app/.env
 
 source config/version.env
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-echo "APP_VERSION=${NEW_VERSION}" >> app/.env
+echo "APP_VERSION=${NEW_VERSION}" >> app/.env.dev
