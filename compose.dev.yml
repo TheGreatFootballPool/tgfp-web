@@ -2,11 +2,11 @@ services:
   web:
     build:
       context: .
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --reload
     volumes:
-      - ./app:/app            # live code mount for hot reload
+      - ./app:/app
     env_file:
-      - ./config/.env.dev     # dev-only env (safe values)
+      - ./config/.env.dev
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -16,3 +16,21 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
+  mongo:
+    image: mongo:6
+    container_name: tgfp-mongo-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data-dev:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo-data-dev:
