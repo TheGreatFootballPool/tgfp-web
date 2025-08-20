@@ -1,4 +1,5 @@
-""" Configuration file """
+"""Configuration file"""
+
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -8,7 +9,8 @@ from dotenv import load_dotenv
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class Config:
-    """ Base configuration class """
+    """Base configuration class"""
+
     # pylint: disable=invalid-name
     ENVIRONMENT: str
     MONGO_URI: str
@@ -27,32 +29,30 @@ class Config:
     LISTMONK_LIST_ID: str
     LISTMONK_API_URL: str
     SESSION_SECRET_KEY: str
-    SENTRY_DSN: str
     APP_VERSION: str
 
     @classmethod
     def get_config(cls):
-        """ Factory method for returning the correct config"""
+        """Factory method for returning the correct config"""
         load_dotenv()
         config = cls(
-            ENVIRONMENT=os.getenv('ENVIRONMENT'),
-            MONGO_URI=os.getenv('MONGO_URI'),
-            WEB_SECRET_KEY=os.getenv('WEB_SECRET_KEY'),
-            API_BASE_URL=os.getenv('API_BASE_URL'),
-            DISCORD_CLIENT_ID=os.getenv('DISCORD_CLIENT_ID'),
-            DISCORD_GUILD_ID=os.getenv('DISCORD_GUILD_ID'),
-            DISCORD_CLIENT_SECRET=os.getenv('DISCORD_CLIENT_SECRET'),
-            DISCORD_REDIRECT_URI=os.getenv('DISCORD_REDIRECT_URI'),
-            DISCORD_AUTH_TOKEN=os.getenv('DISCORD_AUTH_TOKEN'),
-            DISCORD_NAG_BOT_CHANNEL_ID=os.getenv('DISCORD_NAG_BOT_CHANNEL_ID'),
-            DISCORD_NAG_BOT_WEBHOOK_URL=os.getenv('DISCORD_NAG_BOT_WEBHOOK_URL'),
-            SESSION_SECRET_KEY=os.getenv('SESSION_SECRET_KEY'),
-            KESTRA_NAMESPACE=os.getenv('KESTRA_NAMESPACE'),
-            KESTRA_HOST=os.getenv('KESTRA_HOST'),
-            LISTMONK_AUTH_HASH=os.getenv('LISTMONK_AUTH_HASH'),
-            LISTMONK_LIST_ID=os.getenv('LISTMONK_LIST_ID'),
-            LISTMONK_API_URL=os.getenv('LISTMONK_API_URL'),
-            SENTRY_DSN=os.getenv('SENTRY_DSN'),
-            APP_VERSION=os.getenv('APP_VERSION')
+            ENVIRONMENT=os.getenv("ENVIRONMENT"),
+            MONGO_URI=os.getenv("MONGO_URI"),
+            WEB_SECRET_KEY=os.getenv("WEB_SECRET_KEY"),
+            API_BASE_URL=os.getenv("API_BASE_URL"),
+            DISCORD_CLIENT_ID=os.getenv("DISCORD_CLIENT_ID"),
+            DISCORD_GUILD_ID=os.getenv("DISCORD_GUILD_ID"),
+            DISCORD_CLIENT_SECRET=os.getenv("DISCORD_CLIENT_SECRET"),
+            DISCORD_REDIRECT_URI=os.getenv("DISCORD_REDIRECT_URI"),
+            DISCORD_AUTH_TOKEN=os.getenv("DISCORD_AUTH_TOKEN"),
+            DISCORD_NAG_BOT_CHANNEL_ID=os.getenv("DISCORD_NAG_BOT_CHANNEL_ID"),
+            DISCORD_NAG_BOT_WEBHOOK_URL=os.getenv("DISCORD_NAG_BOT_WEBHOOK_URL"),
+            SESSION_SECRET_KEY=os.getenv("SESSION_SECRET_KEY"),
+            KESTRA_NAMESPACE=os.getenv("KESTRA_NAMESPACE"),
+            KESTRA_HOST=os.getenv("KESTRA_HOST"),
+            LISTMONK_AUTH_HASH=os.getenv("LISTMONK_AUTH_HASH"),
+            LISTMONK_LIST_ID=os.getenv("LISTMONK_LIST_ID"),
+            LISTMONK_API_URL=os.getenv("LISTMONK_API_URL"),
+            APP_VERSION=os.getenv("APP_VERSION"),
         )
         return config

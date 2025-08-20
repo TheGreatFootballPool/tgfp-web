@@ -11,7 +11,6 @@ from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from fastapi_discord import DiscordOAuthClient, User
-from sentry_sdk import set_user
 
 # pylint: disable=ungrouped-imports
 from starlette import status
@@ -19,7 +18,6 @@ from starlette.datastructures import MutableHeaders
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
-import sentry_sdk
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from api.nag_players import nag_players
@@ -47,15 +45,6 @@ COOKIE_TIME_OUT = DAYS * SECONDS
 
 # pylint: disable=duplicate-code
 config: Config = Config.get_config()
-sentry_sdk.init(
-    dsn=config.SENTRY_DSN,
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-    environment=config.ENVIRONMENT,
-    release=f"tgfp@{config.APP_VERSION}",
-)
 
 discord: DiscordOAuthClient = DiscordOAuthClient(
     config.DISCORD_CLIENT_ID, config.DISCORD_CLIENT_SECRET, config.DISCORD_REDIRECT_URI
