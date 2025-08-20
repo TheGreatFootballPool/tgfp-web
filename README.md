@@ -2,28 +2,48 @@
 
 # Installation notes
 
-I am going to install this on a Debian 12 LXC hosted by a proxmox instance.  I'm dedicating the LXC for this, so these instructions assume a dedicated container / machine.
+The great football pool is self-contained in a docker environment.
 
-## First Time Deployment
+## Development Process
 
-On a fresh debian 12 install
+Follow these steps to get the project running locally for development.
 
-### Run the following script as root
+### Prerequisites
+
+### Clone the repository
 ```bash
-if ! test -e /opt/tgfp
-then
-  mkdir /opt/tgfp
-fi
-cd /opt/tgfp
-bash -c "$(wget -qLO - https://github.com/TheGreatFootballPool/tgfp-web/raw/main/scripts/deploy.sh)"
+git clone git@github.com:TheGreatFootballPool/tgfp-web.git
+cd tgfp-web
+```
+### Create the CONFIG file: `config/.env.dev file`
+- This file is needed by [compose.dev.yml](compose.dev.yml)
+
+#### 1Password
+- If you use 1password for your secrets you can use the [op.env](config/op.env) file as a template for generating your config file
+- I have added a convenience script [create_local_dev_env.sh](scripts/create_local_dev_env.sh) for creating the env file with `op inject`
+
+#### Manual file creation
+- Otherwise, you can copy / edit the [sample.env](docs/sample.env) and place it in `config/.env.dev`
+
+
+### Start services with Docker
+```bash
+docker compose -f compose.dev.yml up -d
 ```
 
-## Script Prompts
-After the script installs all the prerequisites, you will be prompted for the following info:
+This will start the web server and any required dependencies (e.g., database).
 
-* 1Password Authentication Token (for populating the .env file with secrets)
-* Optionally run in 'dev' environment
+### Sync production database (optional)
+If you need a local copy of the production database for testing:
 
-### Notes
+```bash
+scripts/sync_dev_db.sh
+```
+(see script here) [scripts/sync_dev_db.sh](scripts/sync_dev_db.sh)
 
-> run `journalctl -f -u tgfp-web.service` to view the log output
+> ⚠️ **Note:** Be careful with production data. Ensure credentials and dumps are handled securely.
+
+###  Access the app
+Once the containers are running, open:
+
+http://localhost:8000

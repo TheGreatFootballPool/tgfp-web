@@ -1,9 +1,9 @@
-ENV="local_dev"
+ENV="development"
 cd "$(dirname "$0")" || exit
 cd ..
-APP_ENV=${ENV} op inject -f -i config/op.env -o app/.env
-echo "ENVIRONMENT=${ENV}" >> app/.env
+APP_ENV=${ENV} op inject -f -i config/op.env -o config/.env.dev
+echo "ENVIRONMENT=${ENV}" >> config/.env.dev
 
 source config/version.env
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-echo "APP_VERSION=${NEW_VERSION}" >> app/.env.dev
+echo "APP_VERSION=${NEW_VERSION}" >> config/.env.dev
