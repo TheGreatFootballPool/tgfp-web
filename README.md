@@ -18,9 +18,16 @@ cd tgfp-web
 ### Create the CONFIG file: `config/.env.dev file`
 - This file is needed by [compose.dev.yml](compose.dev.yml)
 
-#### 1Password
-- If you use 1password for your secrets you can use the [op.env](config/op.env) file as a template for generating your config file
+<details>
+<summary> 💡Tips for using 1Password</summary>
+
+> If you use 1password for your secrets, you can use the [op.env](config/op.env) file as a template for generating your config file
+
+- [Install op](https://support.1password.com/command-line-getting-started/)
+- Run `op signin`
 - I have added a convenience script [create_local_dev_env.sh](scripts/create_local_dev_env.sh) for creating the env file with `op inject`
+
+</details>
 
 #### Manual file creation
 - Otherwise, you can copy / edit the [sample.env](docs/sample.env) and place it in `config/.env.dev`
