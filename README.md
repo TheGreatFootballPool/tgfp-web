@@ -50,17 +50,27 @@ http://localhost:8000
 
 ### Prep environment
 #### Prep local dev (pycharm)
-- make sure you're local .venv is set up
-- `uv venv .venv` # creates the local environment
-- `uv pip install -r config/requirements.txt`
-- Delete all previous docker volumes / images / containers
-- run `scripts/create_local_dev_env.sh` to create the development env
-- make sure you're interpreter is set to the local .venv
+
+NOTE: Do the following BEFORE starting pycharm
+- checkout the code
+- cd into dir
 - run `scripts/create_local_python.sh` to make sure your local python environment is ready for development
-- install psql tools on your Mac:
+- fire up pycharm
+- make sure you're interpreter is set to the local .venv
+- Delete all previous docker volumes / images / containers
+- install (or confirm) psql tools on your Mac:
 ```bash
 brew install libpq
 brew link --force libpq
 ```
-- fire up the dev container `docker compose -f compose.dev.yml up -d`
+- run `scripts/create_local_dev_env.sh` to create the development env
+- fire up the dev container `docker compose -f compose.dev.yml up -d --build`
+NOTE: Don't worry about the web site not firing up yet, we'll get to that
+### Initialize the Postgresql DB
+- read in the config
+```bash
+set -a
+source config/.env.dev
+set +a
+```
 

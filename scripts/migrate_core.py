@@ -1,24 +1,31 @@
-# scripts/migrate_core.py
-import os
-from typing import Any, Dict
+# Ensure repo root is importable so `import app` works when running this file directly
+import sys
+import pathlib
 
-from pymongo import MongoClient
-from bson import ObjectId
-from datetime import timezone
-from sqlmodel import create_engine, Session
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path[:0] = [str(ROOT)]
+# scripts/migrate_core.py
+import os  # noqa: E402
+from typing import Any, Dict  # noqa: E402, E402
+
+from pymongo import MongoClient  # noqa: E402
+from bson import ObjectId  # noqa: E402
+from datetime import timezone  # noqa: E402
+from sqlmodel import create_engine, Session  # noqa: E402
 
 # Import your SQLModel classes
-from app.models import Team, Player, ApiKey  # Team/Player/ApiKey must exist
+from app.models import (
+    Team,
+    Player,
+    ApiKey,
+)  # Team/Player/ApiKey must exist  # noqa: E402
 # If your model package name/path differs, adjust the import above.
 
 # --- Config ---
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://tgfp:f_xUG9VGGYxP@tgfp-db:27017/")
-MONGO_DB = os.getenv("MONGO_DB", "tgfp")  # change if your prod DB name differs
-
-POSTGRES_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg://tgfp:tgfp@127.0.0.1:5433/tgfp",
-)
+MONGO_URI = "mongodb://tgfp:f_xUG9VGGYxP@tgfp-db:27017/"
+MONGO_DB = "tgfp"  # change if your prod DB name differs
+POSTGRES_URL = "postgresql+psycopg://tgfp:tgfp@127.0.0.1:5433/tgfp"
 
 # Optional: set to True to print docs instead of writing
 DRY_RUN = bool(int(os.getenv("DRY_RUN", "0")))
@@ -28,7 +35,6 @@ def created_from_objectid(oid: ObjectId):
     """Extract creation time from Mongo ObjectId as UTC-aware datetime."""
     if isinstance(oid, ObjectId):
         return oid.generation_time.astimezone(timezone.utc)
-    return None
 
 
 def get_str(d: Dict[str, Any], key: str, default: str = "") -> str:
