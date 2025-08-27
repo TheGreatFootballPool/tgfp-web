@@ -15,6 +15,7 @@ Follow these steps to get the project running locally for development.
 git clone git@github.com:TheGreatFootballPool/tgfp-web.git
 cd tgfp-web
 ```
+
 ### Create the CONFIG file: `config/.env.dev file`
 - This file is needed by [compose.dev.yml](compose.dev.yml)
 
@@ -30,8 +31,7 @@ cd tgfp-web
 </details>
 
 #### Manual file creation
-- Otherwise, you can copy / edit the [sample.env](docs/sample.env) and place it in `config/.env.dev`
-
+- You can copy / edit the [sample.env](docs/sample.env) and place it in `config/.env.dev`
 
 ### Start services with Docker
 ```bash
@@ -40,17 +40,27 @@ docker compose -f compose.dev.yml up -d
 
 This will start the web server and any required dependencies (e.g., database).
 
-### Sync production database (optional)
-If you need a local copy of the production database for testing:
-
-```bash
-scripts/sync_dev_db.sh
-```
-(see script here) [scripts/sync_dev_db.sh](scripts/sync_dev_db.sh)
-
-> ⚠️ **Note:** Be careful with production data. Ensure credentials and dumps are handled securely.
-
 ###  Access the app
 Once the containers are running, open:
 
 http://localhost:8000
+
+
+## Current work on Issue #196
+
+### Prep environment
+#### Prep local dev (pycharm)
+- make sure you're local .venv is set up
+- `uv venv .venv` # creates the local environment
+- `uv pip install -r config/requirements.txt`
+- Delete all previous docker volumes / images / containers
+- run `scripts/create_local_dev_env.sh` to create the development env
+- make sure you're interpreter is set to the local .venv
+- run `scripts/create_local_python.sh` to make sure your local python environment is ready for development
+- install psql tools on your Mac:
+```bash
+brew install libpq
+brew link --force libpq
+```
+- fire up the dev container `docker compose -f compose.dev.yml up -d`
+

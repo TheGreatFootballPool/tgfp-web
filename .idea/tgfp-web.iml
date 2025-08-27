@@ -9,7 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../tgfp-lib/archive/flask_site" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.12 virtualenv at ~/Code/tgfp-web/.venv" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.11 virtualenv at ~/Code/homelab/.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="8c439a9d4e" level="application" />
     <orderEntry type="library" name="8c439a9d4e" level="application" />
