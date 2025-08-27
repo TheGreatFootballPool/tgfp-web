@@ -2,27 +2,41 @@ from __future__ import annotations
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
-import app.new_models.sql  # noqa: F401  (needed so Alembic sees all models)
 
-# If needed, ensure repo root is importable (uncomment & adjust if alembic is run elsewhere)
-# import sys
-# from pathlib import Path
-# sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-# --- TGFP wiring: import model metadata
-from app.db import init_models  # type: ignore
-
-init_models()
+# Ensure new SQLModel tables are registered via side-effect import
+import app.models  # noqa: F401
 
 config = context.config
-
 if config.config_file_name:
     fileConfig(config.config_file_name)
 
+# Target metadata for autogenerate
 target_metadata = SQLModel.metadata
+
+# --- Optional: limit autogenerate to specific tables (edit as needed) ---
+# Example workflow (one model at a time):
+# TABLES_TO_MIGRATE = {"api_keys"}
+# For normal operation (all tables), leave it empty:
+TABLES_TO_MIGRATE: set[str] = set()
+
+def include_object(obj, name, type_, _reflected, _compare_to):
+    """If TABLES_TO_MIGRATE is non-empty, include only those tables and their columns.
+    Alembic calls this for tables, columns, indexes, constraints, etc.
+    """
+    if not TABLES_TO_MIGRATE:
+        return True
+
+    if type_ == "table":
+        return name in TABLES_TO_MIGRATE
+
+    parent_table = getattr(obj, "table", None)
+    if parent_table is not None:
+        return parent_table.name in TABLES_TO_MIGRATE
+
+    return True
 
 
 def run_migrations_offline() -> None:
@@ -34,6 +48,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -50,6 +65,7 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,
+            include_object=include_object,
         )
         with context.begin_transaction():
             context.run_migrations()

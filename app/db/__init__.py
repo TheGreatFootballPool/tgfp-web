@@ -34,4 +34,4 @@ def init_models() -> None:
     Import SQLModel tables so SQLModel.metadata is populated for Alembic.
     Keep imports local to avoid import cycles.
     """
-    from app.new_models.sql import team, game, player, pick, pick_detail  # noqa: F401
+    from app.models.sql import team, game, player, pick, pick_detail  # noqa: F401

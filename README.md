@@ -25,7 +25,7 @@ cd tgfp-web
 
 - [Install op](https://support.1password.com/command-line-getting-started/)
 - Run `op signin`
-- I have added a convenience script [create_local_dev_env.sh](scripts/create_local_dev_env.sh) for creating the env file with `op inject`
+- I have added a convenience script [scripts/create_local_dev_env.sh](scripts/create_local_dev_env.sh) for creating the env file with `op inject`
 
 </details>
 
