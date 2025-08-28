@@ -49,7 +49,7 @@ http://localhost:8000
 ## Current work on Issue #196
 
 ### Prep environment
-#### Prep local dev (pycharm)
+#### Prep local dev (pycharm - not container)
 
 NOTE: Do the following BEFORE starting pycharm
 - checkout the code
@@ -64,8 +64,10 @@ brew install libpq
 brew link --force libpq
 ```
 - run `scripts/create_local_dev_env.sh` to create the development env
-- fire up the dev container `docker compose -f compose.dev.yml up -d --build`
+- fire up the dev container for DB `docker compose -f compose.dev.yml up -d --build postgres`
+- fire up the tgfp-web site locally
 NOTE: Don't worry about the web site not firing up yet, we'll get to that
+
 ### Initialize the Postgresql DB
 - read in the config
 ```bash

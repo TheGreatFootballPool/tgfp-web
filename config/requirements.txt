@@ -17,5 +17,5 @@ fastapi-discord==0.2.7
 arrow==1.3.0
 discord-webhook==1.4.1
 sqlmodel==0.0.24
-alembic==1.16.4
+alembic==1.16.5
 psycopg[binary]==3.2.9

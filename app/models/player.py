@@ -7,6 +7,7 @@ from .base import TGFPModelBase
 if TYPE_CHECKING:
     from .player_game_pick import PlayerGamePick
 
+
 class Player(TGFPModelBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
@@ -18,3 +19,7 @@ class Player(TGFPModelBase, table=True):
     discord_id: int = Field(sa_type=sa.BigInteger, nullable=False)
 
     game_picks: List["PlayerGamePick"] = Relationship(back_populates="player")
+
+    @property
+    def full_name(self):
+        return self.first_name + " " + self.last_name

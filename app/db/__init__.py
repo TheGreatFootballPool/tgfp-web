@@ -6,11 +6,11 @@ from typing import Iterator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Containers talk to postgres:5432; host runs can override via env (e.g., localhost:5433)
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg://tgfp:tgfp@postgres:5432/tgfp",
-)
+from app.config import Config
+
+config = Config.get_config()
+
+DATABASE_URL = config.DATABASE_URL
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
