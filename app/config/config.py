@@ -17,6 +17,7 @@ class Config:
     # Secrets (I keep these in 1Password)
     API_BASE_URL: str
     APP_VERSION: str
+    COOKIE_RETENTION_DAYS: int
     DATABASE_URL: str
     DISCORD_AUTH_TOKEN: str
     DISCORD_CLIENT_ID: str
@@ -31,7 +32,6 @@ class Config:
     LISTMONK_API_URL: str
     LISTMONK_AUTH_HASH: str
     LISTMONK_LIST_ID: str
-    MONGO_URI: str
     SESSION_SECRET_KEY: str
     WEB_SECRET_KEY: str
 
@@ -42,6 +42,7 @@ class Config:
         new_config = cls(
             API_BASE_URL=os.getenv("API_BASE_URL"),
             APP_VERSION=os.getenv("APP_VERSION"),
+            COOKIE_RETENTION_DAYS=int(os.getenv("COOKIE_RETENTION_DAYS")),
             DATABASE_URL=os.getenv("DATABASE_URL"),
             DISCORD_AUTH_TOKEN=os.getenv("DISCORD_AUTH_TOKEN"),
             DISCORD_CLIENT_ID=os.getenv("DISCORD_CLIENT_ID"),
@@ -56,7 +57,6 @@ class Config:
             LISTMONK_API_URL=os.getenv("LISTMONK_API_URL"),
             LISTMONK_AUTH_HASH=os.getenv("LISTMONK_AUTH_HASH"),
             LISTMONK_LIST_ID=os.getenv("LISTMONK_LIST_ID"),
-            MONGO_URI=os.getenv("MONGO_URI"),
             SESSION_SECRET_KEY=os.getenv("SESSION_SECRET_KEY"),
             WEB_SECRET_KEY=os.getenv("WEB_SECRET_KEY"),
         )

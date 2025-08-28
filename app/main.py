@@ -1,92 +1,80 @@
 """Main entry point for website"""
 
 import os
-from contextlib import asynccontextmanager
 from typing import Annotated, Optional
 from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, Depends, HTTPException, status
 
 # TODO: Re-enable the middleware
 # from starlette.middleware.sessions import SessionMiddleware
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import HTMLResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
-from sqlmodel import Session
+from sqlmodel import Session, select
 from db import engine
 from models import Player
+from app.routers import auth
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    """Perform all app initialization before 'yield'"""
-    # TODO: enable this
-    # await discord.init()
-    yield
+from config import Config
+from routers.auth import get_player_by_discord_id
+
+config = Config.get_config()
 
 
-app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
-# noinspection PyTypeChecker
-# TODO: Re-enable the middleware
-
-# app.add_middleware(
-#     SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
-# )
+app = FastAPI(docs_url=None, redoc_url=None)
+app.include_router(auth.router)
+app.add_middleware(
+    SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
+)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 # noinspection PyTypeChecker
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 
-def get_session():
+def _get_session():
     with Session(engine) as session:
         yield session
 
 
-async def get_latest_info():
+async def _get_latest_info():
     # TODO: Finish porting this
     """Returns the current TGFPInfo object"""
     info = await get_tgfp_info()
-    info.app_version = "unset"  # TODO: config.APP_VERSION
-    info.app_env = "development"  # TODO: config.ENVIRONMENT
+    info.app_version = config.APP_VERSION
+    info.app_env = config.ENVIRONMENT
     return info
 
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[Session, Depends(_get_session)]
 
 
-async def verify_player(request: Request) -> Player:
-    # """Make sure we have a player session, otherwise, get one"""
-    # player: Player = await get_player_from_request(request)
-    # if player:
-    #     return player
-    # discord_id = request.cookies.get("tgfp-discord-id")
-    # if discord_id:
-    #     player = await get_player_by_discord_id(int(discord_id))
-    #     if player:
-    #         request.session["player_id"] = str(player.id)
-    #         set_user({"email": player.email, "username": player.nick_name})
-    #         return player
-    #     # clear the discord id and fall through to exception
-    #     request.cookies.pop("tgfp-discord-id")
-    # raise HTTPException(
-    #     status_code=status.HTTP_307_TEMPORARY_REDIRECT, headers={"Location": "/login"}
-    # )
-    with Session(engine) as session:
-        player: Optional[Player] = session.get(Player, 1)
-        if not player:
-            raise HTTPException(status_code=404)
-    return player
+async def _verify_player(request: Request) -> int:
+    """Make sure we have a player session, otherwise, get one"""
+    cookie = request.cookies.get("tgfp-discord-id")
+    if cookie:
+        player_discord_id: Optional[int] = int(cookie)
+        return player_discord_id
+
+    raise HTTPException(
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        headers={"Location": "/login"},
+    )
 
 
 @app.get("/")
-def home(
+async def home(
     request: Request,
-    player: Player = Depends(verify_player),
-    session: Session = Depends(get_session),
-    info: TGFPInfo = Depends(get_latest_info),
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Home page"""
+    player: Player = await get_player_by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
@@ -119,6 +107,13 @@ def rules():
 @app.get("/logout")
 def logout():
     return {"success": True}
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login(request: Request, info: TGFPInfo = Depends(_get_latest_info)):
+    """Login page for discord"""
+    context = {"info": info}
+    return templates.TemplateResponse(request=request, name="login.j2", context=context)
 
 
 if __name__ == "__main__":
