@@ -1,7 +1,7 @@
 """Main entry point for website"""
 
 import os
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
@@ -42,12 +42,8 @@ def _get_session():
 
 
 async def _get_latest_info():
-    # TODO: Finish porting this
     """Returns the current TGFPInfo object"""
-    info = await get_tgfp_info()
-    info.app_version = config.APP_VERSION
-    info.app_env = config.ENVIRONMENT
-    return info
+    return get_tgfp_info()
 
 
 SessionDep = Annotated[Session, Depends(_get_session)]
@@ -95,8 +91,23 @@ def allpicks():
 
 
 @app.get("/standings")
-def standings():
-    return {"success": True}
+async def standings(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    """Returns the standings page"""
+    session.info["TGFPInfo"] = info
+    player: Player = await get_player_by_discord_id(session, discord_id)
+    players: List[Player] = list(
+        session.exec(select(Player).where(Player.active)).all()
+    )
+    players.sort(key=lambda x: x.total_points, reverse=True)
+    context = {"player": player, "info": info, "active_players": players}
+    return templates.TemplateResponse(
+        request=request, name="standings.j2", context=context
+    )
 
 
 @app.get("/rules")
