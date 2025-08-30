@@ -17,7 +17,7 @@ class Player(TGFPModelBase, table=True):
     last_name: str
     nick_name: str
     active: bool
-    email: str
+    email: str = Field(index=True, unique=True, description="player's email address")
     discord_id: int = Field(sa_type=sa.BigInteger, nullable=False)
 
     game_picks: List["PlayerGamePick"] = Relationship(back_populates="player")

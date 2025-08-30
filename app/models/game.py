@@ -18,7 +18,6 @@ class Game(TGFPModelBase, table=True):
     road_team_id: int = Field(foreign_key="team.id", index=True)
     home_team_id: int = Field(foreign_key="team.id", index=True)
 
-
     # Core fields (same names/types as Beanie)
     game_status: str
     spread: float
@@ -27,7 +26,9 @@ class Game(TGFPModelBase, table=True):
     road_team_score: int
     home_team_score: int
     season: int = Field(index=True)
-    tgfp_nfl_game_id: str = Field(index=True, description="External TGFP/NFL game id")
+    tgfp_nfl_game_id: str = Field(
+        index=True, unique=True, description="External TGFP/NFL game id"
+    )
 
     # View-only relationships for convenience (no schema impact)
     home_team: "Team" = Relationship(

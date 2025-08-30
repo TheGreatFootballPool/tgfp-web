@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
-from config import Config
-from tgfp_nfl import TgfpNfl
+from app.config import Config
+from app.tgfp_nfl import TgfpNfl
 
 config = Config.get_config()
 

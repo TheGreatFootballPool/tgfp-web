@@ -15,5 +15,7 @@ class Team(TGFPModelBase, table=True):
     wins: int
     full_name: str
     logo_url: str
-    tgfp_nfl_team_id: str
+    tgfp_nfl_team_id: str = Field(
+        index=True, unique=True, description="External TGFP/NFL team id"
+    )
     discord_emoji: str
