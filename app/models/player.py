@@ -1,6 +1,5 @@
 from typing import Optional, List, TYPE_CHECKING
 import sqlalchemy as sa
-from sqlalchemy.orm.session import object_session
 from sqlmodel import Field, Relationship, Session, select
 
 from .base import TGFPModelBase
@@ -25,13 +24,6 @@ class Player(TGFPModelBase, table=True):
     @property
     def full_name(self):
         return self.first_name + " " + self.last_name
-
-    @property
-    def current_session(self) -> Session:
-        sess: Session = object_session(self)
-        if sess is None:
-            raise RuntimeError("This Player isn't attached to a Session!")
-        return sess
 
     @property
     def tgfp_info(self) -> TGFPInfo:

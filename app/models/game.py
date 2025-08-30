@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 
 import pytz
-from sqlmodel import Field, Relationship
+from sqlalchemy.orm.session import object_session
+from sqlmodel import Field, Relationship, Session, select
 
 from .base import TGFPModelBase
+from .model_helpers import TGFPInfo
 
 if TYPE_CHECKING:
     from .team import Team
@@ -50,7 +52,6 @@ class Game(TGFPModelBase, table=True):
         }
     )
 
-    # ----- helpers matching the original model -----
     @property
     def is_final(self) -> bool:
         """Returns true if the game is final"""
@@ -74,3 +75,22 @@ class Game(TGFPModelBase, table=True):
         utc_dt = self.start_time.replace(tzinfo=pytz.utc)
         pac = pytz.timezone("US/Pacific")
         return pac.normalize(utc_dt.astimezone(pac))
+
+
+def games_for_week(
+    session: Session, season: int = None, week_no: int = None
+) -> List[Game]:
+    """Gets a list of games for a given week and season, sorted by game start time."""
+    tgfp_info: TGFPInfo = session.info["TGFPInfo"]
+    search_week: int = week_no if week_no else tgfp_info.current_week
+    search_season: int = season if season else tgfp_info.current_season
+
+    statement = (
+        select(Game)
+        .where(Game.season == search_season)
+        .where(Game.week_no == search_week)
+        .order_by(Game.start_time)
+    )
+
+    games = list(session.exec(statement).all())
+    return games

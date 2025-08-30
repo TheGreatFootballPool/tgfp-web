@@ -247,63 +247,6 @@ async def allpicks(
     )
 
 
-@app.get("/picks", response_class=HTMLResponse)
-async def picks(
-    request: Request,
-    player: Player = Depends(verify_player),
-    info: TGFPInfo = Depends(get_latest_info),
-):
-    """Picks page"""
-    if player.pick_for_week(info.display_week):
-        context = {
-            "error_messages": [
-                "Sorry, you can't change your picks.  If you think this is a problem, contact John"
-            ],
-            "goto_route": "allpicks",
-            "player": player,
-            "info": info,
-        }
-        return templates.TemplateResponse(
-            request=request, name="error_picks.j2", context=context
-        )
-    games: List[Game] = (
-        await Game.find(
-            Game.week_no == info.display_week,
-            Game.season == info.season,
-            fetch_links=True,
-        )
-        .sort("+start_time")
-        .to_list()
-    )
-    valid_games = []
-    started_games = []
-    game: Game
-    for game in games:
-        if game.is_pregame:
-            valid_games.append(game)
-        else:
-            started_games.append(game)
-    valid_lock_teams = []
-    valid_upset_teams = []
-    for game in valid_games:
-        valid_upset_teams.append(game.underdog_team)
-        valid_lock_teams.append(game.home_team)
-        valid_lock_teams.append(game.road_team)
-    valid_lock_teams.sort(key=lambda x: x.long_name, reverse=False)
-    valid_upset_teams.sort(key=lambda x: x.long_name, reverse=False)
-    pick = None
-    context = {
-        "valid_games": valid_games,
-        "started_games": started_games,
-        "valid_lock_teams": valid_lock_teams,
-        "valid_upset_teams": valid_upset_teams,
-        "info": info,
-        "player": player,
-        "pick": pick,
-    }
-    return templates.TemplateResponse(request=request, name="picks.j2", context=context)
-
-
 # pylint: disable=too-many-locals
 @app.post("/picks_form")
 async def picks_form(

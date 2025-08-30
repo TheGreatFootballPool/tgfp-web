@@ -29,9 +29,7 @@ async def auth_lifespan(_: FastAPI):
 router = APIRouter(lifespan=auth_lifespan, prefix="/auth", tags=["auth"])
 
 
-async def get_player_by_discord_id(
-    session: Session, discord_id: int
-) -> Optional[Player]:
+def get_player_by_discord_id(session: Session, discord_id: int) -> Optional[Player]:
     """Returns a player by their discord ID"""
     statement = select(Player).where(Player.discord_id == discord_id).limit(1)
     result = session.exec(statement)
@@ -55,7 +53,7 @@ async def callback(code: str, request: Request):
     request.scope.update(headers=request.headers.raw)
     user: User = await discord.user(request)
     with Session(engine) as session:
-        player: Player = await get_player_by_discord_id(session, int(user.id))
+        player: Player = get_player_by_discord_id(session, int(user.id))
     if player:
         redirect_url = request.url_for("home")
         response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)

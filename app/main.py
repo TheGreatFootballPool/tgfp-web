@@ -2,6 +2,8 @@
 
 import os
 from typing import Annotated, Optional, List
+
+from models.game import games_for_week, Game
 from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
@@ -63,14 +65,15 @@ async def _verify_player(request: Request) -> int:
 
 
 @app.get("/")
-async def home(
+def home(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
     info: TGFPInfo = Depends(_get_latest_info),
 ):
+    session.info["TGFPInfo"] = info
     """Home page"""
-    player: Player = await get_player_by_discord_id(session, discord_id)
+    player: Player = get_player_by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
@@ -80,8 +83,65 @@ def profile():
     return {"success": True}
 
 
-@app.get("/picks")
-def picks():
+@app.get("/picks", response_class=HTMLResponse)
+def picks(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    """Picks page"""
+    session.info["TGFPInfo"] = info
+    player: Player = get_player_by_discord_id(session, discord_id)
+    if player.picks_for_week():
+        context = {
+            "error_messages": [
+                "Sorry, you can't change your picks.  If you think this is a problem, contact John"
+            ],
+            "goto_route": "allpicks",
+            "player": player,
+            "info": info,
+        }
+        return templates.TemplateResponse(
+            request=request, name="error_picks.j2", context=context
+        )
+    games: List[Game] = games_for_week(session)
+    valid_games = []
+    started_games = []
+    game: Game
+    for game in games:
+        if game.is_pregame:
+            valid_games.append(game)
+        else:
+            started_games.append(game)
+    valid_lock_teams = []
+    valid_upset_teams = []
+    for game in valid_games:
+        valid_upset_teams.append(game.underdog_team)
+        valid_lock_teams.append(game.home_team)
+        valid_lock_teams.append(game.road_team)
+    valid_lock_teams.sort(key=lambda x: x.long_name, reverse=False)
+    valid_upset_teams.sort(key=lambda x: x.long_name, reverse=False)
+    pick = None
+    context = {
+        "valid_games": valid_games,
+        "started_games": started_games,
+        "valid_lock_teams": valid_lock_teams,
+        "valid_upset_teams": valid_upset_teams,
+        "info": info,
+        "player": player,
+        "pick": pick,
+    }
+    return templates.TemplateResponse(request=request, name="picks.j2", context=context)
+
+
+@app.post("/picks_form")
+def picks_form(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
     return {"success": True}
 
 
@@ -99,7 +159,7 @@ async def standings(
 ):
     """Returns the standings page"""
     session.info["TGFPInfo"] = info
-    player: Player = await get_player_by_discord_id(session, discord_id)
+    player: Player = get_player_by_discord_id(session, discord_id)
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
@@ -118,7 +178,7 @@ async def rules(
     info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Rules page"""
-    player: Player = await get_player_by_discord_id(session, discord_id)
+    player: Player = get_player_by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="rules.j2", context=context)
 
