@@ -100,8 +100,16 @@ def standings():
 
 
 @app.get("/rules")
-def rules():
-    return {"success": True}
+async def rules(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    """Rules page"""
+    player: Player = await get_player_by_discord_id(session, discord_id)
+    context = {"player": player, "info": info}
+    return templates.TemplateResponse(request=request, name="rules.j2", context=context)
 
 
 @app.get("/logout")
