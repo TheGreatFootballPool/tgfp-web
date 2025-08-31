@@ -8,8 +8,6 @@ from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 
-# TODO: Re-enable the middleware
-# from starlette.middleware.sessions import SessionMiddleware
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -17,7 +15,7 @@ from starlette.responses import HTMLResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
-from models import Player
+from models import Player, PlayerGamePick
 from app.routers import auth
 
 
@@ -46,6 +44,50 @@ def _get_session():
 async def _get_latest_info():
     """Returns the current TGFPInfo object"""
     return get_tgfp_info()
+
+
+def get_error_messages(
+    player_picks: List[PlayerGamePick], games: List[Game], upset_id: int, lock_id: int
+) -> List[str]:
+    """
+     Get Error Messages
+    Args:
+       player_picks: list of all the picks details
+       games: all the current week's games
+       upset_id: team_id of the upset team
+       lock_id: lock_id of the lock team
+    Returns:
+        :class:`List` - error_message array (empty array if none)
+    """
+    errors = []
+    # First let's make sure that the form was completed (no missed picks)
+    if len(player_picks) != len(games):
+        errors.append("You missed a pick")
+
+    # Now let's make sure that the lock and pick are the same
+    if lock_id:
+        # loop through each pick until I find a pick that matches the lock, if not found, then warn
+        found_lock: bool = False
+        for pick in player_picks:
+            if pick.picked_team_id == lock_id:
+                found_lock = True
+        if not found_lock:
+            errors.append("You need to actually pick the team you picked for a lock")
+    else:
+        # Cool, now let's see if they missed their lock
+        errors.append("You missed your lock.  (You must choose a lock)")
+
+    if upset_id:
+        found_upset: bool = False
+        for pick in player_picks:
+            if pick.picked_team_id == upset_id:
+                found_upset = True
+        if not found_upset:
+            errors.append(
+                "You cannot choose an upset that you didn't choose as a winner"
+            )
+
+    return errors
 
 
 SessionDep = Annotated[Session, Depends(_get_session)]
@@ -136,13 +178,55 @@ def picks(
 
 
 @app.post("/picks_form")
-def picks_form(
+async def picks_form(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
     info: TGFPInfo = Depends(_get_latest_info),
 ):
-    return {"success": True}
+    session.info["TGFPInfo"] = info
+    player: Player = get_player_by_discord_id(session, discord_id)
+    games: List[Game] = games_for_week(session)
+    form = await request.form()
+    # now get the form variables
+    lock_id: int = int(form.get("lock")) if form.get("lock") else 0
+    upset_id: int = int(form.get("upset")) if form.get("upset") else 0
+    pick_detail: List[PlayerGamePick] = []
+    for game in games:
+        key = f"game_{game.id}"
+        if key in form:
+            winner_id = int(form.get(key))
+            is_lock = winner_id == lock_id
+            is_upset = winner_id == upset_id
+            pg_pick: PlayerGamePick = PlayerGamePick(
+                player_id=player.id,
+                game_id=game.id,
+                picked_team_id=winner_id,
+                season=info.current_season,
+                week_no=info.current_week,
+                is_lock=is_lock,
+                is_upset=is_upset,
+            )
+            pick_detail.append(pg_pick)
+            session.add(pg_pick)
+
+    # Below is where we check for errors
+    error_messages = get_error_messages(pick_detail, games, upset_id, lock_id)
+    if error_messages:
+        context = {
+            "error_messages": error_messages,
+            "goto_route": "picks",
+            "player": player,
+            "info": info,
+        }
+        return templates.TemplateResponse(
+            request=request, name="error_picks.j2", context=context
+        )
+    session.commit()
+    context = {"player": player, "info": info}
+    return templates.TemplateResponse(
+        request=request, name="picks_form.j2", context=context
+    )
 
 
 @app.get("/allpicks")
