@@ -5,7 +5,7 @@ a data source (ESPN / Yahoo for example) for retrieving scores, schedule data, e
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, List
 from dateutil import parser
 import httpx
 

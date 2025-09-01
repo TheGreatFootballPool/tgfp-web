@@ -32,6 +32,14 @@ class Config:
     LISTMONK_API_URL: str
     LISTMONK_AUTH_HASH: str
     LISTMONK_LIST_ID: str
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: int
+    MAIL_SERVER: str
+    MAIL_FROM_NAME: str
+    MAIL_STARTTLS: bool
+    MAIL_SSL_TLS: bool
     SESSION_SECRET_KEY: str
     WEB_SECRET_KEY: str
 
@@ -57,6 +65,14 @@ class Config:
             LISTMONK_API_URL=os.getenv("LISTMONK_API_URL"),
             LISTMONK_AUTH_HASH=os.getenv("LISTMONK_AUTH_HASH"),
             LISTMONK_LIST_ID=os.getenv("LISTMONK_LIST_ID"),
+            MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+            MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+            MAIL_FROM=os.getenv("MAIL_FROM"),
+            MAIL_PORT=int(os.getenv("MAIL_PORT")),
+            MAIL_SERVER=os.getenv("MAIL_SERVER"),
+            MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME"),
+            MAIL_STARTTLS=bool(os.getenv("MAIL_STARTTLS")),
+            MAIL_SSL_TLS=False,
             SESSION_SECRET_KEY=os.getenv("SESSION_SECRET_KEY"),
             WEB_SECRET_KEY=os.getenv("WEB_SECRET_KEY"),
         )

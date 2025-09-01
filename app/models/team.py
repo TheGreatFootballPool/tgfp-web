@@ -1,7 +1,7 @@
 from typing import Optional, List
 from sqlmodel import Field, Session, select
 
-from .base import TGFPModelBase  # your SQLModel base with timestamps, etc.
+from models.base import TGFPModelBase  # your SQLModel base with timestamps, etc.
 
 
 class Team(TGFPModelBase, table=True):

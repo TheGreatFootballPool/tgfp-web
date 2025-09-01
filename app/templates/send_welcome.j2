@@ -1,0 +1,21 @@
+{% extends "base.j2" %}
+{% set page_title="Send Welcome Email" %}
+{% set page_description="Form to send a welcome email to a user" %}
+{% block content %}
+<br><br><font class="date" style="font-weight:bold">Send Welcome Email</font>
+<a name="send_welcome_form">&nbsp;</a>
+<p>Use this form to send a welcome email.</p>
+<form method="post" action="/mail/welcome_email" class="form">
+    <div class="form-row">
+        <label for="first_name">First Name</label>
+        <input type="text" id="first_name" name="first_name" required />
+    </div>
+    <div class="form-row">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required />
+    </div>
+    <div class="form-row">
+        <button type="submit">Send Welcome</button>
+    </div>
+</form>
+{% endblock %}

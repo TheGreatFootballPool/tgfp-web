@@ -16,7 +16,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team
-from app.routers import auth
+from app.routers import auth, mail
 
 
 from config import Config
@@ -26,6 +26,7 @@ config = Config.get_config()
 
 app = FastAPI(docs_url=None, redoc_url=None)
 app.include_router(auth.router)
+app.include_router(mail.router)
 app.add_middleware(
     SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
 )
