@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
-from typing import Final, Optional
+from typing import Final
 
 from fastapi import APIRouter, FastAPI, Request, status
-from sqlmodel import Session, select
+from sqlmodel import Session
 from starlette.responses import RedirectResponse
 from starlette.datastructures import MutableHeaders
 from fastapi_discord import DiscordOAuthClient, User
@@ -29,14 +29,6 @@ async def auth_lifespan(_: FastAPI):
 router = APIRouter(lifespan=auth_lifespan, prefix="/auth", tags=["auth"])
 
 
-def get_player_by_discord_id(session: Session, discord_id: int) -> Optional[Player]:
-    """Returns a player by their discord ID"""
-    statement = select(Player).where(Player.discord_id == discord_id).limit(1)
-    result = session.exec(statement)
-    player: Optional[Player] = result.first()
-    return player
-
-
 @router.get("/discord_login")
 async def discord_login():
     """Login url for discord"""
@@ -53,7 +45,7 @@ async def callback(code: str, request: Request):
     request.scope.update(headers=request.headers.raw)
     user: User = await discord.user(request)
     with Session(engine) as session:
-        player: Player = get_player_by_discord_id(session, int(user.id))
+        player: Player = Player.by_discord_id(session, int(user.id))
     if player:
         redirect_url = request.url_for("home")
         response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)

@@ -128,7 +128,7 @@ async def callback(code: str, request: Request):
     request._headers = new_header
     request.scope.update(headers=request.headers.raw)
     user: User = await discord.user(request)
-    player: Player = await get_player_by_discord_id(int(user.id))
+    player: Player = await player_by_discord_id(int(user.id))
     if player:
         redirect_url = request.url_for("home")
         response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
@@ -213,40 +213,6 @@ async def standings(
     )
 
 
-@app.get("/allpicks", response_class=HTMLResponse)
-async def allpicks(
-    request: Request,
-    player: Player = Depends(verify_player),
-    info: TGFPInfo = Depends(get_latest_info),
-    week_no: int = None,
-):
-    """All Picks page"""
-    picks_week_no = info.display_week
-    if week_no:
-        picks_week_no = week_no
-    active_players: List[Player] = await Player.active_players()
-    active_players.sort(key=lambda x: x.total_points, reverse=True)
-    games: List[Game] = (
-        await Game.find(
-            Game.week_no == picks_week_no, Game.season == info.season, fetch_links=True
-        )
-        .sort("+start_time")
-        .to_list()
-    )
-    teams: List[Team] = await Team.find_all().to_list()
-    context = {
-        "player": player,
-        "info": info,
-        "active_players": active_players,
-        "week_no": picks_week_no,
-        "games": games,
-        "teams": teams,
-    }
-    return templates.TemplateResponse(
-        request=request, name="allpicks.j2", context=context
-    )
-
-
 @app.post("/api/create_picks_page", dependencies=[Depends(api_key_auth)])
 async def api_create_picks_page():
     """API for creating the picks page"""
@@ -291,7 +257,7 @@ async def api_update_team_records():
     return {"success": True}
 
 
-async def get_player_by_discord_id(discord_id: int) -> Optional[Player]:
+async def player_by_discord_id(discord_id: int) -> Optional[Player]:
     """Returns a player by their discord ID"""
     player: Player = await Player.find_one(Player.discord_id == discord_id)
     return player

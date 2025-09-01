@@ -3,7 +3,7 @@
 import os
 from typing import Annotated, Optional, List
 
-from models.game import games_for_week, Game
+from models.game import Game
 from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
@@ -15,12 +15,11 @@ from starlette.responses import HTMLResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
-from models import Player, PlayerGamePick
+from models import Player, PlayerGamePick, Team
 from app.routers import auth
 
 
 from config import Config
-from routers.auth import get_player_by_discord_id
 
 config = Config.get_config()
 
@@ -115,7 +114,7 @@ def home(
 ):
     session.info["TGFPInfo"] = info
     """Home page"""
-    player: Player = get_player_by_discord_id(session, discord_id)
+    player: Player = Player.player_by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
@@ -134,7 +133,7 @@ def picks(
 ):
     """Picks page"""
     session.info["TGFPInfo"] = info
-    player: Player = get_player_by_discord_id(session, discord_id)
+    player: Player = Player.player_by_discord_id(session, discord_id)
     if player.picks_for_week():
         context = {
             "error_messages": [
@@ -147,7 +146,7 @@ def picks(
         return templates.TemplateResponse(
             request=request, name="error_picks.j2", context=context
         )
-    games: List[Game] = games_for_week(session)
+    games: List[Game] = Game.games_for_week(session)
     valid_games = []
     started_games = []
     game: Game
@@ -185,8 +184,8 @@ async def picks_form(
     info: TGFPInfo = Depends(_get_latest_info),
 ):
     session.info["TGFPInfo"] = info
-    player: Player = get_player_by_discord_id(session, discord_id)
-    games: List[Game] = games_for_week(session)
+    player: Player = Player.player_by_discord_id(session, discord_id)
+    games: List[Game] = Game.games_for_week(session)
     form = await request.form()
     # now get the form variables
     lock_id: int = int(form.get("lock")) if form.get("lock") else 0
@@ -230,8 +229,33 @@ async def picks_form(
 
 
 @app.get("/allpicks")
-def allpicks():
-    return {"success": True}
+def allpicks(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+    week_no: int = None,
+):
+    session.info["TGFPInfo"] = info
+    player: Player = Player.player_by_discord_id(session, discord_id)
+    picks_week_no = info.current_week
+    if week_no:
+        picks_week_no = week_no
+    active_players: List[Player] = Player.active_players(session)
+    active_players.sort(key=lambda x: x.total_points, reverse=True)
+    games: List[Game] = Game.games_for_week(session)
+    teams: List[Team] = Team.all_teams(session)
+    context = {
+        "player": player,
+        "info": info,
+        "active_players": active_players,
+        "week_no": picks_week_no,
+        "games": games,
+        "teams": teams,
+    }
+    return templates.TemplateResponse(
+        request=request, name="allpicks.j2", context=context
+    )
 
 
 @app.get("/standings")
@@ -243,7 +267,7 @@ async def standings(
 ):
     """Returns the standings page"""
     session.info["TGFPInfo"] = info
-    player: Player = get_player_by_discord_id(session, discord_id)
+    player: Player = Player.player_by_discord_id(session, discord_id)
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
@@ -262,7 +286,7 @@ async def rules(
     info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Rules page"""
-    player: Player = get_player_by_discord_id(session, discord_id)
+    player: Player = Player.player_by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="rules.j2", context=context)
 

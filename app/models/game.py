@@ -76,21 +76,21 @@ class Game(TGFPModelBase, table=True):
         pac = pytz.timezone("US/Pacific")
         return pac.normalize(utc_dt.astimezone(pac))
 
+    @staticmethod
+    def games_for_week(
+        session: Session, season: int = None, week_no: int = None
+    ) -> List["Game"]:
+        """Gets a list of games for a given week and season, sorted by game start time."""
+        tgfp_info: TGFPInfo = session.info["TGFPInfo"]
+        search_week: int = week_no if week_no else tgfp_info.current_week
+        search_season: int = season if season else tgfp_info.current_season
 
-def games_for_week(
-    session: Session, season: int = None, week_no: int = None
-) -> List[Game]:
-    """Gets a list of games for a given week and season, sorted by game start time."""
-    tgfp_info: TGFPInfo = session.info["TGFPInfo"]
-    search_week: int = week_no if week_no else tgfp_info.current_week
-    search_season: int = season if season else tgfp_info.current_season
+        statement = (
+            select(Game)
+            .where(Game.season == search_season)
+            .where(Game.week_no == search_week)
+            .order_by(Game.start_time)
+        )
 
-    statement = (
-        select(Game)
-        .where(Game.season == search_season)
-        .where(Game.week_no == search_week)
-        .order_by(Game.start_time)
-    )
-
-    games = list(session.exec(statement).all())
-    return games
+        games = list(session.exec(statement).all())
+        return games
