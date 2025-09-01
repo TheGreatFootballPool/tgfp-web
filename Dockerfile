@@ -16,6 +16,4 @@ COPY config/requirements.txt /tmp/requirements.txt
 RUN uv pip install --system -r /tmp/requirements.txt
 COPY app /app
 
-# We’ll set the run command later once we confirm your APP module path
-EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "main:app", "--host=0.0.0.0", "--port=8000", "--proxy-headers"]

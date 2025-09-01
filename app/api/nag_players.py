@@ -1,23 +1,24 @@
 """This example requires the 'message_content' intent."""
+
 import datetime
 from typing import List, Optional
 
 import arrow
 from discord_webhook import DiscordWebhook
 
-from models import Game, Player, TGFPInfo
+from models import Game, Player
 from config import Config
 
 
 def get_minutes_to_kickoff(game: Game) -> int:
-    """ Returns the number of minutes before the scheduled kickoff of the given game """
+    """Returns the number of minutes before the scheduled kickoff of the given game"""
     game_1_start = arrow.get(game.start_time)
     delta: datetime.timedelta = game_1_start - arrow.utcnow()
     return round(delta.seconds / 60)
 
 
-async def get_late_players(info: TGFPInfo) -> List[Player]:
-    """ Returns a list of players that have not yet put their picks in for the week """
+async def get_late_players() -> List[Player]:
+    """Returns a list of players that have not yet put their picks in for the week"""
     late_players: List[Player] = []
     players: List[Player] = await Player.find_all(fetch_links=True).to_list()
     for player in players:
@@ -31,7 +32,7 @@ async def get_late_players(info: TGFPInfo) -> List[Player]:
 
 
 async def get_nag_payload(info: TGFPInfo) -> Optional[str]:
-    """ Gets the embed message to send to the server """
+    """Gets the embed message to send to the server"""
     late_players = await get_late_players(info)
     message: Optional[str] = None
     if late_players:
@@ -47,12 +48,11 @@ async def get_nag_payload(info: TGFPInfo) -> Optional[str]:
 
 
 async def nag_players(info: TGFPInfo):
-    """ Sends a message to the players  """
+    """Sends a message to the players"""
     config: Config = Config.get_config()
     nag_payload = await get_nag_payload(info)
     if nag_payload:
         webhook = DiscordWebhook(
-            url=config.DISCORD_NAG_BOT_WEBHOOK_URL,
-            content=nag_payload
+            url=config.DISCORD_NAG_BOT_WEBHOOK_URL, content=nag_payload
         )
         webhook.execute()

@@ -1,6 +1,6 @@
 {% set login_status_class='subhead' %}
 {% macro week_no_link(index) %}
-    {% if week_no == index %}week {{ index }}{% else %}<a href="/allpicks?week_no={{ index }}">week {{ index }}</a>{% endif %}{% if index != info.display_week %} - {% endif %}
+    {% if week_no == index %}week {{ index }}{% else %}<a href="/allpicks?week_no={{ index }}">week {{ index }}</a>{% endif %}{% if index != info.current_week %} - {% endif %}
 {% endmacro %}
 
 <!doctype html>
@@ -17,10 +17,10 @@
     <div id="headerBar">
         <div class="title">The Great Football Pool</div>
         <div class="description">{{ page_description }}</div>
-        <div class="description_sub">Choose week number: ({% for i in range(info.display_week) %}{{ week_no_link(i + 1) }}{% endfor %})</div>
+        <div class="description_sub">Choose week number: ({% for i in range(info.current_week) %}{{ week_no_link(i + 1) }}{% endfor %})</div>
     </div>
     <div id="mainContent">
-        {% set found_picks = player.pick_for_week(week_no=week_no) %}
+        {% set found_picks = player.picks_for_week(week_no=week_no) %}
         {% if not found_picks %}
             <h1>You must enter your <a href="{{ url_for('picks') }}">picks</a> before seeing this page</h1>
          {% else %}

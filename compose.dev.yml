@@ -2,35 +2,49 @@ services:
   web:
     build:
       context: .
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --reload
+      dockerfile: Dockerfile
     volumes:
       - ./app:/app
+      - ./alembic.ini:/alembic.ini:ro
+      - ./alembic:/alembic:ro
+      - ./docker/entrypoint.sh:/app/entrypoint.sh:ro
     env_file:
       - ./config/.env.dev
+    environment:
+      PYTHONPATH: /
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8000:8000"
     restart: unless-stopped
+    entrypoint: ["bash", "/app/entrypoint.sh"]
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/login"]
+      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/docs -o /dev/null"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 5s
 
-  mongo:
-    image: mongo:6
-    container_name: tgfp-mongo-dev
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data-dev:/data/db
+  postgres:
+    image: postgres:16
+    container_name: tgfp-postgres-dev
     restart: unless-stopped
+    environment:
+      POSTGRES_USER: tgfp
+      POSTGRES_PASSWORD: tgfp
+      POSTGRES_DB: tgfp
+      TZ: UTC
+    volumes:
+      - tgfp-pg-data-dev:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 15s
+      test: ["CMD-SHELL", "pg_isready -U tgfp -d tgfp"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 10s
 
 volumes:
-  mongo-data-dev:
+  tgfp-pg-data-dev:

@@ -1,0 +1,268 @@
+"""Main entry point for website"""
+
+import os
+from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Optional, Final, List
+
+import uvicorn
+from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.templating import Jinja2Templates
+from fastapi_discord import DiscordOAuthClient, User
+
+from starlette import status
+from starlette.datastructures import MutableHeaders
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import HTMLResponse, RedirectResponse
+from starlette.staticfiles import StaticFiles
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+from api.nag_players import nag_players
+from api.schedule_kestra_flows import schedule_kestra_flows
+from api.update_scores import update_game
+from api.update_team_records import update_team_records
+from api.create_picks import create_picks, CreatePicksException
+from config import Config
+from models import Player
+
+SECONDS: Final[int] = 60 * 60 * 24
+DAYS: Final[int] = 365
+COOKIE_TIME_OUT = DAYS * SECONDS
+
+# pylint: disable=duplicate-code
+config: Config = Config.get_config()
+
+discord: DiscordOAuthClient = DiscordOAuthClient(
+    config.DISCORD_CLIENT_ID, config.DISCORD_CLIENT_SECRET, config.DISCORD_REDIRECT_URI
+)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # use token authentication
+
+
+def ordinal(n: int):
+    """Returns the 'place' ordinal string for a given int"""
+    if 11 <= (n % 100) <= 13:
+        suffix = "th"
+    else:
+        suffix = ["th", "st", "nd", "rd", "th"][min(n % 10, 4)]
+    return str(n) + suffix
+
+
+async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
+    """Check to see if we have an authorized token"""
+    found_key: Optional[ApiKey] = await ApiKey.find_one(ApiKey.token == api_key)
+    if found_key is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
+        )
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Perform all app initialization before 'yield'"""
+    await discord.init()
+    yield
+
+
+app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
+# noinspection PyTypeChecker
+app.add_middleware(
+    SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
+)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+# noinspection PyTypeChecker
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
+
+async def get_player_from_request(request: Request) -> Optional[Player]:
+    """Return the deserialized player object from the request session"""
+    player: Optional[Player] = None
+    if request.scope.get("session") is not None:
+        player_id: str = request.session.get("player_id")
+        if player_id:
+            player = await Player.get(PydanticObjectId(player_id))
+    return player
+
+
+async def get_latest_info(request: Request) -> Optional[TGFPInfo]:
+    """Returns the current TGFPInfo object"""
+    info = await get_tgfp_info()
+    info.app_version = config.APP_VERSION
+    info.app_env = config.ENVIRONMENT
+    request.session["tgfp_info"] = info.model_dump_json()
+    return info
+
+
+@app.get("/discord_login")
+async def discord_login():
+    """Login url for discord"""
+    return RedirectResponse(discord.oauth_login_url)
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login(request: Request, info: TGFPInfo = Depends(get_latest_info)):
+    """Login page for discord"""
+    context = {"info": info}
+    return templates.TemplateResponse(request=request, name="login.j2", context=context)
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    """Logs the user out and clears the session"""
+    request.session.clear()
+    redirect_url = request.url_for("login")
+    response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+    response.delete_cookie("tgfp-discord-id")
+    return response
+
+
+@app.get("/callback")
+async def callback(code: str, request: Request):
+    """Callback url for discord"""
+    token, _ = await discord.get_access_token(code)
+    new_header = MutableHeaders(request.headers)
+    new_header["Authorization"] = f"Bearer {token}"
+    # pylint: disable=protected-access
+    request._headers = new_header
+    request.scope.update(headers=request.headers.raw)
+    user: User = await discord.user(request)
+    player: Player = await player_by_discord_id(int(user.id))
+    if player:
+        redirect_url = request.url_for("home")
+        response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+        response.set_cookie(
+            key="tgfp-discord-id",
+            value=user.id,
+            max_age=COOKIE_TIME_OUT,
+        )
+    else:
+        redirect_url = request.url_for("login")
+        response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+    return response
+
+
+@app.get("/")
+def root(request: Request):
+    """Redirect '/' to /home"""
+    return RedirectResponse(request.url_for("home"), status.HTTP_301_MOVED_PERMANENTLY)
+
+
+@app.get("/rules", response_class=HTMLResponse)
+def rules(
+    request: Request,
+    player: Player = Depends(verify_player),
+    info: TGFPInfo = Depends(get_latest_info),
+):
+    """Rules page"""
+    context = {"player": player, "info": info}
+    return templates.TemplateResponse(request=request, name="rules.j2", context=context)
+
+
+@app.get("/home", response_class=HTMLResponse)
+@app.get("/profile", response_class=HTMLResponse)
+async def profile(
+    request: Request,
+    player: Player = Depends(verify_player),
+    info: TGFPInfo = Depends(get_latest_info),
+    profile_player_id: str = None,
+):
+    """Player Profile Page"""
+    if profile_player_id:
+        profile_player: Player = await Player.get(PydanticObjectId(profile_player_id))
+    else:
+        profile_player: Player = player
+    num_players: int = len(await Player.active_players())
+    games_back: int = await profile_player.games_back()
+    labels: List[str] = []
+    values: List[int] = []
+    for i in range(0, info.active_week):
+        week_no: int = i + 1
+        labels.append(f"Week {week_no}")
+        values.append(await profile_player.get_standings_through(week_no))
+    data: dict = {"labels": labels, "data": values}
+    current_place: str = ordinal(values[-1])
+    context = {
+        "player": player,
+        "profile_player": profile_player,
+        "page_title": "Profile",
+        "info": info,
+        "the_data": data,
+        "num_players": num_players,
+        "games_back": games_back,
+        "current_place": current_place,
+    }
+    return templates.TemplateResponse(
+        request=request, name="new_base.j2", context=context
+    )
+
+
+@app.get("/standings", response_class=HTMLResponse)
+async def standings(
+    request: Request,
+    player: Player = Depends(verify_player),
+    info: TGFPInfo = Depends(get_latest_info),
+):
+    """Returns the standings page"""
+    players: List[Player] = await Player.find({"active": True}).to_list()
+    players.sort(key=lambda x: x.total_points, reverse=True)
+    context = {"player": player, "info": info, "active_players": players}
+    return templates.TemplateResponse(
+        request=request, name="standings.j2", context=context
+    )
+
+
+@app.post("/api/create_picks_page", dependencies=[Depends(api_key_auth)])
+async def api_create_picks_page():
+    """API for creating the picks page"""
+    try:
+        await create_picks()
+    except CreatePicksException as e:
+        # pylint: disable=raise-missing-from
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"success": True}
+
+
+@app.post("/api/nag_players", dependencies=[Depends(api_key_auth)])
+async def api_nag_players(info: TGFPInfo = Depends(get_latest_info)):
+    """Sends a message to discord to nag the players that haven't done their picks yet"""
+    await nag_players(info)
+    return {"success": True}
+
+
+@app.post("/api/schedule_kestra_flows", dependencies=[Depends(api_key_auth)])
+async def api_schedule_kestra_flows(info: TGFPInfo = Depends(get_latest_info)):
+    """Schedule all the kestra flows"""
+    await schedule_kestra_flows(info)
+    return {"success": True}
+
+
+@app.get(
+    "/api/update_game/{game_id}",
+    response_model=Game,
+    dependencies=[Depends(api_key_auth)],
+)
+async def api_update_game(game_id: str):
+    """API to tell trigger a game update (given the game ID)"""
+    game: Game = await Game.get(PydanticObjectId(game_id))
+    await update_game(game)
+    return game
+
+
+@app.post("/api/update_team_records", dependencies=[Depends(api_key_auth)])
+async def api_update_team_records():
+    """When called, will update all the team's win / loss record"""
+    await update_team_records()
+    return {"success": True}
+
+
+async def player_by_discord_id(discord_id: int) -> Optional[Player]:
+    """Returns a player by their discord ID"""
+    player: Player = await Player.find_one(Player.discord_id == discord_id)
+    return player
+
+
+if __name__ == "__main__":
+    reload: bool = os.getenv("ENVIRONMENT") != "production"
+    uvicorn.run("main:app", host="0.0.0.0", port=6701, reload=reload, access_log=False)

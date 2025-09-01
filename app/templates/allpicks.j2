@@ -2,22 +2,22 @@
 {% set page_title="Everybody's Picks Page" -%}
 {% set page_description="The Picks Page - See everybody's picks" -%}
 
-{% macro row_with_style(player_pick, row_number) -%}
+{% macro row_with_style(player_picks, row_number) -%}
     {% if row_number%2 == 0 -%}
-        <tr {% if player_pick is not defined %}style="opacity:0.4"{% endif %}>
+        <tr {% if player_picks is not defined %}style="opacity:0.4"{% endif %}>
     {% else -%}
-        <tr style="{% if player_pick is not defined %}opacity:0.4{% endif %};border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
+        <tr style="{% if player_picks is not defined %}opacity:0.4{% endif %};border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
     {% endif -%}
 {% endmacro -%}
 {% macro team_with_upset_lock_style(team, pick) -%}
     {% set span_class = None -%}
-    {% if pick.lock_team.ref.id == team.id -%}
+    {% if pick.is_lock -%}
         {% set span_class = "lock" -%}
     {% endif -%}
-    {% if pick.upset_team and pick.upset_team.ref.id == team.id -%}
+    {% if pick.is_upset -%}
         {% set span_class = "upset" -%}
     {% endif -%}
-    {% if pick.upset_team and pick.upset_team.ref.id == team.id and pick.lock_team.ref.id == team.id %}
+    {% if pick.is_lock and pick.is_upset %}
         {% set span_class = "lockupset" -%}
     {% endif %}
     <span {% if span_class -%} class="{{ span_class }}"{% endif -%}>{{ team.long_name }}</span>
@@ -52,17 +52,18 @@
     {% endfor -%}
     </tr>
     {% for player in active_players -%}
-        {% set player_pick = player.pick_for_week(week_no=week_no) -%}
-        {{ row_with_style(player_pick, loop.index) }}
+        {% set player_picks = player.picks_for_week(week_no=week_no) -%}
+        {{ row_with_style(player_picks, loop.index) }}
         <td style="overflow:hidden; border-top:solid 1px #888;border-left:solid 1px #888;">
             <div style="white-space: nowrap;float:left;width:50%;">&nbsp;{{ player.nick_name }}</div>
             <div align="right" style="white-space: nowrap;float:right;width:50%;">({{ player.wins(week_no=week_no) }}-{{ player.losses(week_no=week_no) }}) {% if player.bonus(week_no=week_no) > 0 %}+{% endif %}{{ player.bonus(week_no=week_no) }}&nbsp;</div></td>
         {% for game in games -%}
-            {% if not player_pick %}
+            {% if not player_picks %}
                 <td style="color:green;text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">--no pick--</td>
             {% else %}
-                {% set team = player_pick.winning_team_for_game(game, teams) %}
-                <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ team_with_upset_lock_style(team, player_pick) }}</td>
+                {% set pick = player.pick_for_game_id(game.id) %}
+                {% set team = pick.picked_team %}
+                <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ team_with_upset_lock_style(team, pick) }}</td>
             {% endif %}
         {% endfor %}
     {% endfor -%}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body {
+            background: #eee;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #111;
+        }
+
+        header {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background: #fff;
+            margin: 0 auto;
+            padding: 30px;
+        }
+    </style>
+    <title></title>
+</head>
+<body>
+<section class="container">
+    <header>
+        <!-- This will appear in the header of all e-mails.
+             The subscriber's name will be automatically inserted here. //-->
+        Hi {{ first_name }}!
+    </header>
+
+    <!-- This is where the e-mail body will be inserted //-->
+    <div class="content">
+        Welcome to the Great Football Pool!
+        <p>
+            Here is everything you need to know:
+        <h3>Login information:</h3>
+        <ul>
+            <li><a href="{{ homepage_url }}">{{ homepage_url }}</a>
+            <li>login: use your discord account to connect
+        </ul>
+        <h3>History.</h3>
+        The football pool started looong ago (I want to say 1993?) when Don Kassner (Donny), Dan Christensen (Dan-o) and
+        I started taking the games each week and guessing who would win/lose, etc... we developed a system of points and
+        tracked it during the season. All this was done with newspaper, telephone and email. When I moved up to
+        Vancouver, WA in 1995 it became much more difficult, but we kept it up. That's when I put it on-line. Then over
+        the next few years we added Friends and Family. and even their friends and family.... Over the years there have
+        been over 40 people who have played and right now we have (I think) about 26 active players. We're all friends
+        and family (even though not everybody knows everybody), as the football pool has never been open to the
+        'public'.
+        <h3>Winner</h3>
+        At the end of the year, the winner gets the “Bob Davis Award™”.
+        We've been giving that award in Bob's honor ever since he passed away, before that, it was Bob who usually sent
+        the award to the winner. I’ll forward you the email about why I started this new tradition.
+        <p>
+            Kelly Faber won last year by picking the Chiefs over the 49ers.
+        <h3>Basic rules</h3>
+        The rules are described here: <a href="{{ rules_url }}">{{ rules_url }}</a>
+        <h3>Unspoken Rules</h3>
+        <ol>
+            <li>You can't see other people's picks until you enter yours. This use to just be a rule, but now it's the
+                way the website works. The reason is that you shouldn't allow other people's picks to influence yours.
+            <li>You need to get your picks in before kickoff of the first game of the week.
+                <ul>
+                    <li>The picks page is posted at 6am PST on Wednesday of every week, the 'spread' is locked in at
+                        that time.
+                    <li>The way it works now, is if you get the pick in late, then the system automatically picks the
+                        <b>home team</b> for you, and you cannot pick that game as your upset, or lock
+                </ul>
+            <li>Once you enter your picks, you cannot change them
+        </ol>
+        <h3>Email Distribution list:</h3>
+        I used to have an email distribution list (like an old-fashioned one that people could reply to, etc...), but
+        I've replaced that with discord (more on that below).
+        <p>
+            I now use a newsletter style mailer to send out emails.
+        <h3>Discord</h3>
+        We have an 'official' discord server for trash talking, results, etc... There is a bot that you can interact
+        with and get information. I'm going to put together a more formal guide on
+        how to interact with it. In the meantime don't hesitate to jump on and talk it up.
+    </div>
+
+    <footer>
+        <div>Sincerely,</div>
+        <div>John's TGFP Email Bot</div>
+        <br/>
+        <div>Question, concerns? Just reply to this email</div>
+        <div>Replies to this email will ONLY be seen by me (<a href="mailto:{{ admin_email }}">{{ admin_email }}</a>)
+        </div>
+        <div>TGFP Homepage: <a href="{{ homepage_url }}" target="_blank">{{ homepage_url }}</a></div>
+        <div>TGFP Discord: <a href="{{ discord_invite_link }}" target="_blank">{{ discord_invite_link }}</a></div>
+    </footer>
+
+</section>
+</body>
+</html>

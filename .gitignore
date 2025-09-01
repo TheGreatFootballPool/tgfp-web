@@ -16,3 +16,4 @@ logs
 .env
 db/*
 .env.*
+.venv
