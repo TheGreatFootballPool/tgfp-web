@@ -38,7 +38,7 @@ services:
     volumes:
       - tgfp-pg-data-prod:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tgfp -d tgfp"]
       interval: 10s

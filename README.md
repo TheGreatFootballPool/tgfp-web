@@ -9,6 +9,7 @@ The great football pool is self-contained in a docker environment.
 Follow these steps to get the project running locally for development.
 
 ### Prerequisites
+* Docker (compose)
 
 ### 1. Clone the repository
 ```bash
@@ -33,10 +34,9 @@ cd tgfp-web
 
 - [Install op](https://support.1password.com/command-line-getting-started/)
 - `export OP_SERVICE_ACCOUNT_TOKEN=<your token>` 
-- run the convenience script to create the env file with `op inject`
+- Run the convenience script to create the env file with `op inject`
   - Production [scripts/create_local_prod_env.sh](scripts/create_local_prod_env.sh) 
   - Development [scripts/create_local_dev_env.sh](scripts/create_local_dev_env.sh)
-  - 
 </details>
 
 ### Start services with Docker
