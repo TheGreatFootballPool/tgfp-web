@@ -9,7 +9,7 @@ services:
       - ./alembic:/alembic:ro
       - ./docker/entrypoint.sh:/app/entrypoint.sh:ro
     env_file:
-      - ./config/.env.dev
+      - ./config/.env.development
     environment:
       PYTHONPATH: /
     depends_on:

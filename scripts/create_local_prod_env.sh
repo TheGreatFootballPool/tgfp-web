@@ -1,4 +1,4 @@
-ENV="development"
+ENV="production"
 cd "$(dirname "$0")" || exit
 cd ..
 APP_ENV=${ENV} op inject -f -i config/op.env -o "config/.env.${ENV}"
