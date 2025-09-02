@@ -42,6 +42,7 @@ class Config:
     MAIL_SSL_TLS: bool
     SESSION_SECRET_KEY: str
     WEB_SECRET_KEY: str
+    UMAMI_TRACKING_ID: str
 
     @classmethod
     def get_config(cls):
@@ -75,5 +76,6 @@ class Config:
             MAIL_SSL_TLS=False,
             SESSION_SECRET_KEY=os.getenv("SESSION_SECRET_KEY"),
             WEB_SECRET_KEY=os.getenv("WEB_SECRET_KEY"),
+            UMAMI_TRACKING_ID=os.getenv("UMAMI_TRACKING_ID"),
         )
         return new_config

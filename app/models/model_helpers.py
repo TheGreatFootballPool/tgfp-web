@@ -36,6 +36,7 @@ class TGFPInfo(BaseModel):
     current_week: int
     app_version: str
     app_env: str
+    umami_tracking_id: str
 
     @property
     def last_week(self):
@@ -49,4 +50,5 @@ def get_tgfp_info() -> TGFPInfo:
         current_week=current_nfl_week(),
         app_version=config.APP_VERSION,
         app_env=config.ENVIRONMENT,
+        umami_tracking_id=config.UMAMI_TRACKING_ID,
     )

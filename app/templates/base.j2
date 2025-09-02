@@ -7,7 +7,7 @@
     <script type=text/javascript src="{{ url_for('static', path='/jquery.js?' + info.app_version) }}"></script>
     <script src="{{ url_for('static', path='/sorttable.js?' + info.app_version) }}"></script>
     <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
- </head>
+    <script defer src="https://umami.sturgeon.me/script.js" data-website-id="{{ info.umami_tracking_id }}"></script>
   <body>
     <div id="topBar"></div>
     <div id="headerBar">
