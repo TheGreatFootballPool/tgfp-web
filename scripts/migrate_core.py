@@ -25,7 +25,7 @@ from app.models import (
 # --- Config ---
 MONGO_URI = "mongodb://tgfp:f_xUG9VGGYxP@tgfp-db:27017/"
 MONGO_DB = "tgfp"  # change if your prod DB name differs
-POSTGRES_URL = "postgresql+psycopg://tgfp:tgfp@127.0.0.1:5433/tgfp"
+POSTGRES_URL = "postgresql+psycopg://tgfp:tgfp@127.0.0.1:5434/tgfp"  # change the port to not conflict with macOS
 
 # Optional: set to True to print docs instead of writing
 DRY_RUN = bool(int(os.getenv("DRY_RUN", "0")))

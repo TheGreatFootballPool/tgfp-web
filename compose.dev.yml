@@ -12,6 +12,7 @@ services:
       - ./config/.env.development
     environment:
       PYTHONPATH: /
+      ALEMBIC_CONFIG: /alembic.ini
     depends_on:
       postgres:
         condition: service_healthy

@@ -14,10 +14,10 @@ cd ..
 
 # ---------- Load .env first in cwd ----------
 set -a
-. config/.env.dev
+. config/.env.production
 set +a
 
-COMPOSE_FILE="compose.dev.yml"
+COMPOSE_FILE="compose.prod.yml"
 DB_NAME="tgfp"
 MONGO_IMAGE="mongo:6"
 DEV_SERVICE="mongo"

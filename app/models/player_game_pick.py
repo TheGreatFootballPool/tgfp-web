@@ -7,7 +7,9 @@ from .base import TGFPModelBase
 
 if TYPE_CHECKING:
     # noinspection PyUnusedImports
-    from models import Player, Game, Team
+    from .player import Player
+    from .game import Game
+    from .team import Team
 
 
 class PlayerGamePick(TGFPModelBase, table=True):

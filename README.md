@@ -33,7 +33,8 @@ cd tgfp-web
 > If you use 1password for your secrets, you can use the [op.env](config/op.env) file as a template for generating your config file
 
 - [Install op](https://support.1password.com/command-line-getting-started/)
-- `export OP_SERVICE_ACCOUNT_TOKEN=<your token>` 
+- `export OP_SERVICE_ACCOUNT_TOKEN=<your token>`
+- `op vault list` (to test)
 - Run the convenience script to create the env file with `op inject`
   - Production [scripts/create_local_prod_env.sh](scripts/create_local_prod_env.sh) 
   - Development [scripts/create_local_dev_env.sh](scripts/create_local_dev_env.sh)
