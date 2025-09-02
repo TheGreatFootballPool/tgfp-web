@@ -20,7 +20,6 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-    entrypoint: ["bash", "/app/entrypoint.sh"]
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/ping -o /dev/null"]
       interval: 15s
