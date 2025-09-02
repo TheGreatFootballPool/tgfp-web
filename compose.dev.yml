@@ -7,7 +7,6 @@ services:
       - ./app:/app
       - ./alembic.ini:/alembic.ini:ro
       - ./alembic:/alembic:ro
-      - ./docker/entrypoint.sh:/app/entrypoint.sh:ro
     env_file:
       - ./config/.env.development
     environment:
