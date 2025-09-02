@@ -115,7 +115,26 @@ def home(
 ):
     session.info["TGFPInfo"] = info
     """Home page"""
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
+    context = {"player": player, "info": info}
+    return templates.TemplateResponse(request=request, name="home.j2", context=context)
+
+
+@app.get("/ping")
+def ping():
+    return {"status": "pong"}
+
+
+@app.get("/home")
+def home_legacy(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    session.info["TGFPInfo"] = info
+    """Home page"""
+    player: Player = Player.by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
@@ -134,7 +153,7 @@ def picks(
 ):
     """Picks page"""
     session.info["TGFPInfo"] = info
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
     if player.picks_for_week():
         context = {
             "error_messages": [
@@ -185,7 +204,7 @@ async def picks_form(
     info: TGFPInfo = Depends(_get_latest_info),
 ):
     session.info["TGFPInfo"] = info
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
     games: List[Game] = Game.games_for_week(session)
     form = await request.form()
     # now get the form variables
@@ -238,7 +257,7 @@ def allpicks(
     week_no: int = None,
 ):
     session.info["TGFPInfo"] = info
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
     picks_week_no = info.current_week
     if week_no:
         picks_week_no = week_no
@@ -268,7 +287,7 @@ async def standings(
 ):
     """Returns the standings page"""
     session.info["TGFPInfo"] = info
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
@@ -287,7 +306,7 @@ async def rules(
     info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Rules page"""
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(request=request, name="rules.j2", context=context)
 

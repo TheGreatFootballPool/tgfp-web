@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     entrypoint: ["bash", "/app/entrypoint.sh"]
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/ -o /dev/null"]
+      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/ping -o /dev/null"]
       interval: 15s
       timeout: 5s
       retries: 3

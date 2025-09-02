@@ -69,7 +69,7 @@ async def send_welcome(
     session: Session = Depends(_get_session),
     info: TGFPInfo = Depends(_get_latest_info),
 ):
-    player: Player = Player.player_by_discord_id(session, discord_id)
+    player: Player = Player.by_discord_id(session, discord_id)
     context = {"player": player, "info": info}
     return templates.TemplateResponse(
         request=request, name="send_welcome.j2", context=context

@@ -16,12 +16,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    container_name:
+      tgfp-web-dev
     ports:
-      - "8000:8000"
+      - "6701:8000"
     restart: unless-stopped
     entrypoint: ["bash", "/app/entrypoint.sh"]
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/docs -o /dev/null"]
+      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:8000/ping -o /dev/null"]
       interval: 15s
       timeout: 5s
       retries: 3

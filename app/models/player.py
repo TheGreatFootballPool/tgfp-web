@@ -125,7 +125,7 @@ class Player(TGFPModelBase, table=True):
         return list(session.exec(statement).all())
 
     @staticmethod
-    def player_by_discord_id(session: Session, discord_id: int) -> Optional["Player"]:
+    def by_discord_id(session: Session, discord_id: int) -> Optional["Player"]:
         """Returns a player by their discord ID"""
         statement = select(Player).where(Player.discord_id == discord_id).limit(1)
         result = session.exec(statement)
