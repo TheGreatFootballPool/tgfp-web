@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="FastAPI (dev)" type="PythonConfigurationType" factoryName="Python">
     <module name="tgfp-web" />
-    <option name="ENV_FILES" value="$PROJECT_DIR$/config/.env.dev" />
+    <option name="ENV_FILES" value="$PROJECT_DIR$/config/.env.development" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>

@@ -10,32 +10,34 @@ Follow these steps to get the project running locally for development.
 
 ### Prerequisites
 
-### Clone the repository
+### 1. Clone the repository
 ```bash
 git clone git@github.com:TheGreatFootballPool/tgfp-web.git
 cd tgfp-web
 ```
 
-### Steps for Production deployment
-### Create the CONFIG file: `config/.env.production` file
-- This file is needed by [compose.prod.yml](compose.prod.yml)
+### Steps for deployment
+### 2. Create the CONFIG file: 
+> This file is needed by [compose.prod.yml](compose.prod.yml)
 
-### Create the CONFIG file: `config/.env.development` file
-- This file is needed by [compose.dev.yml](compose.dev.yml)
+* _Production_: `config/.env.production`
+* _Development_: `config/.env.development`
 
+> See the `config/sample.env` for example config
+ 
 <details>
-<summary> 💡Tips for using 1Password</summary>
+
+<summary> 💡How to use 1Password to generate .env file </summary>
 
 > If you use 1password for your secrets, you can use the [op.env](config/op.env) file as a template for generating your config file
 
 - [Install op](https://support.1password.com/command-line-getting-started/)
 - `export OP_SERVICE_ACCOUNT_TOKEN=<your token>` 
-- I have added a convenience script [scripts/create_local_dev_env.sh](scripts/create_local_dev_env.sh) for creating the env file with `op inject`
-
+- run the convenience script to create the env file with `op inject`
+  - Production [scripts/create_local_prod_env.sh](scripts/create_local_prod_env.sh) 
+  - Development [scripts/create_local_dev_env.sh](scripts/create_local_dev_env.sh)
+  - 
 </details>
-
-#### Manual file creation
-- You can copy / edit the [sample.env](docs/sample.env) and place it in `config/.env.dev`
 
 ### Start services with Docker
 ```bash
@@ -47,10 +49,8 @@ This will start the web server and any required dependencies (e.g., database).
 ###  Access the app
 Once the containers are running, open:
 
-http://localhost:8000
+(example for local) http://localhost:6701/
 
-
-## Current work on Issue #196
 
 ### Prep environment
 #### Prep local dev (pycharm - not container)
@@ -76,7 +76,7 @@ NOTE: Don't worry about the web site not firing up yet, we'll get to that
 - read in the config
 ```bash
 set -a
-source config/.env.dev
+source config/.env.development
 set +a
 ```
 
