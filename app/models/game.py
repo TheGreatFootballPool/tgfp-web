@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Optional, TYPE_CHECKING, List
 
 import pytz
-from sqlalchemy.orm.session import object_session
 from sqlmodel import Field, Relationship, Session, select
 
 from .base import TGFPModelBase
@@ -75,6 +74,15 @@ class Game(TGFPModelBase, table=True):
         utc_dt = self.start_time.replace(tzinfo=pytz.utc)
         pac = pytz.timezone("US/Pacific")
         return pac.normalize(utc_dt.astimezone(pac))
+
+    @property
+    def winning_team(self) -> Optional["Team"]:
+        if self.is_final:
+            if self.home_team_score > self.road_team_score:
+                return self.home_team
+            if self.home_team_score < self.road_team_score:
+                return self.road_team
+        return None
 
     @staticmethod
     def games_for_week(

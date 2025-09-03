@@ -16,7 +16,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team
-from app.routers import auth, mail
+from app.routers import auth, mail, api
 
 
 from config import Config
@@ -27,6 +27,7 @@ config = Config.get_config()
 app = FastAPI(docs_url=None, redoc_url=None)
 app.include_router(auth.router)
 app.include_router(mail.router)
+app.include_router(api.router)
 app.add_middleware(
     SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
 )
@@ -324,7 +325,7 @@ async def login(request: Request, info: TGFPInfo = Depends(_get_latest_info)):
 
 
 if __name__ == "__main__":
-    reload = os.getenv("ENVIRONMENT", "development") != "production"
+    assert os.getenv("ENVIRONMENT") == "local_dev"
     uvicorn.run(
-        "app.main:app", host="0.0.0.0", port=6701, reload=reload, access_log=False
+        "app.main:app", host="0.0.0.0", port=6801, reload=True, access_log=False
     )

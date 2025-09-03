@@ -85,7 +85,7 @@ class Player(TGFPModelBase, table=True):
         local_losses = 0
         pick: PlayerGamePick
         for pick in self.picks_for_week(season=season, week_no=week_no):
-            local_losses += 1 if pick.is_win is False else 0
+            local_losses += 1 if pick.is_loss else 0
         return local_losses
 
     def bonus(self, week_no=None, season=None) -> int:

@@ -5,11 +5,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Load env vars from config/.env.dev
-if [ -f "config/.env.dev" ]; then
+if [ -f "config/.env.local_dev" ]; then
   # shellcheck disable=SC2046
-  export $(grep -vE '^\s*#' config/.env.dev | xargs -I{} echo {})
+  export $(grep -vE '^\s*#' config/.env.local_dev | xargs -I{} echo {})
 else
-  echo "❌ config/.env.dev not found"
+  echo "❌ config/.env.local_dev not found"
   exit 1
 fi
 

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: tgfp-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tgfp
+      POSTGRES_PASSWORD: tgfp
+      POSTGRES_DB: tgfp
+      TZ: UTC
+    volumes:
+      - tgfp-pg-data-dev:/var/lib/postgresql/data
+    ports:
+      - "6432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tgfp -d tgfp"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  tgfp-pg-data-dev:

@@ -93,11 +93,29 @@ class PlayerGamePick(TGFPModelBase, table=True):
     # game-time choices
     is_lock: bool = False
     is_upset: bool = False
-    # scoring cache (optional — can be computed / updated on the fly)
-    awarded_points: int = 0
-    is_win: bool = False
 
-    # convenience relationships (view-only is fine if you prefer)
+    @property
+    def is_win(self) -> bool:
+        if self.game.winning_team and self.game.winning_team.id == self.picked_team_id:
+            return True
+        return False
+
+    @property
+    def is_loss(self) -> bool:
+        if self.game.winning_team and self.game.winning_team.id != self.picked_team_id:
+            return True
+        return False
+
+    @property
+    def home_team_won(self) -> bool:
+        return (
+            self.game.is_final and self.game.home_team_score > self.game.home_team_score
+        )
+
+    @property
+    def picked_home_team(self):
+        return self.picked_team_id == self.game.home_team_id
+
     player: "Player" = Relationship(back_populates="game_picks")
     game: "Game" = Relationship()
     picked_team: "Team" = Relationship(
