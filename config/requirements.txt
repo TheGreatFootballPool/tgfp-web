@@ -1,4 +1,4 @@
-fastapi[standard]==0.115.1
+fastapi[standard]==0.115.5
 beanie==2.0.0
 pylint==3.3.8
 pytest==8.4.1
