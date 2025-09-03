@@ -107,14 +107,15 @@ class PlayerGamePick(TGFPModelBase, table=True):
         return False
 
     @property
-    def home_team_won(self) -> bool:
-        return (
-            self.game.is_final and self.game.home_team_score > self.game.home_team_score
-        )
-
-    @property
-    def picked_home_team(self):
-        return self.picked_team_id == self.game.home_team_id
+    def bonus_points(self) -> int:
+        bonus_points = 0
+        if self.is_win and self.is_lock:
+            bonus_points += 1
+        if self.is_win and self.is_upset:
+            bonus_points += 1
+        if self.is_loss and self.is_lock:
+            bonus_points -= 1
+        return bonus_points
 
     player: "Player" = Relationship(back_populates="game_picks")
     game: "Game" = Relationship()

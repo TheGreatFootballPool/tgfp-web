@@ -89,22 +89,23 @@ class Player(TGFPModelBase, table=True):
         return local_losses
 
     def bonus(self, week_no=None, season=None) -> int:
-        """return the number of wins optionally for a single week, or through week_no"""
         local_bonus = 0
         pick: PlayerGamePick
         for pick in self.picks_for_week(season=season, week_no=week_no):
-            local_bonus += 1 if pick.is_win and (pick.is_lock or pick.is_upset) else 0
+            local_bonus += pick.bonus_points
         return local_bonus
 
     @property
-    def total_points(self) -> int:
+    def total_points(self, week_no=None, season=None) -> int:
         """
         Returns the number of total
         for the season if `week_no` is not specified.
         :return: :class:`int` - total number of points (wins + bonus)
          optionally for a single week, or all weeks
         """
-        return self.wins() + self.bonus()
+        return self.wins(week_no=week_no, season=season) + self.bonus(
+            week_no=week_no, season=season
+        )
 
     @property
     def winning_pct(self) -> float:
