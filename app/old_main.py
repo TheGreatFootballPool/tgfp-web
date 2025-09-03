@@ -2,7 +2,6 @@
 
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
 from typing import Optional, Final, List
 
 import uvicorn
@@ -22,7 +21,6 @@ from api.nag_players import nag_players
 from api.schedule_kestra_flows import schedule_kestra_flows
 from api.update_scores import update_game
 from api.update_team_records import update_team_records
-from api.create_picks import create_picks, CreatePicksException
 from config import Config
 from models import Player
 

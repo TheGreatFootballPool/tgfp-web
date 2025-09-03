@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, RedirectResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
@@ -141,8 +141,17 @@ def home_legacy(
 
 
 @app.get("/profile")
-def profile():
-    return {"success": True}
+def profile(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    player: Player = Player.by_discord_id(session, discord_id)
+    context = {"player": player, "info": info}
+    return templates.TemplateResponse(
+        request=request, name="coming_soon.j2", context=context
+    )
 
 
 @app.get("/picks", response_class=HTMLResponse)
@@ -313,8 +322,17 @@ async def rules(
 
 
 @app.get("/logout")
-def logout():
-    return {"success": True}
+def logout(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    request.session.clear()
+    redirect_url = request.url_for("login")
+    response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+    response.delete_cookie("tgfp-discord-id")
+    return response
 
 
 @app.get("/login", response_class=HTMLResponse)
