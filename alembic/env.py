@@ -22,10 +22,14 @@ target_metadata = SQLModel.metadata
 # For normal operation (all tables), leave it empty:
 TABLES_TO_MIGRATE: set[str] = set()
 
+
 def include_object(obj, name, type_, _reflected, _compare_to):
     """If TABLES_TO_MIGRATE is non-empty, include only those tables and their columns.
     Alembic calls this for tables, columns, indexes, constraints, etc.
     """
+    if type_ == "table" and name == "apscheduler_jobs":
+        return False
+
     if not TABLES_TO_MIGRATE:
         return True
 

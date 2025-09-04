@@ -15,6 +15,10 @@ DATABASE_URL = config.DATABASE_URL
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
+# APScheduler job store engine (defaults to main DB unless SCHED_DB_URL is set)
+SCHED_DB_URL = os.getenv("SCHED_DB_URL", DATABASE_URL)
+scheduler_engine = create_engine(SCHED_DB_URL, pool_pre_ping=True, future=True)
+
 
 @contextmanager
 def session_scope() -> Iterator:

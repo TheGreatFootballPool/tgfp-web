@@ -1,0 +1,72 @@
+
+
+{# templates/scheduler_jobs.j2 #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>APScheduler Jobs</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; font-size: 0.9em; }
+    h1 { margin-bottom: 1rem; }
+    h2 { margin-top: 2rem; margin-bottom: 0.25rem; font-size: 1.1em; }
+    .meta { color: #666; font-size: 0.9em; margin-bottom: 1rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+    th { background: #f6f8fa; text-align: left; }
+    tr:nth-child(even) { background: #fafafa; }
+    .id { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: .9em; }
+    .small { color: #666; font-size: .9em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>APScheduler Jobs</h1>
+    <div class="meta">
+      Showing {{ jobs|length }} job(s){% if jobs|length %} across {{ (jobs|groupby('func_ref'))|length }} function(s){% endif %}.
+    </div>
+
+    {# Group by function reference using Jinja's built-in groupby #}
+    {% for func_ref, items in jobs|groupby('func_ref') %}
+      <h2>{{ func_ref }}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Next run (local)</th>
+            <th>Trigger</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in items|sort(attribute='next_run_time') %}
+            <tr>
+              <td class="id">{{ job.id }}</td>
+              <td>{{ job.name }}</td>
+              <td class="time">{{ job.next_run_time.isoformat() if job.next_run_time else "—" }}</td>
+              <td class="small">{{ job.trigger }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No jobs scheduled.</p>
+    {% endfor %}
+  </div>
+
+  <script>
+    // Convert ISO timestamps in ".time" cells to the browser's local timezone
+    document.querySelectorAll('td.time').forEach(td => {
+      const s = td.textContent.trim();
+      if (s && s !== '—') {
+        const d = new Date(s);
+        if (!isNaN(d)) {
+          td.textContent = d.toLocaleString();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

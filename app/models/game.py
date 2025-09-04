@@ -70,10 +70,23 @@ class Game(TGFPModelBase, table=True):
 
     @property
     def pacific_start_time(self) -> datetime:
-        """Returns the start time in the US/Pacific timezone"""
-        utc_dt = self.start_time.replace(tzinfo=pytz.utc)
+        """Return start_time as US/Pacific tz-aware datetime."""
         pac = pytz.timezone("US/Pacific")
+        if self.start_time.tzinfo is None:
+            # assume stored as UTC naive
+            utc_dt = self.start_time.replace(tzinfo=pytz.utc)
+        else:
+            utc_dt = self.start_time.astimezone(pytz.utc)
         return pac.normalize(utc_dt.astimezone(pac))
+
+    @property
+    def utc_start_time(self) -> datetime:
+        """Return start_time as a UTC-aware datetime."""
+        if self.start_time.tzinfo is None:
+            # assume it's stored as UTC naive
+            return self.start_time.replace(tzinfo=pytz.utc)
+        # convert any aware datetime to UTC
+        return self.start_time.astimezone(pytz.utc)
 
     @property
     def winning_team(self) -> Optional["Team"]:
@@ -102,3 +115,10 @@ class Game(TGFPModelBase, table=True):
 
         games = list(session.exec(statement).all())
         return games
+
+    @staticmethod
+    def get_first_game_of_the_week(session: Session) -> "Game":
+        """Returns the 'first' game of a week given the info"""
+        games: List[Game] = Game.games_for_week(session)
+        games.sort(key=lambda x: x.start_time, reverse=True)
+        return games[-1]

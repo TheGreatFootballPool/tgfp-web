@@ -1,8 +1,13 @@
 """Main entry point for website"""
 
 import os
-from typing import Annotated, Optional, List
+from contextlib import asynccontextmanager
+from typing import Optional, List
 
+from pytz import timezone
+
+from bots.nag_players import nag_players
+from bots.scheduler import schedule_jobs, scheduler
 from models.game import Game
 from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
@@ -16,7 +21,8 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team
-from app.routers import auth, mail, api
+from app.routers import auth, mail, api, admin_scheduler
+from apscheduler.triggers.cron import CronTrigger
 
 
 from config import Config
@@ -24,10 +30,35 @@ from config import Config
 config = Config.get_config()
 
 
-app = FastAPI(docs_url=None, redoc_url=None)
+@asynccontextmanager
+async def lifespan(
+    _app: FastAPI,
+):
+    scheduler.start()
+    try:
+        pacific = timezone("America/Los_Angeles")
+        trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)
+        job = scheduler.get_job("weekly_planner")
+        if job:
+            scheduler.reschedule_job("weekly_planner", trigger=trigger)
+        else:
+            scheduler.add_job(schedule_jobs, trigger=trigger, id="weekly_planner")
+        await schedule_jobs()
+        yield
+    finally:
+        scheduler.shutdown(wait=True)
+
+
+app = FastAPI(
+    title="TGFP",
+    docs_url=None,
+    redoc_url=None,
+    lifespan=lifespan,
+)
 app.include_router(auth.router)
 app.include_router(mail.router)
 app.include_router(api.router)
+app.include_router(admin_scheduler.router)
 app.add_middleware(
     SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
 )
@@ -89,9 +120,6 @@ def get_error_messages(
             )
 
     return errors
-
-
-SessionDep = Annotated[Session, Depends(_get_session)]
 
 
 async def _verify_player(request: Request) -> int:
@@ -324,9 +352,6 @@ async def rules(
 @app.get("/logout")
 def logout(
     request: Request,
-    discord_id: int = Depends(_verify_player),
-    session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
     request.session.clear()
     redirect_url = request.url_for("login")
