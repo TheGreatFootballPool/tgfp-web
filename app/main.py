@@ -36,7 +36,8 @@ async def lifespan(
 ):
     scheduler.start()
     try:
-        trigger = CronTrigger(day_of_week="tue", hour=13, minute=0)
+        pacific = timezone("America/Los_Angeles")
+        trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)
         job = scheduler.get_job("weekly_planner")
         if job:
             scheduler.reschedule_job("weekly_planner", trigger=trigger)
