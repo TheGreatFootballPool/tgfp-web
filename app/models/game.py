@@ -71,7 +71,7 @@ class Game(TGFPModelBase, table=True):
     @property
     def pacific_start_time(self) -> datetime:
         """Return start_time as US/Pacific tz-aware datetime."""
-        pac = pytz.timezone("US/Pacific")
+        pac = pytz.timezone("America/Los_Angeles")
         if self.start_time.tzinfo is None:
             # assume stored as UTC naive
             utc_dt = self.start_time.replace(tzinfo=pytz.utc)
