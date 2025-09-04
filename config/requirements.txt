@@ -22,3 +22,4 @@ psycopg[binary]==3.2.9
 fastapi-mail==1.5.0
 humanize~=4.13.0
 asyncpg==0.30.0
+apscheduler==3.11.0

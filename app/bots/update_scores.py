@@ -1,7 +1,6 @@
 """Take a game, and get the current scores from TgfpNfl and update the TGFP game"""
 
 import asyncio
-from typing import List
 from sqlmodel import Session
 
 from db import engine
