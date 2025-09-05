@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List
+from zoneinfo import ZoneInfo
 from sqlmodel import Session
 
 from bots.update_scores import update_game
@@ -33,6 +34,9 @@ async def schedule_nag_players(info: TGFPInfo):
         first_game: Game = Game.get_first_game_of_the_week(session)
         for delta in [60, 20, 7]:
             d: datetime = first_game.utc_start_time - timedelta(hours=0, minutes=delta)
+            now_utc = datetime.now(ZoneInfo("UTC"))
+            if now_utc >= d:
+                continue
             job_id: str = f"s{info.current_season}:w{info.current_week}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
@@ -51,9 +55,27 @@ async def schedule_update_games(info: TGFPInfo):
         session.info["TGFPInfo"] = info
         this_weeks_games: List[Game] = Game.games_for_week(session)
         for game in this_weeks_games:
-            start_date = game.pacific_start_time
-            end_date = start_date + timedelta(hours=6)
             job_id: str = f"s{info.current_season}:w{info.current_week}:g{game.id}"
+
+            # Use UTC for scheduling to avoid tzlocal/pytz issues
+            now_utc = datetime.now(ZoneInfo("UTC"))
+            kickoff_utc = game.utc_start_time  # should be tz-aware UTC
+            end_date = kickoff_utc + timedelta(hours=6)
+
+            # Decide the start date: if kickoff has passed
+            if kickoff_utc <= now_utc:
+                if game.is_final:
+                    continue
+                # Not final: start polling now (plus a tiny delay) so there's always a next run
+                start_date = now_utc + timedelta(seconds=5)
+            else:
+                # Future kickoff: start at kickoff time
+                start_date = kickoff_utc
+
+            # Safety: if the computed window is invalid, do not schedule
+            if end_date <= start_date:
+                continue
+
             job_name: str = (
                 f"{game.road_team.full_name} @ "
                 f"{game.home_team.full_name}: "

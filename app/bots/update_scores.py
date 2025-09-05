@@ -1,6 +1,5 @@
 """Take a game, and get the current scores from TgfpNfl and update the TGFP game"""
 
-import asyncio
 from sqlmodel import Session
 
 from db import engine
@@ -13,8 +12,9 @@ from models import Game
 def update_game(game_id: int):
     """
     Update all the wins / losses / scores, etc...
-    @param game:
-    @return: The current live status of the game
+    @param game_id: The id of the game to update
+    @type game_id: int
+    :return: The current live status of the game
     """
     info: TGFPInfo = get_tgfp_info()
     nfl_data_source = TgfpNfl(week_no=info.current_week)
@@ -29,7 +29,3 @@ def update_game(game_id: int):
         session.add(game)
         session.commit()
         # TODO: write some code to kill the job if the game is final
-
-
-if __name__ == "__main__":
-    update_game(34)
