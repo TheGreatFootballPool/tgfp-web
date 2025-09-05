@@ -10,7 +10,7 @@ from tgfp_nfl import TgfpNfl
 from models import Game
 
 
-async def update_game(game_id: int):
+def update_game(game_id: int):
     """
     Update all the wins / losses / scores, etc...
     @param game:
@@ -32,4 +32,4 @@ async def update_game(game_id: int):
 
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(update_game(34))
+    update_game(34)
