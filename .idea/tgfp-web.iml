@@ -12,12 +12,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Python 3.11 virtualenv at ~/Code/tgfp-web/.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="8c439a9d4e" level="application" />
-    <orderEntry type="library" name="8c439a9d4e" level="application" />
-    <orderEntry type="library" name="9e699032f7b3c81b263e1fccd8dfbbec" level="application" />
-    <orderEntry type="library" name="flowbite" level="application" />
-    <orderEntry type="library" name="apexcharts" level="application" />
-    <orderEntry type="library" name="chart.js" level="application" />
+    <orderEntry type="library" name="bundle" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Jinja2" />
