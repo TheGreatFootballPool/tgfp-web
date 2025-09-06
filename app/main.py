@@ -6,13 +6,9 @@ from typing import Optional, List
 
 from pytz import timezone
 
-from bots.nag_players import nag_players
-from bots.scheduler import schedule_jobs, scheduler
-from models.game import Game
-from models.model_helpers import TGFPInfo, get_tgfp_info
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
-
+import sentry_sdk
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -20,7 +16,9 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
-from models import Player, PlayerGamePick, Team
+from models import Player, PlayerGamePick, Team, Game
+from bots.scheduler import schedule_jobs, scheduler
+from models.model_helpers import TGFPInfo, get_tgfp_info
 from app.routers import auth, mail, api, admin_scheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -44,6 +42,19 @@ async def lifespan(
         else:
             scheduler.add_job(schedule_jobs, trigger=trigger, id="weekly_planner")
         await schedule_jobs()
+        sentry_sdk.init(
+            dsn=config.BUGSINK_DSN,
+            # Add data like request headers and IP for users, if applicable;
+            # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+            send_default_pii=True,
+            max_request_body_size="always",
+            # Setting up the release is highly recommended. The SDK will try to
+            # infer it, but explicitly setting it is more reliable:
+            release=config.APP_VERSION,
+            environment=config.ENVIRONMENT,
+            traces_sample_rate=0.0,
+        )
+
         yield
     finally:
         scheduler.shutdown(wait=True)
