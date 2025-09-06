@@ -37,6 +37,7 @@ class TGFPInfo(BaseModel):
     app_version: str
     app_env: str
     umami_tracking_id: str
+    bugsink_dsn: str
 
     @property
     def last_week(self):
@@ -51,4 +52,5 @@ def get_tgfp_info() -> TGFPInfo:
         app_version=config.APP_VERSION,
         app_env=config.ENVIRONMENT,
         umami_tracking_id=config.UMAMI_TRACKING_ID,
+        bugsink_dsn=config.BUGSINK_DSN,
     )

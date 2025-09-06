@@ -17,6 +17,7 @@ class Config:
     # Secrets (I keep these in 1Password)
     API_BASE_URL: str
     APP_VERSION: str
+    BUGSINK_DSN: str
     COOKIE_RETENTION_DAYS: int
     DATABASE_URL: str
     DISCORD_AUTH_TOKEN: str
@@ -51,6 +52,7 @@ class Config:
         new_config = cls(
             API_BASE_URL=os.getenv("API_BASE_URL"),
             APP_VERSION=os.getenv("APP_VERSION"),
+            BUGSINK_DSN=os.getenv("BUGSINK_DSN"),
             COOKIE_RETENTION_DAYS=int(os.getenv("COOKIE_RETENTION_DAYS")),
             DATABASE_URL=os.getenv("DATABASE_URL"),
             DISCORD_AUTH_TOKEN=os.getenv("DISCORD_AUTH_TOKEN"),
