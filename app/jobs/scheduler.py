@@ -62,7 +62,7 @@ def schedule_update_games(info: TGFPInfo):
             # Use UTC for scheduling to avoid tzlocal/pytz issues
             now_utc = datetime.now(ZoneInfo("UTC"))
             kickoff_utc = game.utc_start_time  # should be tz-aware UTC
-            end_date = kickoff_utc + timedelta(hours=6)
+            end_date = kickoff_utc + timedelta(hours=8)
 
             # Decide the start date: if kickoff has passed
             if kickoff_utc <= now_utc:
