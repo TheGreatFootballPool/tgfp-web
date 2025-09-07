@@ -43,7 +43,6 @@ class Config:
     MAIL_SSL_TLS: bool
     SESSION_SECRET_KEY: str
     SEQ_API_KEY: str
-    SEQ_API_SECRET: str
     WEB_SECRET_KEY: str
     UMAMI_TRACKING_ID: str
 
