@@ -42,6 +42,8 @@ class Config:
     MAIL_STARTTLS: bool
     MAIL_SSL_TLS: bool
     SESSION_SECRET_KEY: str
+    SEQ_API_KEY: str
+    SEQ_API_SECRET: str
     WEB_SECRET_KEY: str
     UMAMI_TRACKING_ID: str
 
@@ -77,6 +79,7 @@ class Config:
             MAIL_STARTTLS=bool(os.getenv("MAIL_STARTTLS")),
             MAIL_SSL_TLS=False,
             SESSION_SECRET_KEY=os.getenv("SESSION_SECRET_KEY"),
+            SEQ_API_KEY=os.getenv("SEQ_API_KEY"),
             WEB_SECRET_KEY=os.getenv("WEB_SECRET_KEY"),
             UMAMI_TRACKING_ID=os.getenv("UMAMI_TRACKING_ID"),
         )
