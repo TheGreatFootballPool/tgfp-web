@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 
-from bots.scheduler import scheduler
+from jobs.scheduler import scheduler
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(prefix="/admin/scheduler", tags=["Scheduler"])
