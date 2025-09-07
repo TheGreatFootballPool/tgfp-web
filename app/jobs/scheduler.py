@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta
 from typing import List
 from zoneinfo import ZoneInfo
-from sqlmodel import Session
 
-from bots.update_scores import update_game
+from apscheduler.triggers.cron import CronTrigger
+from sqlmodel import Session
+from pytz import timezone
+
+from jobs import create_picks, update_game, nag_players
 from models import Game
 from config import Config
 from models.model_helpers import TGFPInfo, get_tgfp_info
@@ -14,7 +17,6 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from db import scheduler_engine, engine
-from bots.nag_players import nag_players
 
 jobstores = {"default": SQLAlchemyJobStore(engine=scheduler_engine)}
 executors = {"default": ThreadPoolExecutor(16)}
@@ -27,7 +29,7 @@ scheduler = AsyncIOScheduler(
 config: Config = Config.get_config()
 
 
-async def schedule_nag_players(info: TGFPInfo):
+def schedule_nag_players(info: TGFPInfo):
     """Creates the flows for nagging players"""
     with Session(engine) as session:
         session.info["TGFPInfo"] = info
@@ -49,7 +51,7 @@ async def schedule_nag_players(info: TGFPInfo):
                 )
 
 
-async def schedule_update_games(info: TGFPInfo):
+def schedule_update_games(info: TGFPInfo):
     """Creates the flows for updating games"""
     with Session(engine) as session:
         session.info["TGFPInfo"] = info
@@ -97,7 +99,18 @@ async def schedule_update_games(info: TGFPInfo):
                 )
 
 
+def schedule_create_picks():
+    pacific = timezone("America/Los_Angeles")
+    trigger = CronTrigger(day_of_week="wed", hour=6, minute=0, timezone=pacific)
+    job = scheduler.get_job("create_picks")
+    if job:
+        scheduler.reschedule_job("create_picks", trigger=trigger)
+    else:
+        scheduler.add_job(create_picks, trigger=trigger, id="create_picks")
+
+
 async def schedule_jobs():
     info: TGFPInfo = get_tgfp_info()
-    await schedule_nag_players(info)
-    await schedule_update_games(info)
+    schedule_nag_players(info)
+    schedule_update_games(info)
+    schedule_create_picks()

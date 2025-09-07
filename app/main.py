@@ -17,7 +17,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team, Game
-from bots.scheduler import schedule_jobs, scheduler
+from jobs.scheduler import schedule_jobs, scheduler
 from models.model_helpers import TGFPInfo, get_tgfp_info
 from app.routers import auth, mail, api, admin_scheduler
 from apscheduler.triggers.cron import CronTrigger
