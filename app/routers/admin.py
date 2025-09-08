@@ -6,12 +6,12 @@ from starlette.templating import Jinja2Templates
 from jobs.scheduler import job_scheduler
 
 templates = Jinja2Templates(directory="templates")
-router = APIRouter(prefix="/admin/job_scheduler", tags=["Scheduler"])
+router = APIRouter(prefix="/admin", tags=["Scheduler"])
 
 
-@router.get("", response_class=HTMLResponse)
-def dashboard(request: Request):
+@router.get("/job_schedule", response_class=HTMLResponse)
+def job_schedule(request: Request):
     jobs = job_scheduler.get_jobs()
     return templates.TemplateResponse(
-        "scheduler_jobs.j2", {"request": request, "jobs": jobs}
+        "admin_job_schedule.j2", {"request": request, "jobs": jobs}
     )

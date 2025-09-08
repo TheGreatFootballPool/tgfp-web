@@ -77,7 +77,7 @@ async def send_welcome(
 
 
 @router.post("/welcome_email")
-async def welcom_email(
+async def welcome_email(
     request: Request,
     email_model: EmailSchema | None = None,
     first_name: str | None = Form(default=None),

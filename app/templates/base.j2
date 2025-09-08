@@ -55,11 +55,16 @@
             <a href="{{ url_for('rules') }}">Rules</a><br/>
             <a href="{{ url_for('logout') }}">Logout</a><br/>
         </div>
-        <div id="currentWeek" class="subhead">Current Week: {{ info.display_week }} </div>
         {% if player and player.email == 'john@sturgeon.me' %}
+            <div id="linksTitle" class="subhead">Admin</div>
+            <div id="admin_links" class="content">
+                <a href="{{ url_for('job_schedule') }}">Schedule</a><br/>
+                <a href="{{ url_for('send_welcome') }}">Welcome Email</a><br/>
+            </div>
             <div id="appVersion" class="content">App Version: {{ info.app_version }}</div>
             <div id="appVersion" class="content">App ENV: {{ info.app_env }}</div>
         {% endif %}
+        <div id="currentWeek" class="subhead">Current Week: {{ info.display_week }} </div>
     </div>
     <div id="righterStill"></div>
 </div>
