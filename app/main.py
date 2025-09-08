@@ -21,7 +21,7 @@ from db import engine
 from models import Player, PlayerGamePick, Team, Game
 from jobs.scheduler import schedule_jobs, job_scheduler
 from models.model_helpers import TGFPInfo, get_tgfp_info
-from app.routers import auth, mail, api, admin_scheduler
+from app.routers import auth, mail, api, admin
 from apscheduler.triggers.cron import CronTrigger
 
 
@@ -80,7 +80,7 @@ app = FastAPI(
 app.include_router(auth.router)
 app.include_router(mail.router)
 app.include_router(api.router)
-app.include_router(admin_scheduler.router)
+app.include_router(admin.router)
 app.add_middleware(
     SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
 )
