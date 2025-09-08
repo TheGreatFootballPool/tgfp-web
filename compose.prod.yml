@@ -26,6 +26,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://seq:12201"
+        tag: "first-logs"
 
   postgres:
     image: postgres:16
