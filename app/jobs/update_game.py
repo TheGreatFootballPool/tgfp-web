@@ -1,10 +1,12 @@
 """Take a game, and get the current scores from TgfpNfl and update the TGFP game"""
 
+import logging
+
 from apscheduler.jobstores.base import JobLookupError
 from sqlmodel import Session
 
 from db import engine
-from jobs import scheduler
+from jobs import job_scheduler
 from models.model_helpers import TGFPInfo, get_tgfp_info
 from tgfp_nfl import TgfpNfl
 
@@ -33,9 +35,8 @@ def update_game(game_id: int):
         if game.is_final:
             job_id: str = f"s{info.current_season}:w{info.current_week}:g{game.id}"
             try:
-                scheduler.remove_job(job_id)
+                logging.info("Removing job %s with game: %s", job_id, game.id)
+                job_scheduler.remove_job(job_id)
             except JobLookupError:
                 pass  # already gone; fine
             return
-
-        # TODO: write some code to kill the job if the game is final

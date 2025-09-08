@@ -22,7 +22,7 @@ jobstores = {"default": SQLAlchemyJobStore(engine=scheduler_engine)}
 executors = {"default": ThreadPoolExecutor(16)}
 job_defaults = {"coalesce": False, "max_instances": 1}
 
-scheduler = AsyncIOScheduler(
+job_scheduler = AsyncIOScheduler(
     jobstores=jobstores, executors=executors, job_defaults=job_defaults, timezone="UTC"
 )
 
@@ -42,11 +42,11 @@ def schedule_nag_players(info: TGFPInfo):
             job_id: str = f"s{info.current_season}:w{info.current_week}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
-            job = scheduler.get_job(job_id)
+            job = job_scheduler.get_job(job_id)
             if job:
-                scheduler.reschedule_job(job_id, trigger=trigger)
+                job_scheduler.reschedule_job(job_id, trigger=trigger)
             else:
-                scheduler.add_job(
+                job_scheduler.add_job(
                     nag_players, name=job_name, trigger=trigger, id=job_id
                 )
 
@@ -86,11 +86,11 @@ def schedule_update_games(info: TGFPInfo):
             trigger: IntervalTrigger = IntervalTrigger(
                 minutes=5, start_date=start_date, end_date=end_date, jitter=60
             )
-            job = scheduler.get_job(job_id)
+            job = job_scheduler.get_job(job_id)
             if job:
-                scheduler.reschedule_job(job_id, trigger=trigger)
+                job_scheduler.reschedule_job(job_id, trigger=trigger)
             else:
-                scheduler.add_job(
+                job_scheduler.add_job(
                     update_game,
                     name=job_name,
                     trigger=trigger,
@@ -102,11 +102,11 @@ def schedule_update_games(info: TGFPInfo):
 def schedule_create_picks():
     pacific = timezone("America/Los_Angeles")
     trigger = CronTrigger(day_of_week="wed", hour=6, minute=0, timezone=pacific)
-    job = scheduler.get_job("create_picks")
+    job = job_scheduler.get_job("create_picks")
     if job:
-        scheduler.reschedule_job("create_picks", trigger=trigger)
+        job_scheduler.reschedule_job("create_picks", trigger=trigger)
     else:
-        scheduler.add_job(create_picks, trigger=trigger, id="create_picks")
+        job_scheduler.add_job(create_picks, trigger=trigger, id="create_picks")
 
 
 async def schedule_jobs():
