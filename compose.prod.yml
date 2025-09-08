@@ -29,8 +29,8 @@ services:
     logging:
       driver: "gelf"
       options:
-        gelf-address: "udp://seq:12201"
-        tag: "first-logs"
+        gelf-address: "udp://192.168.4.109:12201"
+        tag: "tgfp-web-prod"
 
   postgres:
     image: postgres:16
