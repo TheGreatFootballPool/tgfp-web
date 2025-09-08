@@ -6,7 +6,7 @@ from apscheduler.jobstores.base import JobLookupError
 from sqlmodel import Session
 
 from db import engine
-from jobs import job_scheduler
+from .scheduler import job_scheduler
 from models.model_helpers import TGFPInfo, get_tgfp_info
 from tgfp_nfl import TgfpNfl
 
