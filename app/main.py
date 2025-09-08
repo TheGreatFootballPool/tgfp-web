@@ -19,7 +19,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team, Game
-from jobs.scheduler import schedule_jobs, scheduler
+from jobs.scheduler import schedule_jobs, job_scheduler
 from models.model_helpers import TGFPInfo, get_tgfp_info
 from app.routers import auth, mail, api, admin_scheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -34,7 +34,7 @@ config = Config.get_config()
 async def lifespan(
     _app: FastAPI,
 ):
-    scheduler.start()
+    job_scheduler.start()
     sentry_sdk.init(
         dsn=config.BUGSINK_DSN,
         # Add data like request headers and IP for users, if applicable;
@@ -59,16 +59,16 @@ async def lifespan(
     try:
         pacific = timezone("America/Los_Angeles")
         trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)
-        job = scheduler.get_job("weekly_planner")
+        job = job_scheduler.get_job("weekly_planner")
         if job:
-            scheduler.reschedule_job("weekly_planner", trigger=trigger)
+            job_scheduler.reschedule_job("weekly_planner", trigger=trigger)
         else:
-            scheduler.add_job(schedule_jobs, trigger=trigger, id="weekly_planner")
+            job_scheduler.add_job(schedule_jobs, trigger=trigger, id="weekly_planner")
         await schedule_jobs()
 
         yield
     finally:
-        scheduler.shutdown(wait=True)
+        job_scheduler.shutdown(wait=True)
 
 
 app = FastAPI(
