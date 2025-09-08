@@ -42,7 +42,7 @@ def get_nag_payload(session) -> Optional[str]:
         time_to_kickoff = get_time_to_kickoff(first_game)
         message = "This is the TGFP NagBot with a friendly reminder to the following:\n"
         for player in late_players:
-            logging.debug("Player: {name} needs to be nagged", name=player.nick_name)
+            logging.debug("Player: {name} needs to be nagged", name=player.nick_name)  # type: ignore[arg-type]
             message += f"• <@{player.discord_id}>\n"
         message += "\nYou still need to enter your picks."
         message += " Go to https://tgfp.us/picks and get 'em in!"

@@ -66,7 +66,8 @@ def create_picks():
         nfl_game: TgfpNflGame
         for nfl_game in nfl_games:
             logging.debug(
-                f"Creating pick for nfl_game: {nfl_game}", nfl_game=nfl_game.extra_info
+                f"Creating pick for nfl_game: {nfl_game}",
+                nfl_game=nfl_game.extra_info,  # type: ignore[arg-type]
             )
             tgfp_game = _game_from_nfl_game(
                 nfl_game=nfl_game, session=session, info=info
