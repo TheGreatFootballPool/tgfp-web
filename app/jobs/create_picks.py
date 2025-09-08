@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from sqlmodel import Session, select
@@ -52,6 +53,7 @@ def _game_from_nfl_game(
 
 def create_picks():
     """Creates the weekly picks page"""
+    logging.info("Creating weekly picks page")
     info: TGFPInfo = get_tgfp_info()
     with Session(engine) as session:
         session.info["TGFPInfo"] = info
@@ -59,9 +61,13 @@ def create_picks():
         nfl: TgfpNfl = TgfpNfl(week_no=week_no)
         nfl_games: List[TgfpNflGame] = nfl.games()
         if not nfl_games:
+            logging.error("No nfl_games found")
             raise CreatePicksException("There should have been games!!!")
         nfl_game: TgfpNflGame
         for nfl_game in nfl_games:
+            logging.debug(
+                f"Creating pick for nfl_game: {nfl_game}", nfl_game=nfl_game.extra_info
+            )
             tgfp_game = _game_from_nfl_game(
                 nfl_game=nfl_game, session=session, info=info
             )
