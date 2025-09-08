@@ -3,7 +3,8 @@ import os
 
 
 class PingFilter:
-    def filter(self, record):
+    @staticmethod
+    def filter(record):
         return "/ping" not in record.getMessage()
 
 
