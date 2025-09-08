@@ -5,6 +5,7 @@ a data source (ESPN / Yahoo for example) for retrieving scores, schedule data, e
 
 from __future__ import annotations
 
+import logging
 from typing import Optional, Tuple, Any, List
 from dateutil import parser
 import httpx
@@ -89,18 +90,42 @@ class TgfpNfl:
         """Get Game Predictions from ESPN
         :return: game prediction source data for one game
         """
-        content: dict = {}
         url_to_query = (
             self._base_core_api_url
             + f"events/{event_id}/competitions/{event_id}/predictor"
         )
         try:
-            response = httpx.get(url_to_query)
-            content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+            response = httpx.get(
+                url_to_query,
+                headers={"User-Agent": "tgfp-web/1.0"},
+                timeout=httpx.Timeout(5.0, read=10.0, connect=5.0),
+            )
 
-        return content
+            if response.status_code in (502, 503, 504):
+                logging.warning(
+                    "ESPN predictor %s returned %s; skipping",
+                    url_to_query,
+                    response.status_code,
+                )
+                return {}  # bail cleanly
+
+            response.raise_for_status()
+
+            try:
+                return response.json()
+            except ValueError:
+                logging.warning(
+                    "ESPN predictor %s returned non-JSON (content-type=%s); skipping",
+                    url_to_query,
+                    response.headers.get("content-type"),
+                )
+                return {}
+
+        except httpx.RequestError as e:
+            logging.warning(
+                "HTTP request error calling ESPN predictor %s: %s", url_to_query, e
+            )
+            return {}
 
     @property
     def season_type(self) -> int:
@@ -281,11 +306,13 @@ class TgfpNflGame:
         self, stat_name: str, home_team: bool = True, key: str = "displayValue"
     ) -> str | float:
         team = "homeTeam" if home_team else "awayTeam"
-        statistics: list = self._game_predictor_source_data[team]["statistics"]
+        container = self._game_predictor_source_data.get(team, {}) or {}
+        statistics: list = container.get("statistics", []) or []
         for stat in statistics:
-            if stat["name"] == stat_name:
+            if stat.get("name") == stat_name and key in stat:
                 return stat[key]
-        return "Not Found"
+        # Default to "0" so downstream float(...) casts won't explode
+        return "0"
 
     @property
     def favored_team(self) -> Optional[TgfpNflTeam]:
