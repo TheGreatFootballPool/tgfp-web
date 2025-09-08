@@ -30,4 +30,4 @@ RUN chmod +x /entrypoint.sh
 # Ensure our entrypoint runs on container start
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["uv", "run", "uvicorn", "main:app", "--host=0.0.0.0", "--port=8000", "--proxy-headers"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host=0.0.0.0", "--port=8000", "--proxy-headers", "--log-config", "/app/logging_config.py"]
