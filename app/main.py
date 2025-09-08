@@ -1,5 +1,6 @@
 """Main entry point for website"""
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Optional, List
@@ -7,6 +8,7 @@ from typing import Optional, List
 from pytz import timezone
 
 import uvicorn
+import seqlog
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 import sentry_sdk
 from fastapi.templating import Jinja2Templates
@@ -33,6 +35,27 @@ async def lifespan(
     _app: FastAPI,
 ):
     scheduler.start()
+    sentry_sdk.init(
+        dsn=config.BUGSINK_DSN,
+        # Add data like request headers and IP for users, if applicable;
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+        max_request_body_size="always",
+        # Setting up the release is highly recommended. The SDK will try to
+        # infer it, but explicitly setting it is more reliable:
+        release=config.APP_VERSION,
+        environment=config.ENVIRONMENT,
+        traces_sample_rate=0.0,
+    )
+    seqlog.log_to_seq(
+        server_url=config.SEQ_SERVER_URL,
+        api_key=config.SEQ_API_KEY,
+        level=logging.INFO,
+        batch_size=10,
+        auto_flush_timeout=10,  # seconds
+        override_root_logger=True,
+        support_extra_properties=True,  # Optional; only specify this if you want to pass additional log record properties via the "extra" argument.
+    )
     try:
         pacific = timezone("America/Los_Angeles")
         trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)
@@ -42,18 +65,6 @@ async def lifespan(
         else:
             scheduler.add_job(schedule_jobs, trigger=trigger, id="weekly_planner")
         await schedule_jobs()
-        sentry_sdk.init(
-            dsn=config.BUGSINK_DSN,
-            # Add data like request headers and IP for users, if applicable;
-            # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-            send_default_pii=True,
-            max_request_body_size="always",
-            # Setting up the release is highly recommended. The SDK will try to
-            # infer it, but explicitly setting it is more reliable:
-            release=config.APP_VERSION,
-            environment=config.ENVIRONMENT,
-            traces_sample_rate=0.0,
-        )
 
         yield
     finally:

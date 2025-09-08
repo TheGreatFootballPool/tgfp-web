@@ -1,6 +1,8 @@
 """This example requires the 'message_content' intent."""
 
 import datetime
+import logging
+
 import humanize
 from typing import List, Optional
 
@@ -40,6 +42,7 @@ def get_nag_payload(session) -> Optional[str]:
         time_to_kickoff = get_time_to_kickoff(first_game)
         message = "This is the TGFP NagBot with a friendly reminder to the following:\n"
         for player in late_players:
+            logging.debug("Player: {name} needs to be nagged", name=player.nick_name)  # type: ignore[arg-type]
             message += f"• <@{player.discord_id}>\n"
         message += "\nYou still need to enter your picks."
         message += " Go to https://tgfp.us/picks and get 'em in!"
@@ -49,6 +52,7 @@ def get_nag_payload(session) -> Optional[str]:
 
 def nag_players():
     """Sends a message to the players"""
+    logging.info("NagBot starting")
     config: Config = Config.get_config()
     nag_payload = None
     info: TGFPInfo = get_tgfp_info()
