@@ -7,6 +7,7 @@ from sqlmodel import Session
 from pytz import timezone
 
 from jobs import create_picks, update_game, nag_players
+from jobs.sync_team_records import sync_team_records
 from models import Game
 from config import Config
 from models.model_helpers import TGFPInfo, get_tgfp_info
@@ -109,8 +110,21 @@ def schedule_create_picks():
         job_scheduler.add_job(create_picks, trigger=trigger, id="create_picks")
 
 
+def schedule_sync_team_records():
+    pacific = timezone("America/Los_Angeles")
+    trigger = CronTrigger(day_of_week="tue", hour=4, minute=0, timezone=pacific)
+    job = job_scheduler.get_job("sync_team_records")
+    if job:
+        job_scheduler.reschedule_job("sync_team_records", trigger=trigger)
+    else:
+        job_scheduler.add_job(
+            sync_team_records, trigger=trigger, id="sync_team_records"
+        )
+
+
 async def schedule_jobs():
     info: TGFPInfo = get_tgfp_info()
     schedule_nag_players(info)
     schedule_update_games(info)
     schedule_create_picks()
+    schedule_sync_team_records()
