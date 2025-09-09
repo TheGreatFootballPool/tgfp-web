@@ -4,7 +4,7 @@ from app.db import engine
 from tgfp_nfl import TgfpNfl, TgfpNflTeam
 
 
-def main():
+def sync_team_records():
     nfl: TgfpNfl = TgfpNfl()
     with Session(engine) as session:
         teams = Team.all_teams(session)
@@ -14,7 +14,3 @@ def main():
             team.losses = nfl_team.losses
             team.ties = nfl_team.ties
         session.commit()
-
-
-if __name__ == "__main__":
-    main()
