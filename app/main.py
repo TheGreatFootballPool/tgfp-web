@@ -24,8 +24,8 @@ from models.model_helpers import TGFPInfo, get_tgfp_info
 from app.routers import auth, mail, api, admin
 from apscheduler.triggers.cron import CronTrigger
 
-
 from config import Config
+from logging_config import init_logging
 
 config = Config.get_config()
 
@@ -47,15 +47,7 @@ async def lifespan(
         environment=config.ENVIRONMENT,
         traces_sample_rate=0.0,
     )
-    seqlog.log_to_seq(
-        server_url=config.SEQ_SERVER_URL,
-        api_key=config.SEQ_API_KEY,
-        level=logging.INFO,
-        batch_size=10,
-        auto_flush_timeout=10,  # seconds
-        override_root_logger=True,
-        support_extra_properties=True,  # Optional; only specify this if you want to pass additional log record properties via the "extra" argument.
-    )
+    init_logging()
     try:
         pacific = timezone("America/Los_Angeles")
         trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)

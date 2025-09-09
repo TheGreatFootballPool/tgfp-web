@@ -26,11 +26,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "udp://192.168.4.109:12201"
-        tag: "tgfp-web-dev"
 
   postgres:
     image: postgres:16

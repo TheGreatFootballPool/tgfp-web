@@ -44,6 +44,7 @@ class Config:
     SESSION_SECRET_KEY: str
     SEQ_API_KEY: str
     SEQ_SERVER_URL: str
+    LOG_LEVEL: str
     WEB_SECRET_KEY: str
     UMAMI_TRACKING_ID: str
 
@@ -81,6 +82,7 @@ class Config:
             SESSION_SECRET_KEY=os.getenv("SESSION_SECRET_KEY"),
             SEQ_API_KEY=os.getenv("SEQ_API_KEY"),
             SEQ_SERVER_URL=os.getenv("SEQ_SERVER_URL"),
+            LOG_LEVEL=os.getenv("LOG_LEVEL"),
             WEB_SECRET_KEY=os.getenv("WEB_SECRET_KEY"),
             UMAMI_TRACKING_ID=os.getenv("UMAMI_TRACKING_ID"),
         )
