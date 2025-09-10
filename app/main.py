@@ -274,7 +274,7 @@ async def picks_form(
                 game_id=game.id,
                 picked_team_id=winner_id,
                 season=info.current_season,
-                week_no=info.current_week,
+                week_no=game.week_no,
                 is_lock=is_lock,
                 is_upset=is_upset,
             )
@@ -310,7 +310,8 @@ def allpicks(
 ):
     session.info["TGFPInfo"] = info
     player: Player = Player.by_discord_id(session, discord_id)
-    picks_week_no = info.current_week
+    current_week: int = Game.most_recent_week(session)
+    picks_week_no = week_no if week_no else current_week
     if week_no:
         picks_week_no = week_no
     active_players: List[Player] = Player.active_players(session)
@@ -322,6 +323,7 @@ def allpicks(
         "info": info,
         "active_players": active_players,
         "week_no": picks_week_no,
+        "current_week": current_week,
         "games": games,
         "teams": teams,
     }

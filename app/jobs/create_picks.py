@@ -44,7 +44,7 @@ def _game_from_nfl_game(
         road_team_score=0,
         spread=nfl_game.spread,
         start_time=nfl_game.start_time,
-        week_no=int(info.current_week),
+        week_no=nfl_game.week_no,
         tgfp_nfl_game_id=nfl_game.id,
         season=info.current_season,
     )
@@ -57,7 +57,10 @@ def create_picks():
     info: TGFPInfo = get_tgfp_info()
     with Session(engine) as session:
         session.info["TGFPInfo"] = info
-        week_no: int = info.current_week
+        week_no: int = Game.next_week_to_load(session)
+        if not week_no:
+            logging.error("No week to load for create picks")
+            raise CreatePicksException("No week to load for create picks")
         nfl: TgfpNfl = TgfpNfl(week_no=week_no)
         nfl_games: List[TgfpNflGame] = nfl.games()
         if not nfl_games:
