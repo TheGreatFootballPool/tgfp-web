@@ -287,6 +287,7 @@ class TgfpNflGame:
         self._total_home_points: int = 0
         self._total_away_points: int = 0
         self.start_time = parser.parse(game_data["date"])
+        self.week_no: int = game_data["week"]["number"]
         self.game_status_type = game_data["status"]["type"]["name"]
         self.event_id = int(game_data["id"])
 
@@ -538,5 +539,7 @@ class TgfpNflStanding:
 
 
 if __name__ == "__main__":
-    nfl = TgfpNfl()
+    nfl = TgfpNfl(week_no=1)
+    for game in nfl.games():
+        print(game)
     print(nfl.current_nfl_week_no)

@@ -21,11 +21,11 @@ def update_game(game_id: int):
     :return: The current live status of the game
     """
     info: TGFPInfo = get_tgfp_info()
-    nfl_data_source = TgfpNfl(week_no=info.current_week)
     with Session(engine) as session:
         game: Game | None = session.get(Game, game_id)
         if not game:
             return
+        nfl_data_source = TgfpNfl(week_no=game.week_no)
         nfl_game = nfl_data_source.find_game(nfl_game_id=game.tgfp_nfl_game_id)
         game.home_team_score = int(nfl_game.total_home_points)
         game.road_team_score = int(nfl_game.total_away_points)
@@ -33,7 +33,7 @@ def update_game(game_id: int):
         session.add(game)
         session.commit()
         if game.is_final:
-            job_id: str = f"s{info.current_season}:w{info.current_week}:g{game.id}"
+            job_id: str = f"s{info.current_season}:w{game.current_week}:g{game.id}"
             try:
                 logging.info("Removing job %s with game: %s", job_id, game.id)
                 job_scheduler.remove_job(job_id)
