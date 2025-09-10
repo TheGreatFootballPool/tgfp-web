@@ -10,7 +10,7 @@ from jobs import create_picks, update_game, nag_players
 from jobs.sync_team_records import sync_team_records
 from models import Game
 from config import Config
-from models.model_helpers import TGFPInfo, get_tgfp_info
+from models.model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -40,7 +40,7 @@ def schedule_nag_players(info: TGFPInfo):
             now_utc = datetime.now(ZoneInfo("UTC"))
             if now_utc >= d:
                 continue
-            job_id: str = f"s{info.current_season}:w{first_game.week_no}:d{delta}"
+            job_id: str = f"s{current_nfl_season}:w{first_game.week_no}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
             job = job_scheduler.get_job(job_id)
@@ -58,7 +58,7 @@ def schedule_update_games(info: TGFPInfo):
         session.info["TGFPInfo"] = info
         this_weeks_games: List[Game] = Game.games_for_week(session)
         for game in this_weeks_games:
-            job_id: str = f"s{info.current_season}:w{game.week_no}:g{game.id}"
+            job_id: str = f"s{current_nfl_season()}:w{game.week_no}:g{game.id}"
 
             # Use UTC for scheduling to avoid tzlocal/pytz issues
             now_utc = datetime.now(ZoneInfo("UTC"))

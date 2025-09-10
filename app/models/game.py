@@ -5,7 +5,7 @@ import pytz
 from sqlmodel import Field, Relationship, Session, select, col
 
 from .base import TGFPModelBase
-from .model_helpers import TGFPInfo, get_tgfp_info
+from .model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
 
 if TYPE_CHECKING:
     from .team import Team
@@ -102,7 +102,7 @@ class Game(TGFPModelBase, table=True):
         """Gets a list of games for a given week and season, sorted by game start time."""
         tgfp_info: TGFPInfo = session.info["TGFPInfo"]
         search_week: int = Game.most_recent_week(session)
-        search_season: int = season if season else tgfp_info.current_season
+        search_season: int = season if season else current_nfl_season()
 
         statement = (
             select(Game)
@@ -120,8 +120,7 @@ class Game(TGFPModelBase, table=True):
         if there are no records in the table at all, return 0
         else grab the most recent game and return its week_no
         """
-        info: TGFPInfo = session.info["TGFPInfo"]
-        search_season: int = info.current_season
+        search_season: int = current_nfl_season()
 
         statement = (
             select(Game)

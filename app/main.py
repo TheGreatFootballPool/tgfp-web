@@ -1,6 +1,5 @@
 """Main entry point for website"""
 
-import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Optional, List
@@ -8,7 +7,6 @@ from typing import Optional, List
 from pytz import timezone
 
 import uvicorn
-import seqlog
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 import sentry_sdk
 from fastapi.templating import Jinja2Templates
@@ -20,7 +18,7 @@ from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team, Game
 from jobs.scheduler import schedule_jobs, job_scheduler
-from models.model_helpers import TGFPInfo, get_tgfp_info
+from models.model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
 from app.routers import auth, mail, api, admin
 from apscheduler.triggers.cron import CronTrigger
 
@@ -273,7 +271,7 @@ async def picks_form(
                 player_id=player.id,
                 game_id=game.id,
                 picked_team_id=winner_id,
-                season=info.current_season,
+                season=current_nfl_season(),
                 week_no=game.week_no,
                 is_lock=is_lock,
                 is_upset=is_upset,

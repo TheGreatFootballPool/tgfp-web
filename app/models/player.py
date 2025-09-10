@@ -6,7 +6,7 @@ from pydantic import PrivateAttr
 
 from . import Game
 from .base import TGFPModelBase
-from .model_helpers import TGFPInfo
+from .model_helpers import TGFPInfo, current_nfl_season
 
 if TYPE_CHECKING:
     from .player_game_pick import PlayerGamePick
@@ -40,7 +40,7 @@ class Player(TGFPModelBase, table=True):
         sess: Session = self.current_session
         any_game: Game = Game.get_first_game_of_the_week(session=sess)
         search_week: int = week_no if week_no else any_game.week_no
-        search_season: int = season if season else self.tgfp_info.current_season
+        search_season: int = season if season else current_nfl_season()
         key: Tuple[int, int] = (search_season, search_week)
         from .player_game_pick import PlayerGamePick
 
