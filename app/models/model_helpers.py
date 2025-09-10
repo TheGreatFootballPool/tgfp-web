@@ -20,12 +20,10 @@ class TGFPInfo(BaseModel):
     """
     :attributes:
 
-    - :class:`int` current_season --> The current season (YYYY)
     - :class:`str` app_version --> Debug information containing the app version
     - :class:`str` app_env --> Debug information containing the app environment
     """
 
-    current_season: int
     app_version: str
     app_env: str
     umami_tracking_id: str
@@ -35,7 +33,6 @@ class TGFPInfo(BaseModel):
 def get_tgfp_info() -> TGFPInfo:
     """Returns the TGFPInfo object filled w/values"""
     return TGFPInfo(
-        current_season=current_nfl_season(),
         app_version=config.APP_VERSION,
         app_env=config.ENVIRONMENT,
         umami_tracking_id=config.UMAMI_TRACKING_ID,

@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from db import engine
 from models import Game, Team
-from models.model_helpers import TGFPInfo, get_tgfp_info
+from models.model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
 from tgfp_nfl import TgfpNfl, TgfpNflGame
 
 
@@ -20,9 +20,7 @@ class CreatePicksException(Exception):
         return f"Exception: {self.msg}"
 
 
-def _game_from_nfl_game(
-    session: Session, nfl_game: TgfpNflGame, info: TGFPInfo
-) -> Game:
+def _game_from_nfl_game(session: Session, nfl_game: TgfpNflGame) -> Game:
     road_team: Team = session.exec(
         select(Team).where(Team.tgfp_nfl_team_id == nfl_game.away_team.id)
     ).one()
@@ -46,7 +44,7 @@ def _game_from_nfl_game(
         start_time=nfl_game.start_time,
         week_no=nfl_game.week_no,
         tgfp_nfl_game_id=nfl_game.id,
-        season=info.current_season,
+        season=current_nfl_season(),
     )
     return game
 
@@ -72,8 +70,6 @@ def create_picks():
                 f"Creating pick for nfl_game: {nfl_game}",
                 nfl_game=nfl_game.extra_info,  # type: ignore[arg-type]
             )
-            tgfp_game = _game_from_nfl_game(
-                nfl_game=nfl_game, session=session, info=info
-            )
+            tgfp_game = _game_from_nfl_game(nfl_game=nfl_game, session=session)
             session.add(tgfp_game)
         session.commit()
