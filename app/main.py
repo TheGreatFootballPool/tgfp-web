@@ -274,7 +274,7 @@ async def picks_form(
                 game_id=game.id,
                 picked_team_id=winner_id,
                 season=info.current_season,
-                week_no=info.current_week,
+                week_no=game.week_no,
                 is_lock=is_lock,
                 is_upset=is_upset,
             )
