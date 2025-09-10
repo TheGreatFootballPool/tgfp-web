@@ -35,7 +35,7 @@
         {% set home_team=game.home_team -%}
             {% set opacity=1 %}
             {% if game.is_final %}
-                {% if  week_no == info.display_week %}
+                {% if  week_no == current_week %}
                     {% set opacity=0.5 %}
                     {% set opacity=0.5 %}
                 {% else %}

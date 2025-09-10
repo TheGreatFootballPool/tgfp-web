@@ -50,8 +50,8 @@ class TgfpNfl:
         try:
             response = httpx.get(url_to_query)
             content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         return content["events"]
 
     def __get_teams_source_data(self) -> list:
@@ -63,8 +63,8 @@ class TgfpNfl:
         try:
             response = httpx.get(url_to_query)
             content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         return content["sports"][0]["leagues"][0]["teams"]
 
     def __get_standings_source_data(self) -> list:
@@ -79,8 +79,8 @@ class TgfpNfl:
         try:
             response = httpx.get(url_to_query)
             content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         afc_standings: list = content["children"][0]["standings"]["entries"]
         nfc_standings: list = content["children"][1]["standings"]["entries"]
         all_standings: list = afc_standings + nfc_standings
@@ -159,8 +159,8 @@ class TgfpNfl:
             content = response.json()
             week_no: int = content["week"]["number"]
 
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         return week_no
 
     def games(self) -> List[TgfpNflGame]:
@@ -287,6 +287,7 @@ class TgfpNflGame:
         self._total_home_points: int = 0
         self._total_away_points: int = 0
         self.start_time = parser.parse(game_data["date"])
+        self.week_no: int = game_data["week"]["number"]
         self.game_status_type = game_data["status"]["type"]["name"]
         self.event_id = int(game_data["id"])
 
@@ -535,8 +536,3 @@ class TgfpNflStanding:
                 self.losses = int(stat["value"])
             if stat["type"] == "ties":
                 self.ties = int(stat["value"])
-
-
-if __name__ == "__main__":
-    nfl = TgfpNfl()
-    print(nfl.current_nfl_week_no)

@@ -2,10 +2,10 @@ from datetime import datetime
 from typing import Optional, TYPE_CHECKING, List
 
 import pytz
-from sqlmodel import Field, Relationship, Session, select
+from sqlmodel import Field, Relationship, Session, select, col
 
 from .base import TGFPModelBase
-from .model_helpers import TGFPInfo
+from .model_helpers import current_nfl_season
 
 if TYPE_CHECKING:
     from .team import Team
@@ -98,14 +98,12 @@ class Game(TGFPModelBase, table=True):
         return None
 
     @staticmethod
-    def games_for_week(
-        session: Session, season: int = None, week_no: int = None
-    ) -> List["Game"]:
+    def games_for_week(session: Session, season: int = None) -> List["Game"]:
         """Gets a list of games for a given week and season, sorted by game start time."""
-        tgfp_info: TGFPInfo = session.info["TGFPInfo"]
-        search_week: int = week_no if week_no else tgfp_info.current_week
-        search_season: int = season if season else tgfp_info.current_season
-
+        if session.info.get("games_for_week"):
+            return session.info["games_for_week"]
+        search_week: int = Game.most_recent_week(session)
+        search_season: int = season if season else current_nfl_season()
         statement = (
             select(Game)
             .where(Game.season == search_season)
@@ -115,6 +113,26 @@ class Game(TGFPModelBase, table=True):
 
         games = list(session.exec(statement).all())
         return games
+
+    @staticmethod
+    def most_recent_week(session: Session) -> int:
+        """
+        if there are no records in the table at all, return 0
+        else grab the most recent game and return its week_no
+        """
+        if session.info.get("most_recent_week"):
+            return session.info.get("most_recent_week")
+        search_season: int = current_nfl_season()
+        statement = (
+            select(Game)
+            .where(Game.season == search_season)
+            .order_by(col(Game.start_time).desc())
+        )
+        last_game = session.exec(statement).first()
+        if last_game is None:
+            return 0
+        session.info["most_recent_week"] = last_game.week_no
+        return last_game.week_no
 
     @staticmethod
     def get_first_game_of_the_week(session: Session) -> "Game":
