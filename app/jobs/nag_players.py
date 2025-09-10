@@ -13,7 +13,6 @@ from sqlmodel import Session
 from db import engine
 from models import Game, Player
 from config import Config
-from models.model_helpers import TGFPInfo, get_tgfp_info
 
 
 def get_time_to_kickoff(game: Game) -> str:
@@ -55,9 +54,7 @@ def nag_players():
     logging.info("NagBot starting")
     config: Config = Config.get_config()
     nag_payload = None
-    info: TGFPInfo = get_tgfp_info()
     with Session(engine) as session:
-        session.info["TGFPInfo"] = info
         nag_payload = get_nag_payload(session=session)
     if nag_payload:
         webhook = DiscordWebhook(

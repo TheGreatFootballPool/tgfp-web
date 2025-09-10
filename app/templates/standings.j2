@@ -34,9 +34,9 @@
             <td style="text-align: right;">{{ player.wins() }}</td>
             <td style="text-align: right;">{{ player.losses() }}</td>
             <td style="text-align: right;">{{ player.bonus() }}</td>
-            <td style="text-align: right;">{{ player.wins(week_no=info.active_week) }}</td>
-            <td style="text-align: right;">{{ player.losses(week_no=info.active_week) }}</td>
-            <td style="text-align: right;">{{ player.bonus(week_no=info.active_week) }}</td>
+            <td style="text-align: right;">{{ player.wins(week_no=current_week) }}</td>
+            <td style="text-align: right;">{{ player.losses(week_no=current_week) }}</td>
+            <td style="text-align: right;">{{ player.bonus(week_no=current_week) }}</td>
             <td style="text-align: right;">{{ player.total_points }}</td>
             <td style="text-align: right;">{{ '%.3f' | format(player.winning_pct | float) }}</td>
             <td style="text-align: center;">

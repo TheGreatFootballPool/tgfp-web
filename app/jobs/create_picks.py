@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from db import engine
 from models import Game, Team
-from models.model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
+from models.model_helpers import current_nfl_season
 from tgfp_nfl import TgfpNfl, TgfpNflGame
 
 
@@ -52,9 +52,7 @@ def _game_from_nfl_game(session: Session, nfl_game: TgfpNflGame) -> Game:
 def create_picks():
     """Creates the weekly picks page"""
     logging.info("Creating weekly picks page")
-    info: TGFPInfo = get_tgfp_info()
     with Session(engine) as session:
-        session.info["TGFPInfo"] = info
         week_no: int = Game.next_week_to_load(session)
         if not week_no:
             logging.error("No week to load for create picks")
