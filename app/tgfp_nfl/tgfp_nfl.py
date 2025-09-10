@@ -50,8 +50,8 @@ class TgfpNfl:
         try:
             response = httpx.get(url_to_query)
             content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         return content["events"]
 
     def __get_teams_source_data(self) -> list:
@@ -63,8 +63,8 @@ class TgfpNfl:
         try:
             response = httpx.get(url_to_query)
             content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         return content["sports"][0]["leagues"][0]["teams"]
 
     def __get_standings_source_data(self) -> list:
@@ -79,8 +79,8 @@ class TgfpNfl:
         try:
             response = httpx.get(url_to_query)
             content = response.json()
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         afc_standings: list = content["children"][0]["standings"]["entries"]
         nfc_standings: list = content["children"][1]["standings"]["entries"]
         all_standings: list = afc_standings + nfc_standings
@@ -159,8 +159,8 @@ class TgfpNfl:
             content = response.json()
             week_no: int = content["week"]["number"]
 
-        except httpx.RequestError:
-            print("HTTP Request failed")
+        except httpx.RequestError as e:
+            logging.error("Httpx Request Error %s", e)
         return week_no
 
     def games(self) -> List[TgfpNflGame]:
@@ -536,10 +536,3 @@ class TgfpNflStanding:
                 self.losses = int(stat["value"])
             if stat["type"] == "ties":
                 self.ties = int(stat["value"])
-
-
-if __name__ == "__main__":
-    nfl = TgfpNfl(week_no=1)
-    for game in nfl.games():
-        print(game)
-    print(nfl.current_nfl_week_no)

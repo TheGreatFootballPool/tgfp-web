@@ -76,8 +76,6 @@ async def welcome_email(
     first_name: str | None = Form(default=None),
     email: EmailStr | None = Form(default=None),
 ) -> JSONResponse:
-    print(request.url)
-
     # Support both JSON body (email_model) and HTML form posts
     if email_model is not None:
         recipients: List[EmailStr] = email_model.email
