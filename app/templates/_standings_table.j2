@@ -1,0 +1,55 @@
+{% macro row_with_style(row_number) -%}
+{% set even_class = row_even_class | default('row-even') %}
+{% set odd_class  = row_odd_class  | default('row-odd') %}
+{% if row_number % 2 == 0 %}
+  <tr class="{{ even_class }}">
+{% else %}
+  <tr class="{{ odd_class }}">
+{% endif %}
+{%- endmacro %}
+
+{% macro close_tr() -%}
+  </tr>
+{%- endmacro %}
+
+<table id="{{ standings_table_id | default('standings_table') }}" class="{{ standings_table_class | default('sortable') }}">
+  <tr>
+    <td class="standings_head" nowrap>Name</td>
+    <td class="standings_head" nowrap>Wins</td>
+    <td class="standings_head" nowrap>Losses</td>
+    <td class="standings_head" nowrap>Bonus</td>
+    <td class="standings_head" nowrap>Last<br/>Wins</td>
+    <td class="standings_head" nowrap>Last<br/>Losses</td>
+    <td class="standings_head" nowrap>Last<br/>Bonus</td>
+    <td class="standings_head" nowrap>Total</td>
+    <td class="standings_head" nowrap>Win %</td>
+    <td class="standings_head" nowrap>Games<br/>Back</td>
+  </tr>
+
+  {% set row_number = 0 %}
+  {% for player in active_players %}
+    {{ row_with_style(row_number) }}
+    {% set games_back = active_players[0].total_points - player.total_points %}
+    <td><a style="line-height: 14px"
+           href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">
+      {{ player.nick_name }}
+    </a></td>
+    <td style="text-align: right;">{{ player.wins() }}</td>
+    <td style="text-align: right;">{{ player.losses() }}</td>
+    <td style="text-align: right;">{{ player.bonus() }}</td>
+    <td style="text-align: right;">{{ player.wins(week_no=info.active_week) }}</td>
+    <td style="text-align: right;">{{ player.losses(week_no=info.active_week) }}</td>
+    <td style="text-align: right;">{{ player.bonus(week_no=info.active_week) }}</td>
+    <td style="text-align: right;">{{ player.total_points }}</td>
+    <td style="text-align: right;">{{ '%.3f' | format(player.winning_pct | float) }}</td>
+    <td style="text-align: center;">
+      {% if games_back == 0 %}
+        -
+      {% else %}
+        {{ games_back }}
+      {% endif %}
+    </td>
+    {{ close_tr() }}
+    {% set row_number = row_number + 1 %}
+  {% endfor %}
+</table>

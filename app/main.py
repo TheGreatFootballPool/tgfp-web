@@ -340,9 +340,7 @@ async def standings(
     """Returns the standings page"""
     session.info["TGFPInfo"] = info
     player: Player = Player.by_discord_id(session, discord_id)
-    players: List[Player] = list(
-        session.exec(select(Player).where(Player.active)).all()
-    )
+    players: List[Player] = Player.active_players(session)
     players.sort(key=lambda x: x.total_points, reverse=True)
     context = {"player": player, "info": info, "active_players": players}
     return templates.TemplateResponse(

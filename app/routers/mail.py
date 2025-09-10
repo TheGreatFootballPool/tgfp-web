@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from config import Config
 from db import engine
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from models import Player
 from models.model_helpers import TGFPInfo, get_tgfp_info
@@ -118,3 +118,37 @@ async def welcome_email(
     fm = FastMail(conf)
     await fm.send_message(message, template_name="email_welcome.j2")
     return JSONResponse(status_code=200, content={"message": "email has been sent"})
+
+
+@router.get("/send_standings")
+async def send_standings(
+    request: Request,
+    discord_id: int = Depends(_verify_player),
+    session: Session = Depends(_get_session),
+    info: TGFPInfo = Depends(_get_latest_info),
+):
+    """Serve a minimal standalone page with a single text field for standings commentary.
+
+    Note: The `send_standings.j2` template will be a minimal template (not extending `base.j2`).
+    This route only renders the form page; the POST handler will be added in a later step.
+    """
+    session.info["TGFPInfo"] = info
+    player: Player = Player.by_discord_id(session, discord_id)
+    players: List[Player] = Player.active_players(session)
+    players.sort(key=lambda x: x.total_points, reverse=True)
+    context = {"player": player, "info": info, "active_players": players}
+    return templates.TemplateResponse(
+        request=request,
+        name="send_standings.j2",
+        context=context,
+    )
+
+
+@router.post("/standings_email")
+async def standings_email(
+    request: Request,
+    email_model: EmailSchema | None = None,
+    first_name: str | None = Form(default=None),
+    email: EmailStr | None = Form(default=None),
+) -> JSONResponse:
+    pass
