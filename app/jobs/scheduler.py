@@ -8,6 +8,7 @@ from pytz import timezone
 
 from jobs import create_picks, update_game, nag_players
 from jobs.sync_team_records import sync_team_records
+from jobs.get_week import get_week
 from models import Game
 from config import Config
 from models.model_helpers import TGFPInfo, get_tgfp_info
@@ -122,9 +123,19 @@ def schedule_sync_team_records():
         )
 
 
+def schedule_get_week():
+    trigger: IntervalTrigger = IntervalTrigger(minutes=5, jitter=5)
+    job = job_scheduler.get_job("get_week")
+    if job:
+        job_scheduler.reschedule_job("get_week", trigger=trigger)
+    else:
+        job_scheduler.add_job(get_week, trigger=trigger, id="get_week")
+
+
 async def schedule_jobs():
     info: TGFPInfo = get_tgfp_info()
     schedule_nag_players(info)
     schedule_update_games(info)
     schedule_create_picks()
     schedule_sync_team_records()
+    schedule_get_week()

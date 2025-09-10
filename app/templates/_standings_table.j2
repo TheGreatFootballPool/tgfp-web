@@ -26,9 +26,8 @@
     <td class="standings_head" nowrap>Games<br/>Back</td>
   </tr>
 
-  {% set row_number = 0 %}
   {% for player in active_players %}
-    {{ row_with_style(row_number) }}
+    {{ row_with_style(loop.index0) }}
     {% set games_back = active_players[0].total_points - player.total_points %}
     <td><a style="line-height: 14px"
            href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">
@@ -50,6 +49,5 @@
       {% endif %}
     </td>
     {{ close_tr() }}
-    {% set row_number = row_number + 1 %}
   {% endfor %}
 </table>
