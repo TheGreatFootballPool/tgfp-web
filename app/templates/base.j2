@@ -4,10 +4,10 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
     <title>The Great Football Pool - {{ page_title }}</title>
     <link rel=stylesheet type=text/css href="{{ url_for('static', path='/mainstyle.css') }}">
-    <script type=text/javascript src="{{ url_for('static', path='/jquery.js?' + info.app_version) }}"></script>
-    <script src="{{ url_for('static', path='/sorttable.js?' + info.app_version) }}"></script>
+    <script type=text/javascript src="{{ url_for('static', path='/jquery.js?' + config.APP_VERSION) }}"></script>
+    <script src="{{ url_for('static', path='/sorttable.js?' + config.APP_VERSION) }}"></script>
     <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
-    <script defer src="https://umami.sturgeon.me/script.js" data-website-id="{{ info.umami_tracking_id }}"></script>
+    <script defer src="https://umami.sturgeon.me/script.js" data-website-id="{{ config.UMAMI_TRACKING_ID }}"></script>
     {# --- Sentry/Bugsink Loader --- #}
     <script
             src="https://browser.sentry-cdn.com/7.120.0/bundle.min.js"
@@ -17,9 +17,9 @@
     <!--suppress JSUnresolvedReference -->
     <script>
         Sentry.init({
-            dsn: "{{ info.bugsink_dsn }}",   // Injected from FastAPI settings
-            environment: "{{ info.app_env }}",
-            release: "{{ info.app_version }}",
+            dsn: "{{ config.BUGSINK_DSN }}",   // Injected from FastAPI settings
+            environment: "{{ config.ENVIRONMENT }}",
+            release: "{{ config.APP_VERSION }}",
             tracesSampleRate: 0.0,              // disable perf by default
             replaysSessionSampleRate: 0.0       // disable replay unless needed
         });
@@ -61,8 +61,8 @@
                 <a href="{{ url_for('job_schedule') }}">Schedule</a><br/>
                 <a href="{{ url_for('send_welcome') }}">Welcome Email</a><br/>
             </div>
-            <div id="appVersion" class="content">App Version: {{ info.app_version }}</div>
-            <div id="appVersion" class="content">App ENV: {{ info.app_env }}</div>
+            <div id="appVersion" class="content">App Version: {{ config.APP_VERSION }}</div>
+            <div id="appVersion" class="content">App ENV: {{ config.ENVIRONMENT }}</div>
         {% endif %}
         <div id="currentWeek" class="subhead">Current Week: {{ current_week }} </div>
     </div>

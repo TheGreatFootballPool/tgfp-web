@@ -11,7 +11,6 @@ from db import engine
 from sqlmodel import Session
 
 from models import Player
-from models.model_helpers import TGFPInfo, get_tgfp_info
 
 config = Config.get_config()
 
@@ -44,11 +43,6 @@ def _get_session():
         yield session
 
 
-async def _get_latest_info():
-    """Returns the current TGFPInfo object"""
-    return get_tgfp_info()
-
-
 async def _verify_player(request: Request) -> int:
     """Make sure we have a player session, otherwise, get one"""
     cookie = request.cookies.get("tgfp-discord-id")
@@ -67,10 +61,9 @@ async def send_welcome(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "info": info}
+    context = {"player": player, "config": config}
     return templates.TemplateResponse(
         request=request, name="send_welcome.j2", context=context
     )

@@ -5,7 +5,7 @@ import pytz
 from sqlmodel import Field, Relationship, Session, select, col
 
 from .base import TGFPModelBase
-from .model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
+from .model_helpers import current_nfl_season
 
 if TYPE_CHECKING:
     from .team import Team
@@ -100,7 +100,6 @@ class Game(TGFPModelBase, table=True):
     @staticmethod
     def games_for_week(session: Session, season: int = None) -> List["Game"]:
         """Gets a list of games for a given week and season, sorted by game start time."""
-        tgfp_info: TGFPInfo = session.info["TGFPInfo"]
         search_week: int = Game.most_recent_week(session)
         search_season: int = season if season else current_nfl_season()
 

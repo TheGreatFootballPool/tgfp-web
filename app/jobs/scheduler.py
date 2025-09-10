@@ -10,7 +10,7 @@ from jobs import create_picks, update_game, nag_players
 from jobs.sync_team_records import sync_team_records
 from models import Game
 from config import Config
-from models.model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
+from models.model_helpers import current_nfl_season
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -30,10 +30,9 @@ job_scheduler = AsyncIOScheduler(
 config: Config = Config.get_config()
 
 
-def schedule_nag_players(info: TGFPInfo):
+def schedule_nag_players():
     """Creates the flows for nagging players"""
     with Session(engine) as session:
-        session.info["TGFPInfo"] = info
         first_game: Game = Game.get_first_game_of_the_week(session)
         for delta in [60, 20, 7]:
             d: datetime = first_game.utc_start_time - timedelta(hours=0, minutes=delta)
@@ -52,10 +51,9 @@ def schedule_nag_players(info: TGFPInfo):
                 )
 
 
-def schedule_update_games(info: TGFPInfo):
+def schedule_update_games():
     """Creates the flows for updating games"""
     with Session(engine) as session:
-        session.info["TGFPInfo"] = info
         this_weeks_games: List[Game] = Game.games_for_week(session)
         for game in this_weeks_games:
             job_id: str = f"s{current_nfl_season()}:w{game.week_no}:g{game.id}"
@@ -123,8 +121,7 @@ def schedule_sync_team_records():
 
 
 async def schedule_jobs():
-    info: TGFPInfo = get_tgfp_info()
-    schedule_nag_players(info)
-    schedule_update_games(info)
+    schedule_nag_players()
+    schedule_update_games()
     schedule_create_picks()
     schedule_sync_team_records()

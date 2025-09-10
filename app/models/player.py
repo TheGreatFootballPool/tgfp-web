@@ -6,7 +6,7 @@ from pydantic import PrivateAttr
 
 from . import Game
 from .base import TGFPModelBase
-from .model_helpers import TGFPInfo, current_nfl_season
+from .model_helpers import current_nfl_season
 
 if TYPE_CHECKING:
     from .player_game_pick import PlayerGamePick
@@ -29,10 +29,6 @@ class Player(TGFPModelBase, table=True):
     @property
     def full_name(self):
         return self.first_name + " " + self.last_name
-
-    @property
-    def tgfp_info(self) -> TGFPInfo:
-        return self.current_session.info["TGFPInfo"]
 
     def picks_for_week(
         self, season: int = None, week_no: int = None

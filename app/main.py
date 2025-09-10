@@ -18,8 +18,8 @@ from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team, Game
 from jobs.scheduler import schedule_jobs, job_scheduler
-from models.model_helpers import TGFPInfo, get_tgfp_info, current_nfl_season
-from app.routers import auth, mail, api, admin
+from models.model_helpers import current_nfl_season
+from app.routers import auth, mail, admin
 from apscheduler.triggers.cron import CronTrigger
 
 from config import Config
@@ -69,7 +69,6 @@ app = FastAPI(
 )
 app.include_router(auth.router)
 app.include_router(mail.router)
-app.include_router(api.router)
 app.include_router(admin.router)
 app.add_middleware(
     SessionMiddleware, secret_key=config.SESSION_SECRET_KEY, max_age=None
@@ -83,11 +82,6 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 def _get_session():
     with Session(engine) as session:
         yield session
-
-
-async def _get_latest_info():
-    """Returns the current TGFPInfo object"""
-    return get_tgfp_info()
 
 
 def get_error_messages(
@@ -152,12 +146,10 @@ def home(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
-    session.info["TGFPInfo"] = info
     """Home page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "info": info}
+    context = {"player": player, "config": config}
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
 
@@ -171,12 +163,10 @@ def home_legacy(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
-    session.info["TGFPInfo"] = info
     """Home page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "info": info}
+    context = {"player": player, "config": config}
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
 
@@ -185,10 +175,9 @@ def profile(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "info": info}
+    context = {"player": player, "config": config}
     return templates.TemplateResponse(
         request=request, name="coming_soon.j2", context=context
     )
@@ -199,10 +188,8 @@ def picks(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Picks page"""
-    session.info["TGFPInfo"] = info
     player: Player = Player.by_discord_id(session, discord_id)
     if player.picks_for_week():
         context = {
@@ -211,7 +198,8 @@ def picks(
             ],
             "goto_route": "allpicks",
             "player": player,
-            "info": info,
+            "config": config,
+            "current_week": Game.most_recent_week(session),
         }
         return templates.TemplateResponse(
             request=request, name="error_picks.j2", context=context
@@ -239,8 +227,8 @@ def picks(
         "started_games": started_games,
         "valid_lock_teams": valid_lock_teams,
         "valid_upset_teams": valid_upset_teams,
-        "info": info,
         "player": player,
+        "config": config,
         "pick": pick,
     }
     return templates.TemplateResponse(request=request, name="picks.j2", context=context)
@@ -251,9 +239,7 @@ async def picks_form(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
-    session.info["TGFPInfo"] = info
     player: Player = Player.by_discord_id(session, discord_id)
     games: List[Game] = Game.games_for_week(session)
     form = await request.form()
@@ -286,7 +272,7 @@ async def picks_form(
             "error_messages": error_messages,
             "goto_route": "picks",
             "player": player,
-            "info": info,
+            "config": config,
         }
         return templates.TemplateResponse(
             request=request, name="error_picks.j2", context=context
@@ -303,10 +289,8 @@ def allpicks(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
     week_no: int = None,
 ):
-    session.info["TGFPInfo"] = info
     player: Player = Player.by_discord_id(session, discord_id)
     current_week: int = Game.most_recent_week(session)
     picks_week_no = week_no if week_no else current_week
@@ -318,12 +302,12 @@ def allpicks(
     teams: List[Team] = Team.all_teams(session)
     context = {
         "player": player,
-        "info": info,
         "active_players": active_players,
         "week_no": picks_week_no,
         "current_week": current_week,
         "games": games,
         "teams": teams,
+        "config": config,
     }
     return templates.TemplateResponse(
         request=request, name="allpicks.j2", context=context
@@ -335,16 +319,19 @@ async def standings(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Returns the standings page"""
-    session.info["TGFPInfo"] = info
     player: Player = Player.by_discord_id(session, discord_id)
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
     players.sort(key=lambda x: x.total_points, reverse=True)
-    context = {"player": player, "info": info, "active_players": players}
+    context = {
+        "player": player,
+        "current_week": Game.most_recent_week(session),
+        "active_players": players,
+        "config": config,
+    }
     return templates.TemplateResponse(
         request=request, name="standings.j2", context=context
     )
@@ -355,11 +342,14 @@ async def rules(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
-    info: TGFPInfo = Depends(_get_latest_info),
 ):
     """Rules page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "info": info}
+    context = {
+        "player": player,
+        "current_week": Game.most_recent_week(session),
+        "config": config,
+    }
     return templates.TemplateResponse(request=request, name="rules.j2", context=context)
 
 
@@ -375,9 +365,9 @@ def logout(
 
 
 @app.get("/login", response_class=HTMLResponse)
-async def login(request: Request, info: TGFPInfo = Depends(_get_latest_info)):
+async def login(request: Request):
     """Login page for discord"""
-    context = {"info": info}
+    context = {"config": config}
     return templates.TemplateResponse(request=request, name="login.j2", context=context)
 
 
