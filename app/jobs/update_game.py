@@ -33,7 +33,7 @@ def update_game(game_id: int):
         session.add(game)
         session.commit()
         if game.is_final:
-            job_id: str = f"s{info.current_season}:w{game.current_week}:g{game.id}"
+            job_id: str = f"s{info.current_season}:w{game.week_no}:g{game.id}"
             try:
                 logging.info("Removing job %s with game: %s", job_id, game.id)
                 job_scheduler.remove_job(job_id)

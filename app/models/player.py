@@ -4,6 +4,7 @@ from sqlmodel import Field, Relationship, Session, select
 from sqlalchemy import event
 from pydantic import PrivateAttr
 
+from . import Game
 from .base import TGFPModelBase
 from .model_helpers import TGFPInfo
 
@@ -36,9 +37,9 @@ class Player(TGFPModelBase, table=True):
     def picks_for_week(
         self, season: int = None, week_no: int = None
     ) -> List["PlayerGamePick"]:
-        """Gets the picks for the season/week_no or the
-        current week/season by default, with per-(season, week) caching."""
-        search_week: int = week_no if week_no else self.tgfp_info.current_week
+        sess: Session = self.current_session
+        any_game: Game = Game.get_first_game_of_the_week(session=sess)
+        search_week: int = week_no if week_no else any_game.week_no
         search_season: int = season if season else self.tgfp_info.current_season
         key: Tuple[int, int] = (search_season, search_week)
         from .player_game_pick import PlayerGamePick
@@ -49,7 +50,6 @@ class Player(TGFPModelBase, table=True):
             return cached
 
         # Query and cache
-        sess: Session = self.current_session
         statement = (
             select(PlayerGamePick)
             .where(PlayerGamePick.player_id == self.id)

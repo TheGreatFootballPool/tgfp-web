@@ -40,7 +40,7 @@ def schedule_nag_players(info: TGFPInfo):
             now_utc = datetime.now(ZoneInfo("UTC"))
             if now_utc >= d:
                 continue
-            job_id: str = f"s{info.current_season}:w{info.current_week}:d{delta}"
+            job_id: str = f"s{info.current_season}:w{first_game.week_no}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
             job = job_scheduler.get_job(job_id)
@@ -58,7 +58,7 @@ def schedule_update_games(info: TGFPInfo):
         session.info["TGFPInfo"] = info
         this_weeks_games: List[Game] = Game.games_for_week(session)
         for game in this_weeks_games:
-            job_id: str = f"s{info.current_season}:w{info.current_week}:g{game.id}"
+            job_id: str = f"s{info.current_season}:w{game.week_no}:g{game.id}"
 
             # Use UTC for scheduling to avoid tzlocal/pytz issues
             now_utc = datetime.now(ZoneInfo("UTC"))
