@@ -104,7 +104,6 @@ class Game(TGFPModelBase, table=True):
             return session.info["games_for_week"]
         search_week: int = Game.most_recent_week(session)
         search_season: int = season if season else current_nfl_season()
-        print("games_for_week")
         statement = (
             select(Game)
             .where(Game.season == search_season)
