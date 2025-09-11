@@ -4,7 +4,7 @@ from app.db import engine
 from tgfp_nfl import TgfpNfl, TgfpNflTeam
 
 
-def sync_team_records():
+def sync_the_team_records():
     nfl: TgfpNfl = TgfpNfl()
     with Session(engine) as session:
         teams = Team.all_teams(session)

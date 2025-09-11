@@ -53,8 +53,10 @@ async def lifespan(
         if job:
             job_scheduler.reschedule_job("weekly_planner", trigger=trigger)
         else:
-            job_scheduler.add_job(schedule_jobs, trigger=trigger, id="weekly_planner")
-        await schedule_jobs()
+            job_scheduler.add_job(
+                "app.jobs.scheduler:schedule_jobs", trigger=trigger, id="weekly_planner"
+            )
+        schedule_jobs()
 
         yield
     finally:

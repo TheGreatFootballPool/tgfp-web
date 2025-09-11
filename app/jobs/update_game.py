@@ -13,7 +13,7 @@ from tgfp_nfl import TgfpNfl
 from models import Game
 
 
-def update_game(game_id: int):
+def update_a_game(game_id: int):
     """
     Update all the wins / losses / scores, etc...
     @param game_id: The id of the game to update

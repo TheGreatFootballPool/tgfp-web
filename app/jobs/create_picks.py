@@ -49,7 +49,7 @@ def _game_from_nfl_game(session: Session, nfl_game: TgfpNflGame) -> Game:
     return game
 
 
-def create_picks():
+def create_the_picks():
     """Creates the weekly picks page"""
     logging.info("Creating weekly picks page")
     with Session(engine) as session:
