@@ -6,8 +6,6 @@ from apscheduler.triggers.cron import CronTrigger
 from sqlmodel import Session
 from pytz import timezone
 
-from jobs import create_picks, update_game, nag_players
-from jobs.sync_team_records import sync_team_records
 from models import Game
 from config import Config
 from models.model_helpers import current_nfl_season
@@ -47,7 +45,10 @@ def schedule_nag_players():
                 job_scheduler.reschedule_job(job_id, trigger=trigger)
             else:
                 job_scheduler.add_job(
-                    nag_players, name=job_name, trigger=trigger, id=job_id
+                    "app.jobs.nag_players:nag_the_players",
+                    name=job_name,
+                    trigger=trigger,
+                    id=job_id,
                 )
 
 
@@ -90,7 +91,7 @@ def schedule_update_games():
                 job_scheduler.reschedule_job(job_id, trigger=trigger)
             else:
                 job_scheduler.add_job(
-                    update_game,
+                    "app.jobs.update_game:update_a_game",
                     name=job_name,
                     trigger=trigger,
                     id=job_id,
@@ -105,7 +106,9 @@ def schedule_create_picks():
     if job:
         job_scheduler.reschedule_job("create_picks", trigger=trigger)
     else:
-        job_scheduler.add_job(create_picks, trigger=trigger, id="create_picks")
+        job_scheduler.add_job(
+            "app.jobs.create_picks:create_the_picks", trigger=trigger, id="create_picks"
+        )
 
 
 def schedule_sync_team_records():
@@ -116,11 +119,13 @@ def schedule_sync_team_records():
         job_scheduler.reschedule_job("sync_team_records", trigger=trigger)
     else:
         job_scheduler.add_job(
-            sync_team_records, trigger=trigger, id="sync_team_records"
+            "app.jobs.sync_team_records:sync_the_team_records",
+            trigger=trigger,
+            id="sync_team_records",
         )
 
 
-async def schedule_jobs():
+def schedule_jobs():
     schedule_nag_players()
     schedule_update_games()
     schedule_create_picks()

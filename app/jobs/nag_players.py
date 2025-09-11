@@ -49,7 +49,7 @@ def get_nag_payload(session) -> Optional[str]:
     return message
 
 
-def nag_players():
+def nag_the_players():
     """Sends a message to the players"""
     logging.info("NagBot starting")
     config: Config = Config.get_config()
@@ -64,4 +64,4 @@ def nag_players():
 
 
 if __name__ == "__main__":
-    nag_players()
+    nag_the_players()
