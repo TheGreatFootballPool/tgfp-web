@@ -60,6 +60,8 @@
             <div id="admin_links" class="content">
                 <a href="{{ url_for('job_schedule') }}">Schedule</a><br/>
                 <a href="{{ url_for('send_welcome') }}">Welcome Email</a><br/>
+                <a href="{{ url_for('job_create_picks') }}">Create Picks</a><br/>
+                <a href="{{ url_for('job_schedule_jobs') }}">Reschedule Jobs</a><br/>
             </div>
             <div id="appVersion" class="content">App Version: {{ config.APP_VERSION }}</div>
             <div id="appVersion" class="content">App ENV: {{ config.ENVIRONMENT }}</div>

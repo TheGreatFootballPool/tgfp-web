@@ -37,7 +37,8 @@ def schedule_nag_players():
             now_utc = datetime.now(ZoneInfo("UTC"))
             if now_utc >= d:
                 continue
-            job_id: str = f"s{current_nfl_season}:w{first_game.week_no}:d{delta}"
+            current_season: str = str(current_nfl_season())
+            job_id: str = f"s{current_season}:w{first_game.week_no}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
             job = job_scheduler.get_job(job_id)
@@ -57,7 +58,8 @@ def schedule_update_games():
     with Session(engine) as session:
         this_weeks_games: List[Game] = Game.games_for_week(session)
         for game in this_weeks_games:
-            job_id: str = f"s{current_nfl_season()}:w{game.week_no}:g{game.id}"
+            current_season: str = str(current_nfl_season())
+            job_id: str = f"s{current_season}:w{game.week_no}:g{game.id}"
 
             # Use UTC for scheduling to avoid tzlocal/pytz issues
             now_utc = datetime.now(ZoneInfo("UTC"))
@@ -125,7 +127,7 @@ def schedule_sync_team_records():
         )
 
 
-def schedule_jobs():
+async def schedule_jobs():
     schedule_nag_players()
     schedule_update_games()
     schedule_create_picks()

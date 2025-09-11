@@ -56,7 +56,7 @@ async def lifespan(
             job_scheduler.add_job(
                 "app.jobs.scheduler:schedule_jobs", trigger=trigger, id="weekly_planner"
             )
-        schedule_jobs()
+        await schedule_jobs()
 
         yield
     finally:
@@ -151,7 +151,11 @@ def home(
 ):
     """Home page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "config": config}
+    context = {
+        "player": player,
+        "config": config,
+        "current_week": Game.most_recent_week(session),
+    }
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
 
@@ -168,7 +172,11 @@ def home_legacy(
 ):
     """Home page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "config": config}
+    context = {
+        "player": player,
+        "config": config,
+        "current_week": Game.most_recent_week(session),
+    }
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
 
@@ -232,6 +240,7 @@ def picks(
         "player": player,
         "config": config,
         "pick": pick,
+        "current_week": Game.most_recent_week(session),
     }
     return templates.TemplateResponse(request=request, name="picks.j2", context=context)
 
@@ -280,7 +289,7 @@ async def picks_form(
             request=request, name="error_picks.j2", context=context
         )
     session.commit()
-    context = {"player": player, "info": info}
+    context = {"player": player}
     return templates.TemplateResponse(
         request=request, name="picks_form.j2", context=context
     )

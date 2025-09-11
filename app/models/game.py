@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING, List
 
@@ -133,6 +134,17 @@ class Game(TGFPModelBase, table=True):
             return 0
         session.info["most_recent_week"] = last_game.week_no
         return last_game.week_no
+
+    @staticmethod
+    def next_week_to_load(session: Session) -> int:
+        games = Game.games_for_week(session)
+        if not games:
+            return 1
+        last_game = games[-1]
+        if not last_game.is_final:
+            logging.error("Games should be all final here")
+            return 0
+        return games[-1].week_no + 1
 
     @staticmethod
     def get_first_game_of_the_week(session: Session) -> "Game":
