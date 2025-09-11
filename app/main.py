@@ -305,11 +305,9 @@ def allpicks(
     player: Player = Player.by_discord_id(session, discord_id)
     current_week: int = Game.most_recent_week(session)
     picks_week_no = week_no if week_no else current_week
-    if week_no:
-        picks_week_no = week_no
     active_players: List[Player] = Player.active_players(session)
     active_players.sort(key=lambda x: x.total_points, reverse=True)
-    games: List[Game] = Game.games_for_week(session)
+    games: List[Game] = Game.games_for_week(session, week_no=picks_week_no)
     teams: List[Team] = Team.all_teams(session)
     context = {
         "player": player,

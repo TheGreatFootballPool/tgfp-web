@@ -99,11 +99,13 @@ class Game(TGFPModelBase, table=True):
         return None
 
     @staticmethod
-    def games_for_week(session: Session, season: int = None) -> List["Game"]:
+    def games_for_week(
+        session: Session, season: int = None, week_no: int = None
+    ) -> List["Game"]:
         """Gets a list of games for a given week and season, sorted by game start time."""
         if session.info.get("games_for_week"):
             return session.info["games_for_week"]
-        search_week: int = Game.most_recent_week(session)
+        search_week: int = week_no if week_no else Game.most_recent_week(session)
         search_season: int = season if season else current_nfl_season()
         statement = (
             select(Game)
