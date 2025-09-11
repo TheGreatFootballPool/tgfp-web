@@ -289,7 +289,7 @@ async def picks_form(
             request=request, name="error_picks.j2", context=context
         )
     session.commit()
-    context = {"player": player}
+    context = {"player": player, "config": config}
     return templates.TemplateResponse(
         request=request, name="picks_form.j2", context=context
     )
