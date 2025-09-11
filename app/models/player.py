@@ -65,7 +65,11 @@ class Player(TGFPModelBase, table=True):
                 if pick.game_id == game_id:
                     return pick
         session: Session = self.current_session
-        statement = select(PlayerGamePick).where(PlayerGamePick.game_id == game_id)
+        statement = (
+            select(PlayerGamePick)
+            .where(PlayerGamePick.player_id == self.id)
+            .where(PlayerGamePick.game_id == game_id)
+        )
         return session.exec(statement).one()
 
     def wins(self, week_no=None, season=None) -> int:
