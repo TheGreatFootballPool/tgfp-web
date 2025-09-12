@@ -94,6 +94,15 @@ class PlayerGamePick(TGFPModelBase, table=True):
     is_lock: bool = False
     is_upset: bool = False
 
+    player: "Player" = Relationship(back_populates="game_picks")
+    game: "Game" = Relationship()
+    picked_team: "Team" = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "PlayerGamePick.picked_team_id==Team.id",
+            "viewonly": True,
+        }
+    )
+
     @property
     def is_win(self) -> bool:
         if self.game.winning_team and self.game.winning_team.id == self.picked_team_id:
@@ -116,12 +125,3 @@ class PlayerGamePick(TGFPModelBase, table=True):
         if self.is_loss and self.is_lock:
             bonus_points -= 1
         return bonus_points
-
-    player: "Player" = Relationship(back_populates="game_picks")
-    game: "Game" = Relationship()
-    picked_team: "Team" = Relationship(
-        sa_relationship_kwargs={
-            "primaryjoin": "PlayerGamePick.picked_team_id==Team.id",
-            "viewonly": True,
-        }
-    )

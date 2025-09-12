@@ -10,6 +10,7 @@ from .model_helpers import current_nfl_season
 
 if TYPE_CHECKING:
     from .player_game_pick import PlayerGamePick
+    from .player_award import PlayerAward
 
 
 class Player(TGFPModelBase, table=True):
@@ -23,6 +24,7 @@ class Player(TGFPModelBase, table=True):
     discord_id: int = Field(sa_type=sa.BigInteger, nullable=False)
 
     game_picks: List["PlayerGamePick"] = Relationship(back_populates="player")
+    player_awards: List["PlayerAward"] = Relationship(back_populates="player")
 
     _picks_for_week: Dict[Tuple[int, int], List] = PrivateAttr(default_factory=dict)
 
