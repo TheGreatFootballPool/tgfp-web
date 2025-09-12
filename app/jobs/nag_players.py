@@ -27,7 +27,7 @@ def get_late_players(session: Session) -> List[Player]:
     late_players: List[Player] = []
     players: List[Player] = Player.active_players(session=session)
     for player in players:
-        if not player.picks_for_week():
+        if not player.picks(week_no=Game.most_recent_week(session=session)):
             late_players.append(player)
     return late_players
 

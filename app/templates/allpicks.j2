@@ -52,7 +52,7 @@
     {% endfor -%}
     </tr>
     {% for player in active_players -%}
-        {% set player_picks = player.picks_for_week(week_no=week_no) -%}
+        {% set player_picks = player.picks(week_no=week_no) -%}
         {{ row_with_style(player_picks, loop.index) }}
         <td style="overflow:hidden; border-top:solid 1px #888;border-left:solid 1px #888;">
             <div style="white-space: nowrap;float:left;width:50%;">&nbsp;{{ player.nick_name }}</div>
