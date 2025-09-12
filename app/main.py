@@ -201,7 +201,7 @@ def picks(
 ):
     """Picks page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    if player.picks_for_week():
+    if player.picks(week_no=Game.most_recent_week(session=session)):
         context = {
             "error_messages": [
                 "Sorry, you can't change your picks.  If you think this is a problem, contact John"
