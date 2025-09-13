@@ -1,6 +1,6 @@
 # app/models/player_game_pick.py
 from typing import Optional, TYPE_CHECKING
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, Session, select
 import sqlalchemy as sa
 
 from .base import TGFPModelBase
@@ -114,6 +114,17 @@ class PlayerGamePick(TGFPModelBase, table=True):
         if self.game.winning_team and self.game.winning_team.id != self.picked_team_id:
             return True
         return False
+
+    @staticmethod
+    def find_picks(
+        week_no: int, season: int, session: Session
+    ) -> list["PlayerGamePick"]:
+        statement = (
+            select(PlayerGamePick)
+            .where(PlayerGamePick.week_no == week_no)
+            .where(PlayerGamePick.season == season)
+        )
+        return list(session.exec(statement).all())
 
     @property
     def bonus_points(self) -> int:

@@ -7,7 +7,11 @@ from sqlmodel import SQLModel, Field, Session
 
 
 class TGFPModelBase(SQLModel):
-    """Base class for all tables: automatically includes created_at/updated_at."""
+    """
+    attributes:
+    - created_at
+    - updated_at
+    """
 
     __abstract__ = True  # prevents its own table being created
 
