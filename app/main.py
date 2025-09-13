@@ -306,7 +306,7 @@ def allpicks(
     current_week: int = Game.most_recent_week(session)
     picks_week_no = week_no if week_no else current_week
     active_players: List[Player] = Player.active_players(session)
-    active_players.sort(key=lambda x: x.total_points, reverse=True)
+    active_players.sort(key=lambda x: x.total_points(), reverse=True)
     games: List[Game] = Game.games_for_week(session, week_no=picks_week_no)
     teams: List[Team] = Team.all_teams(session)
     context = {
@@ -334,7 +334,7 @@ async def standings(
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
-    players.sort(key=lambda x: x.total_points, reverse=True)
+    players.sort(key=lambda x: x.total_points(), reverse=True)
     context = {
         "player": player,
         "current_week": Game.most_recent_week(session),

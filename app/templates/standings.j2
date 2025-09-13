@@ -29,7 +29,7 @@
 {% set row_number=0 %}
 {% for player in active_players %}
             {{ row_with_style(row_number) }}
-{%     set games_back = active_players[0].total_points - player.total_points %}
+{%     set games_back = active_players[0].total_points() - player.total_points() %}
             <td><a style="line-height: 14px" href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">{{ player.nick_name }}</a></td>
             <td style="text-align: right;">{{ player.wins() }}</td>
             <td style="text-align: right;">{{ player.losses() }}</td>
@@ -37,7 +37,7 @@
             <td style="text-align: right;">{{ player.wins(week_no=current_week) }}</td>
             <td style="text-align: right;">{{ player.losses(week_no=current_week) }}</td>
             <td style="text-align: right;">{{ player.bonus(week_no=current_week) }}</td>
-            <td style="text-align: right;">{{ player.total_points }}</td>
+            <td style="text-align: right;">{{ player.total_points() }}</td>
             <td style="text-align: right;">{{ '%.3f' | format(player.winning_pct | float) }}</td>
             <td style="text-align: center;">
 {%     if games_back == 0 %}

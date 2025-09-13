@@ -118,7 +118,6 @@ class Player(TGFPModelBase, table=True):
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["bonus"]
 
-    @property
     def total_points(self, all_seasons: bool = False, week_no=None, season=None) -> int:
         """
         Returns the number of total
