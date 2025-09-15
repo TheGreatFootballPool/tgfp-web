@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     # noinspection PyUnusedImports
     from .award import Award
     from .player import Player
+    from .game import Game
 
 
 class PlayerAward(TGFPModelBase, table=True):
@@ -17,6 +18,7 @@ class PlayerAward(TGFPModelBase, table=True):
             "award_id",
             "season",
             "week_no",
+            "game_id",
             name="uq_playeraward_player_award_week",
         ),
     )
@@ -26,6 +28,7 @@ class PlayerAward(TGFPModelBase, table=True):
     award_id: int = Field(foreign_key="award.id", index=True)
     season: int = Field(index=True)
     week_no: int = Field(index=True)
-
+    game_id: int | None = Field(foreign_key="game.id", index=True)
     player: "Player" = Relationship(back_populates="player_awards")
     award: "Award" = Relationship()
+    game: "Game" = Relationship()
