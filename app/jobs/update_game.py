@@ -26,6 +26,11 @@ def update_a_game(game_id: int):
             return
         nfl_data_source = TgfpNfl(week_no=game.week_no)
         nfl_game = nfl_data_source.find_game(nfl_game_id=game.tgfp_nfl_game_id)
+        if not nfl_game:
+            logging.warning(
+                f"No game with id {game_id}  Probably because ESPN was not responding"
+            )
+            return
         game.home_team_score = int(nfl_game.total_home_points)
         game.road_team_score = int(nfl_game.total_away_points)
         game.game_status = nfl_game.game_status_type
