@@ -6,9 +6,45 @@ a data source (ESPN / Yahoo for example) for retrieving scores, schedule data, e
 from __future__ import annotations
 
 import logging
-from typing import Optional, Tuple, Any, List
+import time
+from typing import Optional, Any, List
 from dateutil import parser
 import httpx
+
+
+def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
+    """
+    Internal helper for GET requests with basic retry logic.
+
+    Retries on transient server errors (501, 502, 503) up to 2 times.
+    Uses exponential backoff for delays.
+
+    :param url: Target URL
+    :param kwargs: Extra keyword arguments passed to httpx.get()
+    :return: httpx.Response object if successful
+    :raises httpx.RequestError: For connection-level issues
+    :raises httpx.HTTPStatusError: If retries exhausted and status still invalid
+    """
+    max_retries = 2
+    delay = 1.0  # start with 1s, then 2s
+
+    for attempt in range(max_retries + 1):  # includes first try
+        try:
+            response = httpx.get(url, **kwargs)
+            if response.status_code in (501, 502, 503):
+                raise httpx.HTTPStatusError(
+                    f"Transient error {response.status_code} from {url}",
+                    request=response.request,
+                    response=response,
+                )
+            return response
+        except (httpx.RequestError, httpx.HTTPStatusError):
+            logging.warning(f"Retry attempt {attempt + 1}/{max_retries}")
+            if attempt == max_retries:
+                raise
+            time.sleep(delay)
+            delay *= 2  # exponential backoff
+    raise RuntimeError("Unexpected fallthrough in _http_get_with_retry")
 
 
 class TgfpNfl:
@@ -17,7 +53,7 @@ class TgfpNfl:
     def __init__(
         self,
         week_no: Optional[int] = None,
-        season_type: Optional[int] = None,
+        a_season_type: Optional[int] = None,
         debug=False,
     ):
         self._games = []
@@ -28,7 +64,7 @@ class TgfpNfl:
         self._standings_source_data = None
         self._debug = debug
         self._week_no = week_no if week_no else 1
-        self._season_type: Optional[int] = season_type
+        self._season_type: Optional[int] = a_season_type
         self._base_url = "https://site.api.espn.com/apis/v2/sports/football/nfl/"
         self._base_site_url = (
             "https://site.api.espn.com/apis/site/v2/sports/football/nfl"
@@ -41,91 +77,38 @@ class TgfpNfl:
         """Get Games from ESPN -- defaults to current season
         :return: list of games
         """
-        content: dict = {}
         week_no = self._week_no - 18 if self._week_no > 18 else self._week_no
         url_to_query = (
             self._base_site_url
             + f"/scoreboard?seasontype={self.season_type}&week={week_no}"
         )
-        try:
-            response = httpx.get(url_to_query)
-            content = response.json()
-        except httpx.RequestError as e:
-            logging.error("Httpx Request Error %s", e)
+        response = _http_get_with_retry(url_to_query)
+        content = response.json()
         return content["events"]
 
     def __get_teams_source_data(self) -> list:
         """Get Teams from ESPN
         :return: list of teams
         """
-        content: dict = {}
         url_to_query = self._base_site_url + "/teams"
-        try:
-            response = httpx.get(url_to_query)
-            content = response.json()
-        except httpx.RequestError as e:
-            logging.error("Httpx Request Error %s", e)
+        response = _http_get_with_retry(url_to_query)
+        content = response.json()
         return content["sports"][0]["leagues"][0]["teams"]
 
     def __get_standings_source_data(self) -> list:
         """Get Standings from ESPN
         :return: list of teams / standings
         """
-        content: dict = {}
         season_type = self.season_type
         if season_type == 3:
             season_type = 2
         url_to_query = self._base_url + f"/standings?seasontype={season_type}"
-        try:
-            response = httpx.get(url_to_query)
-            content = response.json()
-        except httpx.RequestError as e:
-            logging.error("Httpx Request Error %s", e)
+        response = _http_get_with_retry(url_to_query)
+        content = response.json()
         afc_standings: list = content["children"][0]["standings"]["entries"]
         nfc_standings: list = content["children"][1]["standings"]["entries"]
         all_standings: list = afc_standings + nfc_standings
         return all_standings
-
-    def __get_game_predictor_source_data(self, event_id: int) -> dict:
-        """Get Game Predictions from ESPN
-        :return: game prediction source data for one game
-        """
-        url_to_query = (
-            self._base_core_api_url
-            + f"events/{event_id}/competitions/{event_id}/predictor"
-        )
-        try:
-            response = httpx.get(
-                url_to_query,
-                headers={"User-Agent": "tgfp-web/1.0"},
-                timeout=httpx.Timeout(5.0, read=10.0, connect=5.0),
-            )
-
-            if response.status_code in (502, 503, 504):
-                logging.warning(
-                    "ESPN predictor %s returned %s; skipping",
-                    url_to_query,
-                    response.status_code,
-                )
-                return {}  # bail cleanly
-
-            response.raise_for_status()
-
-            try:
-                return response.json()
-            except ValueError:
-                logging.warning(
-                    "ESPN predictor %s returned non-JSON (content-type=%s); skipping",
-                    url_to_query,
-                    response.headers.get("content-type"),
-                )
-                return {}
-
-        except httpx.RequestError as e:
-            logging.warning(
-                "HTTP request error calling ESPN predictor %s: %s", url_to_query, e
-            )
-            return {}
 
     @property
     def season_type(self) -> int:
@@ -149,20 +132,6 @@ class TgfpNfl:
             return self._season_type
         return 3 if self._week_no > 18 else 2
 
-    @property
-    def current_nfl_week_no(self) -> int:
-        """Returns the current NFL week number based on a live call to the API (0 if not found)"""
-        url_to_query = self._base_site_url + "/scoreboard"
-        week_no: int = 0
-        try:
-            response = httpx.get(url_to_query)
-            content = response.json()
-            week_no: int = content["week"]["number"]
-
-        except httpx.RequestError as e:
-            logging.error("Httpx Request Error %s", e)
-        return week_no
-
     def games(self) -> List[TgfpNflGame]:
         """
         Returns:
@@ -173,12 +142,7 @@ class TgfpNfl:
         if not self._games_source_data:
             self._games_source_data = self.__get_games_source_data()
         for game_data in self._games_source_data:
-            single_game_data = self.__get_game_predictor_source_data(
-                int(game_data["id"])
-            )
-            a_game: TgfpNflGame = TgfpNflGame(
-                self, game_data=game_data, game_prediction_data=single_game_data
-            )
+            a_game: TgfpNflGame = TgfpNflGame(self, game_data=game_data)
             self._games.append(a_game)
 
         return self._games
@@ -268,7 +232,7 @@ class TgfpNflGame:
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, data_source: TgfpNfl, game_data, game_prediction_data):
+    def __init__(self, data_source: TgfpNfl, game_data):
         # pylint: disable=invalid-name
         self.id: str = game_data["uid"]
         # pylint: enable=invalid-name
@@ -278,7 +242,6 @@ class TgfpNflGame:
         self._odds_source_data: List[dict[str, Any]] = []
         if "odds" in game_data["competitions"][0]:
             self._odds_source_data = game_data["competitions"][0]["odds"]
-        self._game_predictor_source_data = game_prediction_data
         self._home_team: Optional[TgfpNflTeam] = None
         self._away_team: Optional[TgfpNflTeam] = None
         self._favored_team: Optional[TgfpNflTeam] = None
@@ -302,18 +265,6 @@ class TgfpNflGame:
             first_odd: dict = self._odds_source_data[0]
             return_odds = TgfpNflOdd(data_source=self._data_source, odd_data=first_odd)
         return return_odds
-
-    def _prediction_helper(
-        self, stat_name: str, home_team: bool = True, key: str = "displayValue"
-    ) -> str | float:
-        team = "homeTeam" if home_team else "awayTeam"
-        container = self._game_predictor_source_data.get(team, {}) or {}
-        statistics: list = container.get("statistics", []) or []
-        for stat in statistics:
-            if stat.get("name") == stat_name and key in stat:
-                return stat[key]
-        # Default to "0" so downstream float(...) casts won't explode
-        return "0"
 
     @property
     def favored_team(self) -> Optional[TgfpNflTeam]:
@@ -376,50 +327,6 @@ class TgfpNflGame:
         else:
             self.__set_home_away_favorite_teams_and_score()
         return self._total_away_points
-
-    @property
-    def home_team_predicted_win_pct(self) -> float:
-        return float(self._prediction_helper("gameProjection"))
-
-    @property
-    def away_team_predicted_win_pct(self) -> float:
-        return float(self._prediction_helper("gameProjection", home_team=False))
-
-    @property
-    def home_team_fpi(self) -> float:
-        return float(
-            self._prediction_helper("oppSeasonStrengthRating", home_team=False)
-        )
-
-    @property
-    def away_team_fpi(self) -> float:
-        return float(self._prediction_helper("oppSeasonStrengthRating"))
-
-    @property
-    def home_team_predicted_pt_diff(self) -> float:
-        return float(self._prediction_helper("teamPredPtDiff"))
-
-    @property
-    def matchup_quality(self) -> float:
-        return float(self._prediction_helper("matchupQuality"))
-
-    @property
-    def away_team_predicted_pt_diff(self) -> float:
-        return float(self._prediction_helper("teamPredPtDiff", home_team=False))
-
-    @property
-    def predicted_winning_diff_team(self) -> Tuple[float, TgfpNflTeam]:
-        """
-        Get the predicted winner of the game, and the point differential
-        Returns:
-           - float, TgfpNflTeam # Point differential (float) winning team
-        """
-        # get either home or away, it doesn't matter
-        diff: float = self.home_team_predicted_pt_diff
-        if diff > 0:
-            return diff, self.home_team
-        diff = self.away_team_predicted_pt_diff
-        return diff, self.away_team
 
     def __set_home_away_favorite_teams_and_score(self):
         teams: list = self._game_source_data["competitions"][0]["competitors"]
