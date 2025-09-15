@@ -51,7 +51,8 @@ class TgfpNfl:
             response = httpx.get(url_to_query)
             content = response.json()
         except httpx.RequestError as e:
-            logging.error("Httpx Request Error %s", e)
+            logging.warning("Httpx Request Error %s", e)
+            return []  # Return Empty List after logging an error
         return content["events"]
 
     def __get_teams_source_data(self) -> list:
@@ -148,20 +149,6 @@ class TgfpNfl:
         if self._season_type:
             return self._season_type
         return 3 if self._week_no > 18 else 2
-
-    @property
-    def current_nfl_week_no(self) -> int:
-        """Returns the current NFL week number based on a live call to the API (0 if not found)"""
-        url_to_query = self._base_site_url + "/scoreboard"
-        week_no: int = 0
-        try:
-            response = httpx.get(url_to_query)
-            content = response.json()
-            week_no: int = content["week"]["number"]
-
-        except httpx.RequestError as e:
-            logging.error("Httpx Request Error %s", e)
-        return week_no
 
     def games(self) -> List[TgfpNflGame]:
         """
