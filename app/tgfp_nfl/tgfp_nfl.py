@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional, Tuple, Any, List
+from typing import Optional, Any, List
 from dateutil import parser
 import httpx
 
@@ -110,13 +110,6 @@ class TgfpNfl:
         all_standings: list = afc_standings + nfc_standings
         return all_standings
 
-    @staticmethod
-    def __get_game_predictor_source_data(_: int) -> dict:
-        """Get Game Predictions from ESPN
-        :return: game prediction source data for one game
-        """
-        return {}
-
     @property
     def season_type(self) -> int:
         """
@@ -149,12 +142,7 @@ class TgfpNfl:
         if not self._games_source_data:
             self._games_source_data = self.__get_games_source_data()
         for game_data in self._games_source_data:
-            single_game_data = self.__get_game_predictor_source_data(
-                int(game_data["id"])
-            )
-            a_game: TgfpNflGame = TgfpNflGame(
-                self, game_data=game_data, game_prediction_data=single_game_data
-            )
+            a_game: TgfpNflGame = TgfpNflGame(self, game_data=game_data)
             self._games.append(a_game)
 
         return self._games
@@ -244,7 +232,7 @@ class TgfpNflGame:
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, data_source: TgfpNfl, game_data, game_prediction_data):
+    def __init__(self, data_source: TgfpNfl, game_data):
         # pylint: disable=invalid-name
         self.id: str = game_data["uid"]
         # pylint: enable=invalid-name
@@ -254,7 +242,6 @@ class TgfpNflGame:
         self._odds_source_data: List[dict[str, Any]] = []
         if "odds" in game_data["competitions"][0]:
             self._odds_source_data = game_data["competitions"][0]["odds"]
-        self._game_predictor_source_data = game_prediction_data
         self._home_team: Optional[TgfpNflTeam] = None
         self._away_team: Optional[TgfpNflTeam] = None
         self._favored_team: Optional[TgfpNflTeam] = None
@@ -278,18 +265,6 @@ class TgfpNflGame:
             first_odd: dict = self._odds_source_data[0]
             return_odds = TgfpNflOdd(data_source=self._data_source, odd_data=first_odd)
         return return_odds
-
-    def _prediction_helper(
-        self, stat_name: str, home_team: bool = True, key: str = "displayValue"
-    ) -> str | float:
-        team = "homeTeam" if home_team else "awayTeam"
-        container = self._game_predictor_source_data.get(team, {}) or {}
-        statistics: list = container.get("statistics", []) or []
-        for stat in statistics:
-            if stat.get("name") == stat_name and key in stat:
-                return stat[key]
-        # Default to "0" so downstream float(...) casts won't explode
-        return "0"
 
     @property
     def favored_team(self) -> Optional[TgfpNflTeam]:
@@ -352,50 +327,6 @@ class TgfpNflGame:
         else:
             self.__set_home_away_favorite_teams_and_score()
         return self._total_away_points
-
-    @property
-    def home_team_predicted_win_pct(self) -> float:
-        return float(self._prediction_helper("gameProjection"))
-
-    @property
-    def away_team_predicted_win_pct(self) -> float:
-        return float(self._prediction_helper("gameProjection", home_team=False))
-
-    @property
-    def home_team_fpi(self) -> float:
-        return float(
-            self._prediction_helper("oppSeasonStrengthRating", home_team=False)
-        )
-
-    @property
-    def away_team_fpi(self) -> float:
-        return float(self._prediction_helper("oppSeasonStrengthRating"))
-
-    @property
-    def home_team_predicted_pt_diff(self) -> float:
-        return float(self._prediction_helper("teamPredPtDiff"))
-
-    @property
-    def matchup_quality(self) -> float:
-        return float(self._prediction_helper("matchupQuality"))
-
-    @property
-    def away_team_predicted_pt_diff(self) -> float:
-        return float(self._prediction_helper("teamPredPtDiff", home_team=False))
-
-    @property
-    def predicted_winning_diff_team(self) -> Tuple[float, TgfpNflTeam]:
-        """
-        Get the predicted winner of the game, and the point differential
-        Returns:
-           - float, TgfpNflTeam # Point differential (float) winning team
-        """
-        # get either home or away, it doesn't matter
-        diff: float = self.home_team_predicted_pt_diff
-        if diff > 0:
-            return diff, self.home_team
-        diff = self.away_team_predicted_pt_diff
-        return diff, self.away_team
 
     def __set_home_away_favorite_teams_and_score(self):
         teams: list = self._game_source_data["competitions"][0]["competitors"]
