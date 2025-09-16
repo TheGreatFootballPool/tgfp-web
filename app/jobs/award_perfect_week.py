@@ -6,35 +6,22 @@ the player who had a PERFECT WEEK (no losses)
 import logging
 from sqlmodel import Session
 
-from db import engine
-from models import Player
+from models import Player, AwardSlug
+from models.award_helpers import upsert_award_with_args
+from models.model_helpers import current_nfl_season
 
 
-def find_players_with_perfect_week(
-    week_no: int, session: Session
-) -> list[Player] | None:
-    """
-
-    :param week_no: Week number to query
-    :type week_no: int
-    :param session: Active database session
-    :type session: Session
-    :return: a list of players who have perfect week
-    :rtype: list[Player]
-    """
+def sync_perfect_week(week_no: int, session: Session) -> list[Player] | None:
     active_players: list[Player] = Player.active_players(session=session)
-    players: list[Player] = []
     if len(active_players) < 2:
         logging.error("Too few players")
         raise Exception("Too few players")
-    for p in active_players:
-        if p.losses(week_no=week_no) == 0:
-            players.append(p)
-    return players
-
-
-if __name__ == "__main__":
-    with Session(engine) as s:
-        perfect_players = find_players_with_perfect_week(week_no=2, session=s)
-        for player in perfect_players:
-            print(player.nick_name, player.total_points(week_no=2))
+    for player in active_players:
+        if player.losses(week_no=week_no) == 0:
+            upsert_award_with_args(
+                session=session,
+                player_id=player.id,
+                slug=AwardSlug.PERFECT_WEEK,
+                season=current_nfl_season(),
+                week_no=week_no,
+            )

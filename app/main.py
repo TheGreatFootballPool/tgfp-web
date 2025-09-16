@@ -18,6 +18,7 @@ from sqlmodel import Session, select
 from db import engine
 from models import Player, PlayerGamePick, Team, Game
 from jobs.scheduler import schedule_jobs, job_scheduler
+from models.award_helpers import init_award_table
 from models.model_helpers import current_nfl_season
 from app.routers import auth, mail, admin
 from apscheduler.triggers.cron import CronTrigger
@@ -46,6 +47,7 @@ async def lifespan(
         traces_sample_rate=0.0,
     )
     init_logging()
+    init_award_table()
     try:
         pacific = timezone("America/Los_Angeles")
         trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)
