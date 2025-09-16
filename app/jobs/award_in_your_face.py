@@ -5,12 +5,12 @@ the player who got the first pick for the week the 'quick pick' award
 
 from sqlmodel import Session, select
 
-from db import engine
-from models import PlayerGamePick, Player, Game
+from models import PlayerGamePick, Player, Game, AwardSlug
+from models.award_helpers import upsert_award_with_args
 from models.model_helpers import current_nfl_season
 
 
-def find_in_your_face(week_no: int, session: Session) -> list[Player] | None:
+def sync_in_your_face(week_no: int, session: Session) -> list[Player] | None:
     games: list[Game] = Game.games_for_week(
         session=session, season=current_nfl_season(), week_no=week_no
     )
@@ -22,9 +22,12 @@ def find_in_your_face(week_no: int, session: Session) -> list[Player] | None:
             if pick.is_win:
                 winners.append(pick.player)
         if len(winners) == 1:
-            print(f"Got an In Your Face: {winners[0].nick_name} for game {game.id}")
-
-
-if __name__ == "__main__":
-    with Session(engine) as s:
-        find_in_your_face(week_no=1, session=s)
+            player: Player = winners[0]
+            upsert_award_with_args(
+                session=session,
+                player_id=player.id,
+                slug=AwardSlug.IN_YOUR_FACE,
+                season=current_nfl_season(),
+                week_no=week_no,
+                game_id=game.id,
+            )

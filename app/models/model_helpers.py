@@ -1,5 +1,4 @@
 from datetime import datetime
-from pydantic import BaseModel
 from app.config import Config
 
 config = Config.get_config()
