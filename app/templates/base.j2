@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
     <title>The Great Football Pool - {{ page_title }}</title>
-    <link rel=stylesheet type=text/css href="{{ url_for('static', path='/mainstyle.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', path='/mainstyle.css?' + config.APP_VERSION) }}">
     <script type=text/javascript src="{{ url_for('static', path='/jquery.js?' + config.APP_VERSION) }}"></script>
     <script src="{{ url_for('static', path='/sorttable.js?' + config.APP_VERSION) }}"></script>
     <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
