@@ -59,6 +59,14 @@ async def lifespan(
             job_scheduler.add_job(
                 "app.jobs.scheduler:schedule_jobs", trigger=trigger, id="weekly_planner"
             )
+        job_scheduler.add_job(
+            "app.jobs.award_update_all:update_all_awards",
+            trigger="date",
+            run_date=datetime.now(timezone("UTC")),
+            id="update_all_awards_startup",
+            replace_existing=True,
+        )
+
         await schedule_jobs()
 
         yield
