@@ -127,8 +127,23 @@ def schedule_sync_team_records():
         )
 
 
+def schedule_award_updates():
+    pacific = timezone("America/Los_Angeles")
+    trigger = CronTrigger(day_of_week="tue", hour=5, minute=30, timezone=pacific)
+    job = job_scheduler.get_job("update_awards")
+    if job:
+        job_scheduler.reschedule_job("update_awards", trigger=trigger)
+    else:
+        job_scheduler.add_job(
+            "app.jobs.award_update_all:update_all_awards",
+            trigger=trigger,
+            id="update_awards",
+        )
+
+
 async def schedule_jobs():
     schedule_nag_players()
     schedule_update_games()
     schedule_create_picks()
     schedule_sync_team_records()
+    schedule_award_updates()

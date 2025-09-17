@@ -47,7 +47,8 @@ def upsert_award_with_args(
     season: int,
     week_no: int,
     game_id: int = None,
-):
+) -> bool:
+    did_update: bool = False
     the_award: Award = Award.get_by_slug(session=session, slug=slug)
     statement = (
         select(PlayerAward)
@@ -60,6 +61,7 @@ def upsert_award_with_args(
         statement = statement.where(PlayerAward.game_id == game_id)
     existing = session.exec(statement).first()
     if not existing:
+        did_update = True
         player_award: PlayerAward = PlayerAward(
             player_id=player_id,
             award_id=the_award.id,
@@ -69,3 +71,4 @@ def upsert_award_with_args(
         )
         session.add(player_award)
     session.commit()
+    return did_update

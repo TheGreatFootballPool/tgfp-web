@@ -1,5 +1,6 @@
 """Main entry point for website"""
 
+from datetime import datetime
 import os
 from contextlib import asynccontextmanager
 from typing import Optional, List
@@ -50,7 +51,7 @@ async def lifespan(
     init_award_table()
     try:
         pacific = timezone("America/Los_Angeles")
-        trigger = CronTrigger(day_of_week="tue", hour=6, minute=0, timezone=pacific)
+        trigger = CronTrigger(day_of_week="wed", hour=7, minute=0, timezone=pacific)
         job = job_scheduler.get_job("weekly_planner")
         if job:
             job_scheduler.reschedule_job("weekly_planner", trigger=trigger)
@@ -291,6 +292,14 @@ async def picks_form(
             request=request, name="error_picks.j2", context=context
         )
     session.commit()
+    job_scheduler.add_job(
+        "app.award_update_all:update_all_awards",
+        trigger="date",
+        run_date=datetime.now(timezone("UTC")),
+        id=f"update_all_awards_{player.id}_{Game.most_recent_week(session)}",
+        replace_existing=True,
+    )
+
     context = {"player": player, "config": config}
     return templates.TemplateResponse(
         request=request, name="picks_form.j2", context=context
