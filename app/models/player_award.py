@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, Session, select, col
 import sqlalchemy as sa
 
 from .base import TGFPModelBase
@@ -34,3 +34,9 @@ class PlayerAward(TGFPModelBase, table=True):
     player: "Player" = Relationship(back_populates="player_awards")
     award: "Award" = Relationship()
     game: "Game" = Relationship()
+
+    @staticmethod
+    def awards_needing_notification(session: Session) -> list["PlayerAward"]:
+        """returns a list of active players"""
+        statement = select(PlayerAward).where(col(PlayerAward.notified_at).is_(None))
+        return list(session.exec(statement).all())

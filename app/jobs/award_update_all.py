@@ -3,6 +3,7 @@ import logging
 from sqlmodel import Session, select
 
 from db import engine
+from jobs.award_notify_discord import send_award_notification
 from models import Game, PlayerGamePick, AwardSlug, Player
 from models.award_helpers import upsert_award_with_args
 from models.model_helpers import current_nfl_season
@@ -122,3 +123,4 @@ def update_all_awards():
             sync_in_your_face(week_no=week_no, session=session)
             sync_quick_pick(week_no=week_no, session=session)
             sync_won_the_week(week_no=week_no, session=session)
+        # send_award_notification(session=session)
