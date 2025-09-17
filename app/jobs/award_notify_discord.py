@@ -42,7 +42,3 @@ def send_award_notification(session: Session):
         webhook.add_embed(award_embed)
         webhook.execute()
     session.commit()
-
-
-if __name__ == "__main__":
-    send_award_notification()

@@ -123,4 +123,4 @@ def update_all_awards():
             sync_in_your_face(week_no=week_no, session=session)
             sync_quick_pick(week_no=week_no, session=session)
             sync_won_the_week(week_no=week_no, session=session)
-        # send_award_notification(session=session)
+        send_award_notification(session=session)
