@@ -154,3 +154,17 @@ class Player(TGFPModelBase, table=True):
         result = session.exec(statement)
         player: Optional[Player] = result.first()
         return player
+
+    def awards(
+        self, all_seasons: bool = False, season: int = None, week_no: int = None
+    ):
+        if all_seasons:
+            return self.player_awards
+
+        filtered_awards: list[PlayerAward] = []
+        search_season: int = season if season else current_nfl_season()
+        award: PlayerAward
+        for award in self.player_awards:
+            if award.season == search_season and award.week_no == week_no:
+                filtered_awards.append(award)
+        return filtered_awards

@@ -43,7 +43,7 @@
                    href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">
                     {{ player.nick_name }}
                 </a>
-                {% for player_award in player.player_awards %}
+                {% for player_award in player.awards(week_no=current_week) %}
                     <img src="{{ url_for('static', path='images/' ~ player_award.award.icon ~ '-small.png') }}"
                          alt="{{ player_award.award.name }}"
                          title="{{ player_award.award.name }}"
