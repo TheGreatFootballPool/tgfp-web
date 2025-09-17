@@ -8,7 +8,16 @@ from models.award_helpers import upsert_award_with_args
 from models.model_helpers import current_nfl_season
 
 
-def sync_won_the_week(week_no: int, session: Session) -> Player | None:
+def _all_games_are_final(session: Session, week_no: int) -> bool:
+    statement = select(Game).where(Game.week_no == week_no)
+    games: list[Game] = list(session.exec(statement).all())
+    for game in games:
+        if not game.is_final:
+            return False
+    return True
+
+
+def sync_won_the_week(week_no: int, session: Session):
     """
 
     :param week_no: Week number to query
@@ -18,7 +27,10 @@ def sync_won_the_week(week_no: int, session: Session) -> Player | None:
     :return: Player or None if no player won the week
     :rtype: Player | None
     """
+    if not _all_games_are_final(session, week_no):
+        return
     logging.debug(f"sync_won_the_week {week_no}")
+    # first we need to make sure that the week is '
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         raise Exception("Too few players")
@@ -37,8 +49,11 @@ def sync_won_the_week(week_no: int, session: Session) -> Player | None:
         )
 
 
-def sync_in_your_face(week_no: int, session: Session) -> list[Player] | None:
+def sync_in_your_face(week_no: int, session: Session):
     logging.debug("sync_in_your_face")
+    if not _all_games_are_final(session, week_no):
+        return
+
     games: list[Game] = Game.games_for_week(
         session=session, season=current_nfl_season(), week_no=week_no
     )
@@ -63,6 +78,8 @@ def sync_in_your_face(week_no: int, session: Session) -> list[Player] | None:
 
 def sync_perfect_week(week_no: int, session: Session) -> list[Player] | None:
     logging.debug("sync_perfect_week")
+    if not _all_games_are_final(session, week_no):
+        return
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         logging.error("Too few players")
