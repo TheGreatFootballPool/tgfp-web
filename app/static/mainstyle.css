@@ -66,8 +66,8 @@ P { font-family:verdana;font-size:10pt}
 }
 #resultsDiv {background-color:#fcc;font-weight:bold}
 #mainContent {background-color:White;}
-#left {padding:15px;background-color:White;width:500px;float:left;margin-bottom:10px;}
-#standings_left {padding:15px;background-color:White;width:600px;float:left;margin-bottom:10px;}
+#left {padding:15px;background-color:White;width:600px;float:left;margin-bottom:10px;}
+#standings_left {padding:15px;background-color:White;width:720px;float:left;margin-bottom:10px;}
 #right {float:left;width:200px;}
 #righterStill {line-height:5px;font-size:0px;width:100%;height:5px;float:left;background-color:#bbb}
 #currentWeek {border-bottom:solid 1px black;}
