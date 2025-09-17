@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 from sqlmodel import Field, Relationship
 import sqlalchemy as sa
@@ -29,6 +30,7 @@ class PlayerAward(TGFPModelBase, table=True):
     season: int = Field(index=True)
     week_no: int = Field(index=True)
     game_id: int | None = Field(foreign_key="game.id", index=True)
+    notified_at: datetime | None = Field(default=None)
     player: "Player" = Relationship(back_populates="player_awards")
     award: "Award" = Relationship()
     game: "Game" = Relationship()
