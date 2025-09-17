@@ -2,17 +2,25 @@
 {% set page_title="Standings Page" %}
 {% set page_description="The Standings Page - " %}
 {% macro row_with_style(row_number) %}
-{%     if row_number%2 == 0 %}
+    {% if row_number%2 == 0 %}
         <tr style="border-top:solid 1px #888;border-left:solid 1px #888;background-color:#f0f3c5">
-{%     else %}
+            {% else %}
         <tr>
-{%     endif %}
+    {% endif %}
 {% endmacro %}
 {% macro close_tr() %}
     </tr>
 {% endmacro %}
 {% block content %}
-    <div style="color:#a32f31;padding: 8px 8px 12px 0;">NEW!!! Click on a player's name to see their profile.</div>
+    <div style="color:#a32f31;padding: 8px 8px 12px 0;">
+        {% for award in awards %}
+            <img src="{{ url_for('static', path='images/' ~ award.icon ~ '-small.png') }}"
+                 alt="{{ award.description }}"
+                 title="{{ award.description }}"
+                 style="height:16px; vertical-align:middle; margin-right:4px;"/>
+            = {{ award.name }}{% if not loop.last %},&nbsp;{% endif %}
+        {% endfor %}
+    </div>
     <table id=standings_table class="sortable">
         <tr>
             <td class="standings_head" nowrap>Name</td>
@@ -26,11 +34,22 @@
             <td class="standings_head" nowrap>Win %</td>
             <td class="standings_head" nowrap>Games<br/>Back</td>
         </tr>
-{% set row_number=0 %}
-{% for player in active_players %}
+        {% set row_number=0 %}
+        {% for player in active_players %}
             {{ row_with_style(row_number) }}
-{%     set games_back = active_players[0].total_points() - player.total_points() %}
-            <td><a style="line-height: 14px" href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">{{ player.nick_name }}</a></td>
+            {% set games_back = active_players[0].total_points() - player.total_points() %}
+            <td style="white-space: nowrap;">
+                <a style="line-height: 14px"
+                   href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">
+                    {{ player.nick_name }}
+                </a>
+                {% for player_award in player.player_awards %}
+                    <img src="{{ url_for('static', path='images/' ~ player_award.award.icon ~ '-small.png') }}"
+                         alt="{{ player_award.award.name }}"
+                         title="{{ player_award.award.name }}"
+                         style="height:16px; vertical-align:middle; margin-left:3px;"/>
+                {% endfor %}
+            </td>
             <td style="text-align: right;">{{ player.wins() }}</td>
             <td style="text-align: right;">{{ player.losses() }}</td>
             <td style="text-align: right;">{{ player.bonus() }}</td>
@@ -40,14 +59,14 @@
             <td style="text-align: right;">{{ player.total_points() }}</td>
             <td style="text-align: right;">{{ '%.3f' | format(player.winning_pct | float) }}</td>
             <td style="text-align: center;">
-{%     if games_back == 0 %}
-    -
-{%     else %}
-    {{ games_back }}
-{%     endif %}
+                {% if games_back == 0 %}
+                    -
+                {% else %}
+                    {{ games_back }}
+                {% endif %}
             </td>
-    {{ close_tr() }}
-{%     set row_number = row_number + 1 %}
-{% endfor %}
+            {{ close_tr() }}
+            {% set row_number = row_number + 1 %}
+        {% endfor %}
     </table>
 {% endblock %}

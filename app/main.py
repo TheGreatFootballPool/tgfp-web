@@ -17,7 +17,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlmodel import Session, select
 from db import engine
-from models import Player, PlayerGamePick, Team, Game
+from models import Player, PlayerGamePick, Team, Game, Award
 from jobs.scheduler import schedule_jobs, job_scheduler
 from models.award_helpers import init_award_table
 from models.model_helpers import current_nfl_season
@@ -293,7 +293,7 @@ async def picks_form(
         )
     session.commit()
     job_scheduler.add_job(
-        "app.award_update_all:update_all_awards",
+        "app.jobs.award_update_all:update_all_awards",
         trigger="date",
         run_date=datetime.now(timezone("UTC")),
         id=f"update_all_awards_{player.id}_{Game.most_recent_week(session)}",
@@ -351,6 +351,7 @@ async def standings(
         "current_week": Game.most_recent_week(session),
         "active_players": players,
         "config": config,
+        "awards": session.exec(select(Award)),
     }
     return templates.TemplateResponse(
         request=request, name="standings.j2", context=context
