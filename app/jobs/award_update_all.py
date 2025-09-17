@@ -18,6 +18,7 @@ def sync_won_the_week(week_no: int, session: Session) -> Player | None:
     :return: Player or None if no player won the week
     :rtype: Player | None
     """
+    logging.debug(f"sync_won_the_week {week_no}")
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         raise Exception("Too few players")
@@ -37,6 +38,7 @@ def sync_won_the_week(week_no: int, session: Session) -> Player | None:
 
 
 def sync_in_your_face(week_no: int, session: Session) -> list[Player] | None:
+    logging.debug("sync_in_your_face")
     games: list[Game] = Game.games_for_week(
         session=session, season=current_nfl_season(), week_no=week_no
     )
@@ -60,6 +62,7 @@ def sync_in_your_face(week_no: int, session: Session) -> list[Player] | None:
 
 
 def sync_perfect_week(week_no: int, session: Session) -> list[Player] | None:
+    logging.debug("sync_perfect_week")
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         logging.error("Too few players")
@@ -76,6 +79,7 @@ def sync_perfect_week(week_no: int, session: Session) -> list[Player] | None:
 
 
 def sync_quick_pick(week_no: int, session: Session) -> bool:
+    logging.debug(f"sync_quick_pick: {week_no}")
     picks = PlayerGamePick.find_picks(
         season=current_nfl_season(), week_no=week_no, session=session
     )
@@ -94,6 +98,7 @@ def sync_quick_pick(week_no: int, session: Session) -> bool:
 
 
 def update_all_awards():
+    logging.debug("Updating all awards")
     with Session(engine) as session:
         for week_no in range(1, Game.most_recent_week(session) + 1):
             sync_perfect_week(week_no=week_no, session=session)
