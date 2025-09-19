@@ -16,7 +16,7 @@ discord.py==2.6.3
 fastapi-discord==0.2.7
 arrow==1.3.0
 discord-webhook==1.4.1
-sqlmodel==0.0.24
+sqlmodel==0.0.25
 alembic==1.16.5
 psycopg[binary]==3.2.9
 fastapi-mail==1.5.0
