@@ -86,7 +86,9 @@ def sync_perfect_week(week_no: int, session: Session) -> list[Player] | None:
         logging.error("Too few players")
         raise Exception("Too few players")
     for player in active_players:
-        if player.losses(week_no=week_no) == 0:
+        losses: int = player.losses(week_no=week_no)
+        wins: int = player.wins(week_no=week_no)
+        if losses == 0 and wins > 0:
             upsert_award_with_args(
                 session=session,
                 player_id=player.id,
