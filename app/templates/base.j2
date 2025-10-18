@@ -3,8 +3,8 @@
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
     <title>The Great Football Pool - {{ page_title }}</title>
-    <link rel=stylesheet type=text/css href="{{ url_for('static', path='/mainstyle.css?' + config.APP_VERSION) }}">
-    <script type=text/javascript src="{{ url_for('static', path='/jquery.js?' + config.APP_VERSION) }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='/mainstyle.css?' + config.APP_VERSION) }}">
+    <script type="text/javascript" src="{{ url_for('static', path='/jquery.js?' + config.APP_VERSION) }}"></script>
     <script src="{{ url_for('static', path='/sorttable.js?' + config.APP_VERSION) }}"></script>
     <script src="https://use.fontawesome.com/8c439a9d4e.js"></script>
     <script defer src="https://umami.sturgeon.me/script.js" data-website-id="{{ config.UMAMI_TRACKING_ID }}"></script>
@@ -24,7 +24,7 @@
             replaysSessionSampleRate: 0.0       // disable replay unless needed
         });
     </script>
-
+</head>
 <body>
 <div id="topBar"></div>
 <div id="headerBar">
@@ -56,15 +56,16 @@
             <a href="{{ url_for('logout') }}">Logout</a><br/>
         </div>
         {% if player and player.email == 'john@sturgeon.me' %}
-            <div id="linksTitle" class="subhead">Admin</div>
+            <div id="adminLinksTitle" class="subhead">Admin</div>
             <div id="admin_links" class="content">
                 <a href="{{ url_for('job_schedule') }}">Schedule</a><br/>
                 <a href="{{ url_for('send_welcome') }}">Welcome Email</a><br/>
                 <a href="{{ url_for('job_create_picks') }}">Create Picks</a><br/>
+                <a href="{{ url_for('job_update_all_scores') }}">Update All Scores</a><br/>
                 <a href="{{ url_for('job_schedule_jobs') }}">Reschedule Jobs</a><br/>
             </div>
             <div id="appVersion" class="content">App Version: {{ config.APP_VERSION }}</div>
-            <div id="appVersion" class="content">App ENV: {{ config.ENVIRONMENT }}</div>
+            <div id="appEnvironment" class="content">App ENV: {{ config.ENVIRONMENT }}</div>
         {% endif %}
         <div id="currentWeek" class="subhead">Current Week: {{ current_week }} </div>
     </div>
