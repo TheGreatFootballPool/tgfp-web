@@ -9,6 +9,7 @@ from sqlmodel import Session
 from db import engine
 from jobs.create_picks import create_the_picks
 from jobs.update_all_scores import update_all_scores
+from jobs.sync_team_records import sync_the_team_records
 from jobs.scheduler import job_scheduler, schedule_jobs
 
 templates = Jinja2Templates(directory="templates")
@@ -35,6 +36,14 @@ def job_create_picks(request: Request):
 def job_update_all_scores(request: Request):
     with Session(engine) as session:
         update_all_scores(session)
+    redirect_url = request.url_for("home")
+    response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+    return response
+
+
+@router.get("/job_sync_team_records")
+def job_sync_team_records(request: Request):
+    sync_the_team_records()
     redirect_url = request.url_for("home")
     response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
     return response
