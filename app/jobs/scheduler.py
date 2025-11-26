@@ -141,7 +141,7 @@ def schedule_award_updates():
         )
 
 
-async def schedule_jobs():
+def schedule_jobs():
     schedule_nag_players()
     schedule_update_games()
     schedule_create_picks()
