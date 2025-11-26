@@ -50,8 +50,8 @@ def job_sync_team_records(request: Request):
 
 
 @router.get("/job_schedule_jobs")
-async def job_schedule_jobs(request: Request):
-    await schedule_jobs()
+def job_schedule_jobs(request: Request):
+    schedule_jobs()
     redirect_url = request.url_for("job_schedule")
     response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
     return response

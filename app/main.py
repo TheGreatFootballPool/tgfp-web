@@ -67,7 +67,7 @@ async def lifespan(
             replace_existing=True,
         )
 
-        await schedule_jobs()
+        schedule_jobs()
 
         yield
     finally:
