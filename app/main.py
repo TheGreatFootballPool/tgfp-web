@@ -92,11 +92,6 @@ templates = Jinja2Templates(directory="templates")
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 
-@app.get("/sentry-debug")
-async def trigger_error():
-    _ = 1 / 0
-
-
 def _get_session():
     with Session(engine) as session:
         yield session

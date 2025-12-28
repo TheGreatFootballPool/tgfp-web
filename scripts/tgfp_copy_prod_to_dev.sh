@@ -5,10 +5,6 @@ set -euo pipefail
 PG16_BIN="${PG16_BIN:-/opt/homebrew/opt/postgresql@16/bin}"  # adjust if needed
 JOBS="${JOBS:-4}"
 
-# URIs
-PROD_URI="postgresql+psycopg://tgfp:tgfp@tgfp-prod:5432/tgfp"
-DEV_URI="postgresql+psycopg://tgfp:tgfp@localhost:6432/tgfp"
-
 # Strip "+psycopg" (CLI tools expect plain postgresql:)
 PROD_PG="${PROD_URI/postgresql+psycopg:/postgresql:}"
 DEV_PG="${DEV_URI/postgresql+psycopg:/postgresql:}"
