@@ -166,7 +166,7 @@ Jinja2 templates (`.j2` files) for HTML pages: picks, standings, home, etc.
 All configuration via environment variables (see `config/op.env` for template):
 - `DATABASE_URL`: PostgreSQL connection string
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI`: OAuth settings
-- `BUGSINK_DSN`: Sentry error tracking
+- `SENTRY_DSN`: Sentry error tracking
 - `ENVIRONMENT`: `local_dev`, `development`, or `production`
 - `SESSION_SECRET_KEY`: FastAPI session encryption
 - `APP_VERSION`: Deployed version (from `config/version.env`)

@@ -36,7 +36,7 @@ async def lifespan(
 ):
     job_scheduler.start()
     sentry_sdk.init(
-        dsn=config.BUGSINK_DSN,
+        dsn=config.SENTRY_DSN,
         # Add data like request headers and IP for users, if applicable;
         # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
         send_default_pii=True,
