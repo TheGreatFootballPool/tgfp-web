@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Pre-push hook to ensure version.env is updated when pushing code changes
+# This prevents deploying code without updating the version
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# Get the remote name and URL
+remote="$1"
+url="$2"
+
+# Read from stdin (format: <local ref> <local sha1> <remote ref> <remote sha1>)
+while read local_ref local_sha remote_ref remote_sha
+do
+    if [ "$local_sha" = "0000000000000000000000000000000000000000" ]
+    then
+        # Handle delete
+        continue
+    fi
+
+    if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]
+    then
+        # New branch, compare against empty tree
+        remote_sha=$(git hash-object -t tree /dev/null)
+    fi
+
+    # Check if there are any code changes (excluding config/version.env)
+    code_changes=$(git diff --name-only "$remote_sha" "$local_sha" | grep -v '^config/version.env$' | wc -l)
+
+    if [ "$code_changes" -gt 0 ]; then
+        # There are code changes, check if version.env was also updated
+        version_updated=$(git diff --name-only "$remote_sha" "$local_sha" | grep '^config/version.env$' | wc -l)
+
+        if [ "$version_updated" -eq 0 ]; then
+            echo -e "${RED}ERROR: Code changes detected but config/version.env not updated!${NC}"
+            echo -e "${YELLOW}You are pushing code changes without updating the version.${NC}"
+            echo ""
+            echo "Please update config/version.env manually before pushing."
+            echo ""
+            echo -e "${YELLOW}To bypass this check (not recommended), use:${NC}"
+            echo "  git push --no-verify"
+            exit 1
+        else
+            echo -e "${GREEN}✓ Version updated - proceeding with push${NC}"
+        fi
+    fi
+done
+
+exit 0

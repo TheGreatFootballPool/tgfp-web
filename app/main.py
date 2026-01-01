@@ -45,9 +45,7 @@ async def lifespan(
         # infer it, but explicitly setting it is more reliable:
         release=config.APP_VERSION,
         environment=config.ENVIRONMENT,
-        traces_sample_rate=1.0,
-        profile_lifecycle="manual",
-        profile_session_sample_rate=1.0,
+        traces_sample_rate=0.01,
     )
     init_logging()
     init_award_table()
