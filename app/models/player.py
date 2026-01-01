@@ -108,7 +108,9 @@ class Player(TGFPModelBase, table=True):
         # Only use cache for default all_seasons=False case (which is what prefetch populates)
         if not all_seasons:
             sess: Session = self.current_session
-            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            # Normalize season to match what picks() does (fills in current season if None)
+            search_season: int = season if season else current_nfl_season()
+            cache_key = f"player_record_p{self.id}_s{search_season}_w{week_no}"
             if sess.info.get(cache_key):
                 return sess.info.get(cache_key)["wins"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
@@ -120,7 +122,9 @@ class Player(TGFPModelBase, table=True):
         # Only use cache for default all_seasons=False case (which is what prefetch populates)
         if not all_seasons:
             sess: Session = self.current_session
-            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            # Normalize season to match what picks() does (fills in current season if None)
+            search_season: int = season if season else current_nfl_season()
+            cache_key = f"player_record_p{self.id}_s{search_season}_w{week_no}"
             if sess.info.get(cache_key):
                 return sess.info.get(cache_key)["losses"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
@@ -130,7 +134,9 @@ class Player(TGFPModelBase, table=True):
         # Only use cache for default all_seasons=False case (which is what prefetch populates)
         if not all_seasons:
             sess: Session = self.current_session
-            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            # Normalize season to match what picks() does (fills in current season if None)
+            search_season: int = season if season else current_nfl_season()
+            cache_key = f"player_record_p{self.id}_s{search_season}_w{week_no}"
             if sess.info.get(cache_key):
                 return sess.info.get(cache_key)["bonus"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
@@ -146,7 +152,9 @@ class Player(TGFPModelBase, table=True):
         # Only use cache for default all_seasons=False case (which is what prefetch populates)
         if not all_seasons:
             sess: Session = self.current_session
-            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            # Normalize season to match what picks() does (fills in current season if None)
+            search_season: int = season if season else current_nfl_season()
+            cache_key = f"player_record_p{self.id}_s{search_season}_w{week_no}"
             if sess.info.get(cache_key):
                 record = sess.info.get(cache_key)
                 return record["wins"] + record["bonus"]
