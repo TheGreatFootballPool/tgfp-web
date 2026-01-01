@@ -45,7 +45,9 @@ async def lifespan(
         # infer it, but explicitly setting it is more reliable:
         release=config.APP_VERSION,
         environment=config.ENVIRONMENT,
-        traces_sample_rate=0.0,
+        traces_sample_rate=1.0,
+        profile_lifecycle="manual",
+        profile_session_sample_rate=1.0,
     )
     init_logging()
     init_award_table()
@@ -325,6 +327,8 @@ def allpicks(
     current_week: int = Game.most_recent_week(session)
     picks_week_no = week_no if week_no else current_week
     active_players: List[Player] = Player.active_players(session)
+    # Prefetch all picks for all players to populate session cache
+    Player.prefetch_picks_for_players(session, active_players)
     active_players.sort(key=lambda x: x.total_points(), reverse=True)
     games: List[Game] = Game.games_for_week(session, week_no=picks_week_no)
     teams: List[Team] = Team.all_teams(session)
@@ -353,6 +357,9 @@ async def standings(
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
+    # Prefetch all picks and awards for all players to populate session cache
+    Player.prefetch_picks_for_players(session, players)
+    Player.prefetch_awards_for_players(session, players)
     players.sort(key=lambda x: x.total_points(), reverse=True)
     context = {
         "player": player,

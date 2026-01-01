@@ -105,16 +105,28 @@ class Player(TGFPModelBase, table=True):
         }
 
     def wins(self, all_seasons: bool = False, season: int = None, week_no: int = None):
+        sess: Session = self.current_session
+        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+        if sess.info.get(cache_key):
+            return sess.info.get(cache_key)["wins"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["wins"]
 
     def losses(
         self, all_seasons: bool = False, season: int = None, week_no: int = None
     ):
+        sess: Session = self.current_session
+        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+        if sess.info.get(cache_key):
+            return sess.info.get(cache_key)["losses"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["losses"]
 
     def bonus(self, all_seasons: bool = False, season: int = None, week_no: int = None):
+        sess: Session = self.current_session
+        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+        if sess.info.get(cache_key):
+            return sess.info.get(cache_key)["bonus"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["bonus"]
 
@@ -125,6 +137,11 @@ class Player(TGFPModelBase, table=True):
         :return: :class:`int` - total number of points (wins + bonus)
          optionally for a single week, or all weeks
         """
+        sess: Session = self.current_session
+        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+        if sess.info.get(cache_key):
+            record = sess.info.get(cache_key)
+            return record["wins"] + record["bonus"]
         return self.wins(
             all_seasons=all_seasons, week_no=week_no, season=season
         ) + self.bonus(all_seasons=all_seasons, week_no=week_no, season=season)
@@ -168,3 +185,83 @@ class Player(TGFPModelBase, table=True):
             if award.season == search_season and award.week_no == week_no:
                 filtered_awards.append(award)
         return filtered_awards
+
+    @staticmethod
+    def prefetch_picks_for_players(session: Session, players: List["Player"]) -> None:
+        """
+        Prefetch all picks for a list of players with a single query and populate session cache.
+        This avoids N+1 queries when accessing picks for multiple players.
+        """
+        from .player_game_pick import PlayerGamePick
+
+        if not players:
+            return
+
+        player_ids = [p.id for p in players]
+        # noinspection PyUnresolvedReferences
+        statement = select(PlayerGamePick).where(PlayerGamePick.player_id.in_(player_ids))
+        all_picks = list(session.exec(statement).all())
+
+        # Group picks by player_id and cache combinations
+        from collections import defaultdict
+        picks_by_player = defaultdict(list)
+        for pick in all_picks:
+            picks_by_player[pick.player_id].append(pick)
+
+        # Populate cache for each player with various filter combinations
+        for player in players:
+            player_picks = picks_by_player.get(player.id, [])
+
+            # Cache all picks for this player (no filters)
+            session.info[f"player_game_pick_p{player.id}_sNone_wNone"] = player_picks
+            # Cache computed record for all picks
+            session.info[f"player_record_p{player.id}_sNone_wNone"] = Player._record_from_picks(player_picks)
+
+            # Cache picks grouped by season and week
+            by_season = defaultdict(list)
+            by_week = defaultdict(list)
+            by_season_week = defaultdict(list)
+
+            for pick in player_picks:
+                by_season[pick.season].append(pick)
+                by_week[pick.week_no].append(pick)
+                by_season_week[(pick.season, pick.week_no)].append(pick)
+
+            # Store picks and computed records in cache
+            for season, picks in by_season.items():
+                session.info[f"player_game_pick_p{player.id}_s{season}_wNone"] = picks
+                session.info[f"player_record_p{player.id}_s{season}_wNone"] = Player._record_from_picks(picks)
+
+            for week_no, picks in by_week.items():
+                session.info[f"player_game_pick_p{player.id}_sNone_w{week_no}"] = picks
+                session.info[f"player_record_p{player.id}_sNone_w{week_no}"] = Player._record_from_picks(picks)
+
+            for (season, week_no), picks in by_season_week.items():
+                session.info[f"player_game_pick_p{player.id}_s{season}_w{week_no}"] = picks
+                session.info[f"player_record_p{player.id}_s{season}_w{week_no}"] = Player._record_from_picks(picks)
+
+    @staticmethod
+    def prefetch_awards_for_players(session: Session, players: List["Player"]) -> None:
+        """
+        Prefetch all awards for a list of players with a single query.
+        This avoids N+1 queries when accessing awards for multiple players.
+        """
+        from .player_award import PlayerAward
+
+        if not players:
+            return
+
+        player_ids = [p.id for p in players]
+        # noinspection PyUnresolvedReferences
+        statement = select(PlayerAward).where(PlayerAward.player_id.in_(player_ids))
+        all_awards = list(session.exec(statement).all())
+
+        # Group awards by player_id
+        from collections import defaultdict
+        awards_by_player = defaultdict(list)
+        for award in all_awards:
+            awards_by_player[award.player_id].append(award)
+
+        # Populate the relationship for each player to avoid lazy loading
+        for player in players:
+            player.player_awards = awards_by_player.get(player.id, [])
