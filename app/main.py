@@ -361,9 +361,18 @@ async def standings(
     Player.prefetch_picks_for_players(session, players)
     Player.prefetch_awards_for_players(session, players)
     players.sort(key=lambda x: x.total_points(), reverse=True)
+    games: List[Game] = Game.games_for_week(session)
+    most_recent_week: int = Game.most_recent_week(session)
+    all_games_in_pregame: bool = True
+    for game in games:
+        if not game.is_pregame:
+            all_games_in_pregame = False
+            break
+    if all_games_in_pregame and most_recent_week > 1:
+        most_recent_week -= 1
     context = {
         "player": player,
-        "current_week": Game.most_recent_week(session),
+        "most_recent_week": most_recent_week,
         "active_players": players,
         "config": config,
         "awards": session.exec(select(Award)),
