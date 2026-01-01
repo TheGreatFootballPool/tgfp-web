@@ -105,28 +105,34 @@ class Player(TGFPModelBase, table=True):
         }
 
     def wins(self, all_seasons: bool = False, season: int = None, week_no: int = None):
-        sess: Session = self.current_session
-        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
-        if sess.info.get(cache_key):
-            return sess.info.get(cache_key)["wins"]
+        # Only use cache for default all_seasons=False case (which is what prefetch populates)
+        if not all_seasons:
+            sess: Session = self.current_session
+            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            if sess.info.get(cache_key):
+                return sess.info.get(cache_key)["wins"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["wins"]
 
     def losses(
         self, all_seasons: bool = False, season: int = None, week_no: int = None
     ):
-        sess: Session = self.current_session
-        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
-        if sess.info.get(cache_key):
-            return sess.info.get(cache_key)["losses"]
+        # Only use cache for default all_seasons=False case (which is what prefetch populates)
+        if not all_seasons:
+            sess: Session = self.current_session
+            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            if sess.info.get(cache_key):
+                return sess.info.get(cache_key)["losses"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["losses"]
 
     def bonus(self, all_seasons: bool = False, season: int = None, week_no: int = None):
-        sess: Session = self.current_session
-        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
-        if sess.info.get(cache_key):
-            return sess.info.get(cache_key)["bonus"]
+        # Only use cache for default all_seasons=False case (which is what prefetch populates)
+        if not all_seasons:
+            sess: Session = self.current_session
+            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            if sess.info.get(cache_key):
+                return sess.info.get(cache_key)["bonus"]
         record = self._record_from_picks(self.picks(all_seasons, season, week_no))
         return record["bonus"]
 
@@ -137,11 +143,13 @@ class Player(TGFPModelBase, table=True):
         :return: :class:`int` - total number of points (wins + bonus)
          optionally for a single week, or all weeks
         """
-        sess: Session = self.current_session
-        cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
-        if sess.info.get(cache_key):
-            record = sess.info.get(cache_key)
-            return record["wins"] + record["bonus"]
+        # Only use cache for default all_seasons=False case (which is what prefetch populates)
+        if not all_seasons:
+            sess: Session = self.current_session
+            cache_key = f"player_record_p{self.id}_s{season}_w{week_no}"
+            if sess.info.get(cache_key):
+                record = sess.info.get(cache_key)
+                return record["wins"] + record["bonus"]
         return self.wins(
             all_seasons=all_seasons, week_no=week_no, season=season
         ) + self.bonus(all_seasons=all_seasons, week_no=week_no, season=season)
@@ -209,6 +217,7 @@ class Player(TGFPModelBase, table=True):
             picks_by_player[pick.player_id].append(pick)
 
         # Populate cache for each player with various filter combinations
+        # Note: Only caches for all_seasons=False (the default and only used case)
         for player in players:
             player_picks = picks_by_player.get(player.id, [])
 

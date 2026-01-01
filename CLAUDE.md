@@ -41,7 +41,13 @@ The Great Football Pool (TGFP) is a FastAPI-based web application for running an
    scripts/alembic_upgrade_head.sh
    ```
 
-6. **Start the application locally:**
+6. **Setup git hooks (recommended):**
+   ```bash
+   scripts/setup_git_hooks.sh
+   ```
+   This configures a pre-push hook that ensures `config/version.env` is updated before pushing code changes.
+
+7. **Start the application locally:**
    Run `app/main.py` directly (configured for port 6801 with hot reload when `ENVIRONMENT=local_dev`).
 
 ### Docker Development
@@ -84,10 +90,21 @@ scripts/alembic_upgrade_head.sh
 ```bash
 # Production deployment
 scripts/deploy.sh
-
-# Version bumping
-scripts/bump_version.sh
 ```
+
+**Note:** Update `config/version.env` manually before pushing code changes (enforced by pre-push hook).
+
+### Git Hooks
+
+```bash
+# Setup git hooks (ensures version.env is updated before push)
+scripts/setup_git_hooks.sh
+
+# Bypass hooks for a single push (not recommended)
+git push --no-verify
+```
+
+**Note:** The pre-push hook prevents pushing code changes without updating `config/version.env`. This ensures all deployments have proper version tracking.
 
 ## Architecture
 
