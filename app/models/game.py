@@ -25,6 +25,7 @@ class Game(TGFPModelBase, table=True):
     spread: float
     start_time: datetime = Field(index=True)
     week_no: int = Field(index=True)
+    season_type: int
     road_team_score: int
     home_team_score: int
     season: int = Field(index=True)
