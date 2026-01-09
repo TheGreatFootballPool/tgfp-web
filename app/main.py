@@ -64,8 +64,7 @@ async def lifespan(
             id="update_all_awards_startup",
             replace_existing=True,
         )
-        week_info = current_week_info()
-        schedule_jobs(week_info=week_info)
+        schedule_jobs(week_info=current_week_info())
 
         yield
     finally:

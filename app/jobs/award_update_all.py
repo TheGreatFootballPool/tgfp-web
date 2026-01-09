@@ -26,9 +26,6 @@ def _games_exist_and_all_games_are_final(week_info: WeekInfo, session: Session) 
 
 
 def sync_won_the_week(week_info: WeekInfo, session: Session):
-    if not _games_exist_and_all_games_are_final(week_info=week_info, session=session):
-        return
-    # first we need to make sure that the week is '
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         raise Exception("Too few players")
@@ -47,8 +44,6 @@ def sync_won_the_week(week_info: WeekInfo, session: Session):
 
 
 def sync_in_your_face(week_info: WeekInfo, session: Session):
-    if not _games_exist_and_all_games_are_final(week_info=week_info, session=session):
-        return
     games: list[Game] = Game.games_for_week(week_info=week_info, session=session)
     for game in games:
         statement = select(PlayerGamePick).where(PlayerGamePick.game_id == game.id)
@@ -69,8 +64,6 @@ def sync_in_your_face(week_info: WeekInfo, session: Session):
 
 
 def sync_perfect_week(week_info: WeekInfo, session: Session):
-    if not _games_exist_and_all_games_are_final(week_info=week_info, session=session):
-        return
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         logging.error("Too few players")
@@ -89,17 +82,15 @@ def sync_perfect_week(week_info: WeekInfo, session: Session):
 
 def sync_quick_pick(week_info: WeekInfo, session: Session) -> bool:
     picks = PlayerGamePick.find_picks_for_week(week_info=week_info, session=session)
-    did_update: bool = False
     picks.sort(key=lambda x: x.created_at, reverse=False)
     if len(picks):
         pick: PlayerGamePick = picks[0]
-        did_update = upsert_award_with_args(
+        upsert_award_with_args(
             session=session,
             player_id=pick.player_id,
             slug=AwardSlug.QUICK_PICK,
             week_info=week_info,
         )
-    return did_update
 
 
 def update_all_awards():
@@ -114,6 +105,10 @@ def update_all_awards():
                     season=espn_nfl.season,
                     week_no=week_no,
                 )
+                if not _games_exist_and_all_games_are_final(
+                    week_info=week_info, session=session
+                ):
+                    return  # Early Return when done
                 sync_perfect_week(week_info=week_info, session=session)
                 sync_in_your_face(week_info=week_info, session=session)
                 sync_quick_pick(week_info=week_info, session=session)

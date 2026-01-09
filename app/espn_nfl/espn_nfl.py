@@ -59,6 +59,8 @@ class ESPNSeasonType:
 class ESPNNfl:
     """The main class for interfacing with Data Source JSON for sports"""
 
+    # This is hard coded to match what ESPN provides.
+    # More information can be found here: https://github.com/pseudo-r/Public-ESPN-API
     SEASON_TYPES: List[ESPNSeasonType] = [
         ESPNSeasonType(1, "Pre Season", 3, []),
         ESPNSeasonType(2, "Regular Season", 18, []),
@@ -88,6 +90,9 @@ class ESPNNfl:
         )
 
     @property
+    # Note, this cache only survives as long as the object is instantiated.
+    #  in all cases, this is once per 'request'. once the request has returned the
+    #  object is GC'd
     def _current_season_week_data(self) -> dict:
         """save the info for the current season, season_type and week"""
         if self._current_week_source_data:

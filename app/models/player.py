@@ -137,7 +137,7 @@ class Player(TGFPModelBase, table=True):
         award: PlayerAward
         for award in self.player_awards:
             if (
-                award.season == week_info
+                award.season == week_info.season
                 and award.week_no == week_info.week_no
                 and award.season_type == week_info.season_type
             ):
