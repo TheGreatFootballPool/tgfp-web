@@ -42,10 +42,7 @@ class PlayerGamePick(TGFPModelBase, table=True):
     :ivar is_upset: Whether the player marked this pick as an upset.
     :vartype is_upset: bool
 
-    :ivar awarded_points: Cached scoring for this pick. Optional—can be computed
-                          by your scoring logic. Defaults to ``0``.
     :vartype awarded_points: int
-    :ivar is_win: Whether this pick ultimately won. Defaults to ``False``.
     :vartype is_win: bool
 
     Relationships
