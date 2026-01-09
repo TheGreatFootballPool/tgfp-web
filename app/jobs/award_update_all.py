@@ -80,7 +80,7 @@ def sync_perfect_week(week_info: WeekInfo, session: Session):
             )
 
 
-def sync_quick_pick(week_info: WeekInfo, session: Session) -> bool:
+def sync_quick_pick(week_info: WeekInfo, session: Session):
     picks = PlayerGamePick.find_picks_for_week(week_info=week_info, session=session)
     picks.sort(key=lambda x: x.created_at, reverse=False)
     if len(picks):
