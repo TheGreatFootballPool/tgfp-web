@@ -108,7 +108,7 @@ def update_all_awards():
                 if not _games_exist_and_all_games_are_final(
                     week_info=week_info, session=session
                 ):
-                    return  # Early Return when done
+                    continue  # short circuit
                 sync_perfect_week(week_info=week_info, session=session)
                 sync_in_your_face(week_info=week_info, session=session)
                 sync_quick_pick(week_info=week_info, session=session)
