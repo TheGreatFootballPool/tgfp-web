@@ -37,26 +37,26 @@
         {% set row_number=0 %}
         {% for player in active_players %}
             {{ row_with_style(row_number) }}
-            {% set games_back = active_players[0].total_points() - player.total_points() %}
+            {% set games_back = active_players[0].total_points - player.total_points %}
             <td style="white-space: nowrap;">
                 <a style="line-height: 14px"
                    href="{{ url_for('profile').include_query_params(profile_player_id=player.id) }}">
                     {{ player.nick_name }}
                 </a>
-                {% for player_award in player.awards(week_no=most_recent_week) %}
+                {% for player_award in player.awards_for_week(week_info=week_info) %}
                     <img src="{{ url_for('static', path='images/' ~ player_award.award.icon ~ '-small.png') }}"
                          alt="{{ player_award.award.name }}"
                          title="{{ player_award.award.name }}"
                          style="height:16px; vertical-align:middle; margin-left:3px;"/>
                 {% endfor %}
             </td>
-            <td style="text-align: right;">{{ player.wins() }}</td>
-            <td style="text-align: right;">{{ player.losses() }}</td>
-            <td style="text-align: right;">{{ player.bonus() }}</td>
-            <td style="text-align: right;">{{ player.wins(week_no=most_recent_week) }}</td>
-            <td style="text-align: right;">{{ player.losses(week_no=most_recent_week) }}</td>
-            <td style="text-align: right;">{{ player.bonus(week_no=most_recent_week) }}</td>
-            <td style="text-align: right;">{{ player.total_points() }}</td>
+            <td style="text-align: right;">{{ player.wins }}</td>
+            <td style="text-align: right;">{{ player.losses }}</td>
+            <td style="text-align: right;">{{ player.bonus }}</td>
+            <td style="text-align: right;">{{ player.wins_for_week(week_info=week_info) }}</td>
+            <td style="text-align: right;">{{ player.losses_for_week(week_info=week_info) }}</td>
+            <td style="text-align: right;">{{ player.bonus_for_week(week_info=week_info) }}</td>
+            <td style="text-align: right;">{{ player.total_points }}</td>
             <td style="text-align: right;">{{ '%.3f' | format(player.winning_pct | float) }}</td>
             <td style="text-align: center;">
                 {% if games_back == 0 %}

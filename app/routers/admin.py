@@ -11,6 +11,7 @@ from jobs.create_picks import create_the_picks
 from jobs.update_all_scores import update_all_scores
 from jobs.sync_team_records import sync_the_team_records
 from jobs.scheduler import job_scheduler, schedule_jobs
+from models.model_helpers import current_week_info
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(prefix="/admin", tags=["Scheduler"])
@@ -51,7 +52,7 @@ def job_sync_team_records(request: Request):
 
 @router.get("/job_schedule_jobs")
 def job_schedule_jobs(request: Request):
-    schedule_jobs()
+    schedule_jobs(week_info=current_week_info())
     redirect_url = request.url_for("job_schedule")
     response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
     return response

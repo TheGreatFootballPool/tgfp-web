@@ -1,15 +1,32 @@
-from datetime import datetime
+from dataclasses import dataclass
+
 from app.config import Config
+from app.espn_nfl import ESPNNfl, ESPNSeasonType
 
 config = Config.get_config()
 
 
-def current_nfl_season() -> int:
-    # NOTE: The current season is the year in which the season starts.
-    #  -- if the month Jan - May (1-5) then consider the year before the starting
-    #  season.
-    year = datetime.now().year
-    month = datetime.now().month
-    if month < 6:
-        year -= 1
-    return year
+@dataclass
+class WeekInfo:
+    season: int
+    season_type: int
+    week_no: int
+
+    @property
+    def cache_key(self):
+        return f"{self.season}-{self.season_type}-{self.week_no}"
+
+    @property
+    def season_type_name(self) -> str:
+        season_type: ESPNSeasonType = ESPNNfl.SEASON_TYPES[self.season_type - 1]
+        return season_type.name
+
+
+def current_week_info() -> WeekInfo:
+    espn_nfl = ESPNNfl()
+    week_info = WeekInfo(
+        season=espn_nfl.season,
+        season_type=espn_nfl.season_type,
+        week_no=espn_nfl.week_no,
+    )
+    return week_info

@@ -8,7 +8,7 @@ from pytz import timezone
 
 from models import Game
 from config import Config
-from models.model_helpers import current_nfl_season
+from models.model_helpers import WeekInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -28,17 +28,20 @@ job_scheduler = AsyncIOScheduler(
 config: Config = Config.get_config()
 
 
-def schedule_nag_players():
+def schedule_nag_players(week_info: WeekInfo):
     """Creates the flows for nagging players"""
     with Session(engine) as session:
-        first_game: Game = Game.get_first_game_of_the_week(session)
+        first_game: Game = Game.get_first_game_of_the_week(
+            session=session, week_info=week_info
+        )
+        if not first_game:
+            return
         for delta in [60, 20, 7]:
             d: datetime = first_game.utc_start_time - timedelta(hours=0, minutes=delta)
             now_utc = datetime.now(ZoneInfo("UTC"))
             if now_utc >= d:
                 continue
-            current_season: str = str(current_nfl_season())
-            job_id: str = f"s{current_season}:w{first_game.week_no}:d{delta}"
+            job_id: str = f"s{week_info.season}:st:{week_info.season_type}:w{first_game.week_no}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
             job = job_scheduler.get_job(job_id)
@@ -53,13 +56,14 @@ def schedule_nag_players():
                 )
 
 
-def schedule_update_games():
+def schedule_update_games(week_info: WeekInfo):
     """Creates the flows for updating games"""
     with Session(engine) as session:
-        this_weeks_games: List[Game] = Game.games_for_week(session)
+        this_weeks_games: List[Game] = Game.games_for_week(
+            session=session, week_info=week_info
+        )
         for game in this_weeks_games:
-            current_season: str = str(current_nfl_season())
-            job_id: str = f"s{current_season}:w{game.week_no}:g{game.id}"
+            job_id: str = job_id_for_game_id(game_id=game.id)
 
             # Use UTC for scheduling to avoid tzlocal/pytz issues
             now_utc = datetime.now(ZoneInfo("UTC"))
@@ -141,9 +145,13 @@ def schedule_award_updates():
         )
 
 
-def schedule_jobs():
-    schedule_nag_players()
-    schedule_update_games()
+def job_id_for_game_id(game_id: int) -> str:
+    return f"game_id:{game_id}"
+
+
+def schedule_jobs(week_info: WeekInfo):
+    schedule_nag_players(week_info=week_info)
+    schedule_update_games(week_info=week_info)
     schedule_create_picks()
     schedule_sync_team_records()
     schedule_award_updates()

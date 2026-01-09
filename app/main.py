@@ -20,12 +20,11 @@ from db import engine
 from models import Player, PlayerGamePick, Team, Game, Award
 from jobs.scheduler import schedule_jobs, job_scheduler
 from models.award_helpers import init_award_table
-from models.model_helpers import current_nfl_season
 from app.routers import auth, mail, admin
 from apscheduler.triggers.cron import CronTrigger
 
 from config import Config
-from logging_config import init_logging
+from models.model_helpers import current_week_info, WeekInfo
 
 config = Config.get_config()
 
@@ -47,7 +46,6 @@ async def lifespan(
         environment=config.ENVIRONMENT,
         traces_sample_rate=0.01,
     )
-    init_logging()
     init_award_table()
     try:
         pacific = timezone("America/Los_Angeles")
@@ -66,8 +64,7 @@ async def lifespan(
             id="update_all_awards_startup",
             replace_existing=True,
         )
-
-        schedule_jobs()
+        schedule_jobs(week_info=current_week_info())
 
         yield
     finally:
@@ -95,6 +92,10 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 def _get_session():
     with Session(engine) as session:
         yield session
+
+
+def _get_current_week_info() -> WeekInfo:
+    return current_week_info()
 
 
 def get_error_messages(
@@ -159,13 +160,14 @@ def home(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     """Home page"""
     player: Player = Player.by_discord_id(session, discord_id)
     context = {
         "player": player,
         "config": config,
-        "current_week": Game.most_recent_week(session),
+        "week_info": week_info,
     }
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
@@ -180,13 +182,14 @@ def home_legacy(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     """Home page"""
     player: Player = Player.by_discord_id(session, discord_id)
     context = {
         "player": player,
         "config": config,
-        "current_week": Game.most_recent_week(session),
+        "week_info": week_info,
     }
     return templates.TemplateResponse(request=request, name="home.j2", context=context)
 
@@ -196,9 +199,10 @@ def profile(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     player: Player = Player.by_discord_id(session, discord_id)
-    context = {"player": player, "config": config}
+    context = {"player": player, "config": config, "week_info": week_info}
     return templates.TemplateResponse(
         request=request, name="coming_soon.j2", context=context
     )
@@ -209,10 +213,11 @@ def picks(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     """Picks page"""
     player: Player = Player.by_discord_id(session, discord_id)
-    if player.picks(week_no=Game.most_recent_week(session=session)):
+    if player.picks_for_week(week_info):
         context = {
             "error_messages": [
                 "Sorry, you can't change your picks.  If you think this is a problem, contact John"
@@ -220,12 +225,12 @@ def picks(
             "goto_route": "allpicks",
             "player": player,
             "config": config,
-            "current_week": Game.most_recent_week(session),
+            "week_info": week_info,
         }
         return templates.TemplateResponse(
             request=request, name="error_picks.j2", context=context
         )
-    games: List[Game] = Game.games_for_week(session)
+    games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
     valid_games = []
     started_games = []
     game: Game
@@ -251,7 +256,7 @@ def picks(
         "player": player,
         "config": config,
         "pick": pick,
-        "current_week": Game.most_recent_week(session),
+        "week_info": week_info,
     }
     return templates.TemplateResponse(request=request, name="picks.j2", context=context)
 
@@ -261,9 +266,10 @@ async def picks_form(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
-    player: Player = Player.by_discord_id(session, discord_id)
-    games: List[Game] = Game.games_for_week(session)
+    player: Player = Player.by_discord_id(session=session, discord_id=discord_id)
+    games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
     form = await request.form()
     # now get the form variables
     lock_id: int = int(form.get("lock")) if form.get("lock") else 0
@@ -279,7 +285,8 @@ async def picks_form(
                 player_id=player.id,
                 game_id=game.id,
                 picked_team_id=winner_id,
-                season=current_nfl_season(),
+                season=week_info.season,
+                season_type=week_info.season_type,
                 week_no=game.week_no,
                 is_lock=is_lock,
                 is_upset=is_upset,
@@ -304,11 +311,11 @@ async def picks_form(
         "app.jobs.award_update_all:update_all_awards",
         trigger="date",
         run_date=datetime.now(timezone("UTC")),
-        id=f"update_all_awards_{player.id}_{Game.most_recent_week(session)}",
+        id=f"update_all_awards_{player.id}_{week_info.week_no}",
         replace_existing=True,
     )
 
-    context = {"player": player, "config": config}
+    context = {"player": player, "config": config, "week_info": week_info}
     return templates.TemplateResponse(
         request=request, name="picks_form.j2", context=context
     )
@@ -319,22 +326,30 @@ def allpicks(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
     week_no: int = None,
+    season_type: int = None,
+    season: int = None,
 ):
     player: Player = Player.by_discord_id(session, discord_id)
-    current_week: int = Game.most_recent_week(session)
-    picks_week_no = week_no if week_no else current_week
-    active_players: List[Player] = Player.active_players(session)
-    # Prefetch all picks for all players to populate session cache
-    Player.prefetch_picks_for_players(session, active_players)
-    active_players.sort(key=lambda x: x.total_points(), reverse=True)
-    games: List[Game] = Game.games_for_week(session, week_no=picks_week_no)
-    teams: List[Team] = Team.all_teams(session)
+
+    if week_no and season_type and season:
+        display_week_info = WeekInfo(
+            week_no=week_no, season_type=season_type, season=season
+        )
+    else:
+        display_week_info = week_info
+    active_players: List[Player] = Player.active_players(session=session)
+    active_players.sort(key=lambda x: x.total_points, reverse=True)
+    games: List[Game] = Game.games_for_week(
+        session=session, week_info=display_week_info
+    )
+    teams: List[Team] = Team.all_teams(session=session)
     context = {
         "player": player,
         "active_players": active_players,
-        "week_no": picks_week_no,
-        "current_week": current_week,
+        "display_week_info": display_week_info,
+        "week_info": week_info,
         "games": games,
         "teams": teams,
         "config": config,
@@ -349,18 +364,16 @@ async def standings(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     """Returns the standings page"""
     player: Player = Player.by_discord_id(session, discord_id)
     players: List[Player] = list(
         session.exec(select(Player).where(Player.active)).all()
     )
-    # Prefetch all picks and awards for all players to populate session cache
-    Player.prefetch_picks_for_players(session, players)
-    Player.prefetch_awards_for_players(session, players)
-    players.sort(key=lambda x: x.total_points(), reverse=True)
-    games: List[Game] = Game.games_for_week(session)
-    most_recent_week: int = Game.most_recent_week(session)
+    players.sort(key=lambda x: x.total_points, reverse=True)
+    games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
+    most_recent_week: int = week_info.week_no
     all_games_in_pregame: bool = True
     for game in games:
         if not game.is_pregame:
@@ -373,6 +386,7 @@ async def standings(
         "most_recent_week": most_recent_week,
         "active_players": players,
         "config": config,
+        "week_info": week_info,
         "awards": session.exec(select(Award)),
     }
     return templates.TemplateResponse(
@@ -385,12 +399,13 @@ async def rules(
     request: Request,
     discord_id: int = Depends(_verify_player),
     session: Session = Depends(_get_session),
+    week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     """Rules page"""
     player: Player = Player.by_discord_id(session, discord_id)
     context = {
         "player": player,
-        "current_week": Game.most_recent_week(session),
+        "week_info": week_info,
         "config": config,
     }
     return templates.TemplateResponse(request=request, name="rules.j2", context=context)
@@ -408,9 +423,12 @@ def logout(
 
 
 @app.get("/login", response_class=HTMLResponse)
-async def login(request: Request):
+async def login(
+    request: Request,
+    week_info: WeekInfo = Depends(_get_current_week_info),
+):
     """Login page for discord"""
-    context = {"config": config}
+    context = {"config": config, "week_info": week_info}
     return templates.TemplateResponse(request=request, name="login.j2", context=context)
 
 

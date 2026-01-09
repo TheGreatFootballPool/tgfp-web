@@ -1,12 +1,11 @@
-import logging
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING, List
 
 import pytz
-from sqlmodel import Field, Relationship, Session, select, col
+from sqlmodel import Field, Relationship, Session, select
 
 from .base import TGFPModelBase
-from .model_helpers import current_nfl_season
+from .model_helpers import WeekInfo
 
 if TYPE_CHECKING:
     from .team import Team
@@ -25,6 +24,7 @@ class Game(TGFPModelBase, table=True):
     spread: float
     start_time: datetime = Field(index=True)
     week_no: int = Field(index=True)
+    season_type: int
     road_team_score: int
     home_team_score: int
     season: int = Field(index=True)
@@ -100,17 +100,17 @@ class Game(TGFPModelBase, table=True):
 
     @staticmethod
     def games_for_week(
-        session: Session, season: int = None, week_no: int = None
+        session: Session,
+        week_info: WeekInfo,
     ) -> List["Game"]:
         """Gets a list of games for a given week and season, sorted by game start time."""
         if session.info.get("games_for_week"):
             return session.info["games_for_week"]
-        search_week: int = week_no if week_no else Game.most_recent_week(session)
-        search_season: int = season if season else current_nfl_season()
         statement = (
             select(Game)
-            .where(Game.season == search_season)
-            .where(Game.week_no == search_week)
+            .where(Game.season == week_info.season)
+            .where(Game.week_no == week_info.week_no)
+            .where(Game.season_type == week_info.season_type)
             .order_by(Game.start_time)
         )
 
@@ -118,39 +118,23 @@ class Game(TGFPModelBase, table=True):
         return games
 
     @staticmethod
-    def most_recent_week(session: Session) -> int:
-        """
-        if there are no records in the table at all, return 0
-        else grab the most recent game and return its week_no
-        """
-        if session.info.get("most_recent_week"):
-            return session.info.get("most_recent_week")
-        search_season: int = current_nfl_season()
-        statement = (
-            select(Game)
-            .where(Game.season == search_season)
-            .order_by(col(Game.start_time).desc())
-        )
-        last_game = session.exec(statement).first()
-        if last_game is None:
-            return 0
-        session.info["most_recent_week"] = last_game.week_no
-        return last_game.week_no
-
-    @staticmethod
-    def next_week_to_load(session: Session) -> int:
-        games = Game.games_for_week(session)
-        if not games:
-            return 1
-        last_game = games[-1]
-        if not last_game.is_final:
-            logging.error("Games should be all final here")
-            return 0
-        return games[-1].week_no + 1
-
-    @staticmethod
-    def get_first_game_of_the_week(session: Session) -> "Game":
+    def get_first_game_of_the_week(
+        session: Session, week_info: WeekInfo
+    ) -> "Game | None":
         """Returns the 'first' game of a week given the info"""
-        games: List[Game] = Game.games_for_week(session)
+        games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
         games.sort(key=lambda x: x.start_time, reverse=True)
+        if not games:
+            return None
         return games[-1]
+
+    @staticmethod
+    def get_distinct_week_infos(session: Session) -> List[WeekInfo]:
+        """Returns a list of distinct week infos"""
+        week_infos: List[WeekInfo] = []
+        distinct_weeks = session.exec(
+            select(Game.season, Game.season_type, Game.week_no).distinct()
+        ).all()
+        for season, season_type, week_no in distinct_weeks:
+            week_infos.append(WeekInfo(season, season_type, week_no))
+        return week_infos

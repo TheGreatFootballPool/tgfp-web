@@ -29,6 +29,7 @@ class PlayerAward(TGFPModelBase, table=True):
     award_id: int = Field(foreign_key="award.id", index=True)
     season: int = Field(index=True)
     week_no: int = Field(index=True)
+    season_type: int
     game_id: int | None = Field(foreign_key="game.id", index=True)
     notified_at: datetime | None = Field(default=None)
     player: "Player" = Relationship(back_populates="player_awards")
