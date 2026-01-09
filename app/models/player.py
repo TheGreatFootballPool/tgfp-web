@@ -38,7 +38,7 @@ class Player(TGFPModelBase, table=True):
         sess: Session = self.current_session
         from .player_game_pick import PlayerGamePick
 
-        cache_key: str = f"player_{self.id}:{week_info.hash}"
+        cache_key: str = f"player_{self.id}:{week_info.cache_key}"
         if sess.info.get(cache_key):
             return sess.info.get(cache_key)
 

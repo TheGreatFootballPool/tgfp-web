@@ -13,7 +13,7 @@ class WeekInfo:
     week_no: int
 
     @property
-    def hash(self):
+    def cache_key(self):
         return f"{self.season}-{self.season_type}-{self.week_no}"
 
     @property
