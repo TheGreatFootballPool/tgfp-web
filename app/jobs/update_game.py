@@ -10,6 +10,7 @@ from .scheduler import job_scheduler, job_id_for_game_id
 from espn_nfl import ESPNNfl
 
 from models import Game
+from .update_player_records import update_player_records
 
 
 def _update_one_game(session: Session, game_id: int) -> Game | None:
@@ -48,6 +49,7 @@ def update_a_game(game_id: int):
         game = _update_one_game(session=session, game_id=game_id)
         if game and game.is_final:
             job_id: str = job_id_for_game_id(game_id=game_id)
+            update_player_records(session=session)
             try:
                 logging.info("Removing job %s with game: %s", job_id, game.id)
                 job_scheduler.remove_job(job_id)

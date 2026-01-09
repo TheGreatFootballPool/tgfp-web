@@ -23,10 +23,10 @@ class WeekInfo:
 
 
 def current_week_info() -> WeekInfo:
-    tgfp_nfl = ESPNNfl()
+    espn_nfl = ESPNNfl()
     week_info = WeekInfo(
-        season=tgfp_nfl.season,
-        season_type=tgfp_nfl.season_type,
-        week_no=tgfp_nfl.week_no,
+        season=espn_nfl.season,
+        season_type=espn_nfl.season_type,
+        week_no=espn_nfl.week_no,
     )
     return week_info

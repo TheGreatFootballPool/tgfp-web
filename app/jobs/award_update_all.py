@@ -94,23 +94,11 @@ def sync_quick_pick(week_info: WeekInfo, session: Session):
 
 
 def update_all_awards():
-    logging.debug("Updating all awards")
-    espn_nfl: ESPNNfl = ESPNNfl()
-    season_types = espn_nfl.SEASON_TYPES
     with Session(engine) as session:
-        for season_type in season_types:
-            for week_no in range(1, season_type.weeks + 1):
-                week_info: WeekInfo = WeekInfo(
-                    season_type=season_type.type_id,
-                    season=espn_nfl.season,
-                    week_no=week_no,
-                )
-                if not _games_exist_and_all_games_are_final(
-                    week_info=week_info, session=session
-                ):
-                    continue  # short circuit
-                sync_perfect_week(week_info=week_info, session=session)
-                sync_in_your_face(week_info=week_info, session=session)
-                sync_quick_pick(week_info=week_info, session=session)
-                sync_won_the_week(week_info=week_info, session=session)
+        week_infos: list[WeekInfo] = Game.get_distinct_week_infos(session=session)
+        for week_info in week_infos:
+            sync_perfect_week(week_info=week_info, session=session)
+            sync_in_your_face(week_info=week_info, session=session)
+            sync_quick_pick(week_info=week_info, session=session)
+            sync_won_the_week(week_info=week_info, session=session)
         send_award_notification(session=session)

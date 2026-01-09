@@ -127,3 +127,14 @@ class Game(TGFPModelBase, table=True):
         if not games:
             return None
         return games[-1]
+
+    @staticmethod
+    def get_distinct_week_infos(session: Session) -> List[WeekInfo]:
+        """Returns a list of distinct week infos"""
+        week_infos: List[WeekInfo] = []
+        distinct_weeks = session.exec(
+            select(Game.season, Game.season_type, Game.week_no).distinct()
+        ).all()
+        for season, season_type, week_no in distinct_weeks:
+            week_infos.append(WeekInfo(season, season_type, week_no))
+        return week_infos
