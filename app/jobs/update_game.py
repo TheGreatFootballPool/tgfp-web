@@ -47,7 +47,7 @@ def update_a_game(game_id: int):
     with Session(engine) as session:
         game = _update_one_game(session=session, game_id=game_id)
         if game and game.is_final:
-            job_id: str = job_id_for_game_id()
+            job_id: str = job_id_for_game_id(game_id=game_id)
             try:
                 logging.info("Removing job %s with game: %s", job_id, game.id)
                 job_scheduler.remove_job(job_id)
