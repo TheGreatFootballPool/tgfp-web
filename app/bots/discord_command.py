@@ -11,7 +11,7 @@ from discord import app_commands
 
 from donut import get_matchup_chart
 import pytz
-from tgfp_nfl import TgfpNfl, TgfpNflGame
+from espn_nfl import ESPNNfl, ESPNNflGame
 
 from models import db_init, Game, TGFPInfo, get_tgfp_info, Team
 from config import Config
@@ -58,8 +58,8 @@ class GameCommand:
         timestamp = int(datetime.timestamp(utc_time))
         # noinspection PyTypeChecker
         favorite_team: Team = game.favorite_team
-        espn_nfl: TgfpNfl = TgfpNfl(self.info.display_week)
-        espn_game: TgfpNflGame = espn_nfl.find_game(nfl_game_id=game.tgfp_nfl_game_id)
+        espn_nfl: ESPNNfl = ESPNNfl(self.info.display_week)
+        espn_game: ESPNNflGame = espn_nfl.find_game(nfl_game_id=game.tgfp_nfl_game_id)
         predicted_pt_diff, predicted_winner = espn_game.predicted_winning_diff_team
         home_color: str = espn_game.home_team.color
         if espn_game.favored_team:

@@ -4,6 +4,7 @@ from sqlmodel import Field, Relationship, Session, select
 import sqlalchemy as sa
 
 from .base import TGFPModelBase
+from .model_helpers import WeekInfo
 
 if TYPE_CHECKING:
     # noinspection PyUnusedImports
@@ -75,6 +76,7 @@ class PlayerGamePick(TGFPModelBase, table=True):
             "uq_one_lock_per_week",
             "player_id",
             "season",
+            "season_type",
             "week_no",
             unique=True,
             postgresql_where=sa.text("is_lock = true"),
@@ -88,6 +90,7 @@ class PlayerGamePick(TGFPModelBase, table=True):
 
     # denormalized for constraints/queries
     season: int = Field(index=True)
+    season_type: int
     week_no: int = Field(index=True)
 
     # game-time choices
@@ -116,13 +119,14 @@ class PlayerGamePick(TGFPModelBase, table=True):
         return False
 
     @staticmethod
-    def find_picks(
-        week_no: int, season: int, session: Session
+    def find_picks_for_week(
+        week_info: WeekInfo, session: Session
     ) -> list["PlayerGamePick"]:
         statement = (
             select(PlayerGamePick)
-            .where(PlayerGamePick.week_no == week_no)
-            .where(PlayerGamePick.season == season)
+            .where(PlayerGamePick.week_no == week_info.week_no)
+            .where(PlayerGamePick.season == week_info.season)
+            .where(PlayerGamePick.season_type == week_info.season_type)
         )
         return list(session.exec(statement).all())
 

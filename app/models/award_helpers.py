@@ -6,6 +6,7 @@ from models import AwardSlug, Award, PlayerAward
 import logging
 
 from models.award import AWARD_DEFINITIONS
+from models.model_helpers import WeekInfo
 
 
 # Upsert function for awards
@@ -44,8 +45,7 @@ def upsert_award_with_args(
     session: Session,
     player_id: int,
     slug: AwardSlug,
-    season: int,
-    week_no: int,
+    week_info: WeekInfo,
     game_id: int = None,
 ) -> bool:
     did_update: bool = False
@@ -54,8 +54,9 @@ def upsert_award_with_args(
         select(PlayerAward)
         .where(PlayerAward.player_id == player_id)
         .where(PlayerAward.award_id == the_award.id)
-        .where(PlayerAward.season == season)
-        .where(PlayerAward.week_no == week_no)
+        .where(PlayerAward.season == week_info.season)
+        .where(PlayerAward.season_type == week_info.season_type)
+        .where(PlayerAward.week_no == week_info.week_no)
     )
     if game_id:
         statement = statement.where(PlayerAward.game_id == game_id)
@@ -65,8 +66,9 @@ def upsert_award_with_args(
         player_award: PlayerAward = PlayerAward(
             player_id=player_id,
             award_id=the_award.id,
-            season=season,
-            week_no=week_no,
+            season=week_info.season,
+            season_type=week_info.season_type,
+            week_no=week_info.week_no,
             game_id=game_id,
         )
         session.add(player_award)

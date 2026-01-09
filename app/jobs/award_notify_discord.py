@@ -3,7 +3,6 @@ import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from sqlmodel import Session
 
-from db import engine
 from models import PlayerAward
 from config import Config
 

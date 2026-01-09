@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import dataclass
 from typing import Optional, Any, List
 from dateutil import parser
 import httpx
@@ -47,14 +48,26 @@ def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
     raise RuntimeError("Unexpected fallthrough in _http_get_with_retry")
 
 
-class TgfpNfl:
-    """The main class for interfacing with Data Source json for sports"""
+@dataclass
+class ESPNSeasonType:
+    type_id: int
+    name: str
+    weeks: int
+    skip_weeks: list
+
+
+class ESPNNfl:
+    """The main class for interfacing with Data Source JSON for sports"""
+
+    SEASON_TYPES: List[ESPNSeasonType] = [
+        ESPNSeasonType(1, "Pre Season", 3, []),
+        ESPNSeasonType(2, "Regular Season", 18, []),
+        ESPNSeasonType(3, "Post Season", 5, [4]),
+        ESPNSeasonType(4, "Off Season", 0, []),
+    ]
 
     def __init__(
-        self,
-        week_no: Optional[int] = None,
-        a_season_type: Optional[int] = None,
-        debug=False,
+        self, week_no: Optional[int] = None, season_type: Optional[int] = None
     ):
         self._games = []
         self._teams = []
@@ -62,9 +75,10 @@ class TgfpNfl:
         self._games_source_data = None
         self._teams_source_data = None
         self._standings_source_data = None
-        self._debug = debug
-        self._week_no = week_no if week_no else 1
-        self._season_type: Optional[int] = a_season_type
+        self._current_week_source_data: dict | None = None
+        self._season = None
+        self._season_type = season_type
+        self._week_no = week_no
         self._base_url = "https://site.api.espn.com/apis/v2/sports/football/nfl/"
         self._base_site_url = (
             "https://site.api.espn.com/apis/site/v2/sports/football/nfl"
@@ -73,14 +87,24 @@ class TgfpNfl:
             "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/"
         )
 
+    @property
+    def _current_season_week_data(self) -> dict:
+        """save the info for the current season, season_type and week"""
+        if self._current_week_source_data:
+            return self._current_week_source_data
+        url_to_query = self._base_site_url + "/scoreboard"
+        response = _http_get_with_retry(url_to_query)
+        content = response.json()
+        self._current_week_source_data = content
+        return self._current_week_source_data
+
     def __get_games_source_data(self) -> list:
         """Get Games from ESPN -- defaults to current season
         :return: list of games
         """
-        week_no = self._week_no - 18 if self._week_no > 18 else self._week_no
         url_to_query = (
             self._base_site_url
-            + f"/scoreboard?seasontype={self.season_type}&week={week_no}"
+            + f"/scoreboard?seasontype={self.season_type}&week={self.week_no}"
         )
         response = _http_get_with_retry(url_to_query)
         content = response.json()
@@ -111,43 +135,39 @@ class TgfpNfl:
         return all_standings
 
     @property
-    def season_type(self) -> int:
-        """
-        Returns the season_type
-           -Season types are:
-            1: Preseason
-                weeks 1-4 (HOF game is week=1)
-            2: Regular Season
-                weeks 1-18
-            3: Post Season
-                Week #'s
-                -#1 = Wild Card Round
-                -#2 = Divisional Round
-                -#3 = Conference Championships
-                -#4 = Super Bowl
-        Returns:
+    def season(self) -> int:
+        return self._current_season_week_data["season"]["year"]
 
-        """
+    @property
+    def season_type(self) -> int:
         if self._season_type:
             return self._season_type
-        return 3 if self._week_no > 18 else 2
+        self._season_type = self._current_season_week_data["season"]["type"]
+        return self._season_type
 
-    def games(self) -> List[TgfpNflGame]:
+    @property
+    def week_no(self) -> int:
+        if self._week_no:
+            return self._week_no
+        self._week_no = self._current_season_week_data["week"]["number"]
+        return self._week_no
+
+    def games(self) -> List[ESPNNflGame]:
         """
         Returns:
-            a list of all TgfpNflGames in the json structure
+            a list of all ESPNNflGames in the JSON structure
         """
         if self._games:
             return self._games
         if not self._games_source_data:
             self._games_source_data = self.__get_games_source_data()
         for game_data in self._games_source_data:
-            a_game: TgfpNflGame = TgfpNflGame(self, game_data=game_data)
+            a_game: ESPNNflGame = ESPNNflGame(self, game_data=game_data)
             self._games.append(a_game)
 
         return self._games
 
-    def teams(self) -> List[TgfpNflTeam]:
+    def teams(self) -> List[ESPNNflTeam]:
         """
         Build a list of teams using the teams source and standings source data
         Returns:
@@ -162,29 +182,29 @@ class TgfpNfl:
         for team_data in self._teams_source_data:
             single_team_data: dict = team_data["team"]
             team_id: str = single_team_data["uid"]
-            single_team_standings: TgfpNflStanding = (
+            single_team_standings: ESPNNflStanding = (
                 self.find_tgfp_nfl_standing_for_team(team_id)
             )
-            team: TgfpNflTeam = TgfpNflTeam(single_team_data, single_team_standings)
+            team: ESPNNflTeam = ESPNNflTeam(single_team_data, single_team_standings)
             self._teams.append(team)
         return self._teams
 
     def standings(self) -> List[dict]:
         """
         Returns:
-            a list of all TgfpNflGames in the json structure
+            a list of all ESPNNflGames in the JSON structure
         """
         if self._standings:
             return self._standings
         if not self._standings_source_data:
             self._standings_source_data = self.__get_standings_source_data()
         for standing_data in self._standings_source_data:
-            self._standings.append(TgfpNflStanding(standing_data))
+            self._standings.append(ESPNNflStanding(standing_data))
         return self._standings
 
-    def find_game(self, nfl_game_id=None, event_id=None) -> Optional[TgfpNflGame]:
+    def find_game(self, nfl_game_id=None, event_id=None) -> Optional[ESPNNflGame]:
         """returns a list of all games that optionally"""
-        found_game: Optional[TgfpNflGame] = None
+        found_game: Optional[ESPNNflGame] = None
         for game in self.games():
             found = True
             if nfl_game_id and nfl_game_id != game.id:
@@ -197,7 +217,7 @@ class TgfpNfl:
 
         return found_game
 
-    def find_teams(self, team_id=None, short_name=None) -> List[TgfpNflTeam]:
+    def find_teams(self, team_id=None, short_name=None) -> List[ESPNNflTeam]:
         """returns a list of all teams optionally filtered by a single team_id"""
         found_teams = []
         for team in self.teams():
@@ -213,13 +233,13 @@ class TgfpNfl:
 
     def find_tgfp_nfl_standing_for_team(
         self, team_id: str
-    ) -> Optional[TgfpNflStanding]:
-        """Returns the 'TgfpNflStanding' for a team in the form of a dict
+    ) -> Optional[ESPNNflStanding]:
+        """Returns the 'ESPNNflStanding' for a team in the form of a dict
         'wins': <int>
         'losses': <int>
         'ties': <int>
         """
-        standing: TgfpNflStanding
+        standing: ESPNNflStanding
         for standing in self.standings():
             if team_id == standing.team_id:
                 return standing
@@ -227,12 +247,12 @@ class TgfpNfl:
 
 
 # noinspection PyTypeChecker
-class TgfpNflGame:
-    """A single game from the Data Source json"""
+class ESPNNflGame:
+    """A single game from the Data Source JSON"""
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, data_source: TgfpNfl, game_data):
+    def __init__(self, data_source: ESPNNfl, game_data):
         # pylint: disable=invalid-name
         self.id: str = game_data["uid"]
         # pylint: enable=invalid-name
@@ -242,32 +262,34 @@ class TgfpNflGame:
         self._odds_source_data: List[dict[str, Any]] = []
         if "odds" in game_data["competitions"][0]:
             self._odds_source_data = game_data["competitions"][0]["odds"]
-        self._home_team: Optional[TgfpNflTeam] = None
-        self._away_team: Optional[TgfpNflTeam] = None
-        self._favored_team: Optional[TgfpNflTeam] = None
-        self._winning_team: Optional[TgfpNflTeam] = None
+        self._home_team: Optional[ESPNNflTeam] = None
+        self._away_team: Optional[ESPNNflTeam] = None
+        self._favored_team: Optional[ESPNNflTeam] = None
+        self._winning_team: Optional[ESPNNflTeam] = None
         self._spread: float = 0.0
         self._total_home_points: int = 0
         self._total_away_points: int = 0
         self.start_time = parser.parse(game_data["date"])
         self.week_no: int = game_data["week"]["number"]
+        self.season_type: int = game_data["season"]["type"]
+        self.season: int = game_data["season"]["year"]
         self.game_status_type = game_data["status"]["type"]["name"]
         self.event_id = int(game_data["id"])
 
-    def _odds(self) -> Optional[TgfpNflOdd]:
+    def _odds(self) -> Optional[ESPNNflOdd]:
         """
         Returns:
             the first odds, ignoring all others
         """
-        return_odds: Optional[TgfpNflOdd] = None
+        return_odds: Optional[ESPNNflOdd] = None
         if self._odds_source_data:
             # noinspection PyTypeChecker
             first_odd: dict = self._odds_source_data[0]
-            return_odds = TgfpNflOdd(data_source=self._data_source, odd_data=first_odd)
+            return_odds = ESPNNflOdd(data_source=self._data_source, odd_data=first_odd)
         return return_odds
 
     @property
-    def favored_team(self) -> Optional[TgfpNflTeam]:
+    def favored_team(self) -> Optional[ESPNNflTeam]:
         if self._favored_team:
             return self._favored_team
         self.__set_home_away_favorite_teams_and_score()
@@ -296,14 +318,14 @@ class TgfpNflGame:
         return self._home_team
 
     @property
-    def away_team(self) -> TgfpNflTeam:
+    def away_team(self) -> ESPNNflTeam:
         if self._away_team:
             return self._away_team
         self.__set_home_away_favorite_teams_and_score()
         return self._away_team
 
     @property
-    def winning_team(self) -> Optional[TgfpNflTeam]:
+    def winning_team(self) -> Optional[ESPNNflTeam]:
         teams: list = self._game_source_data["competitions"][0]["competitors"]
         if not self._winning_team and teams and "winner" in teams[0]:
             winner_idx = 0 if teams[0].get("winner") else 1
@@ -358,12 +380,12 @@ class TgfpNflGame:
         }
 
 
-class TgfpNflTeam:
+class ESPNNflTeam:
     """The class that wraps the Data Source JSON for each team"""
 
     # pylint: disable=too-many-instance-attributes
     # pylint: disable=too-few-public-methods
-    def __init__(self, team_data: dict, team_standings: TgfpNflStanding):
+    def __init__(self, team_data: dict, team_standings: ESPNNflStanding):
         self.data = team_data
         self.id = team_data["uid"]
         self.city = team_data["location"]
@@ -392,8 +414,8 @@ class TgfpNflTeam:
         return found_team_id
 
 
-class TgfpNflOdd:
-    """Wraps the data source json for each 'odd' (spread)"""
+class ESPNNflOdd:
+    """Wraps the data source JSON for each 'odd' (spread)"""
 
     # pylint: disable=too-few-public-methods
 
@@ -428,8 +450,8 @@ class TgfpNflOdd:
         return spread
 
 
-class TgfpNflStanding:
-    """Wraps the data source json for standings data for a team"""
+class ESPNNflStanding:
+    """Wraps the data source JSON for standings data for a team"""
 
     def __init__(self, source_standings_data: dict):
         self.team_id: str = source_standings_data["team"]["uid"]

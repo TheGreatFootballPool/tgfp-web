@@ -5,8 +5,7 @@ from sqlmodel import Session, select
 
 from db import engine
 from models import Game, Team
-from models.model_helpers import current_nfl_season
-from tgfp_nfl import TgfpNfl, TgfpNflGame
+from espn_nfl import ESPNNfl, ESPNNflGame
 
 
 class CreatePicksException(Exception):
@@ -20,7 +19,7 @@ class CreatePicksException(Exception):
         return f"Exception: {self.msg}"
 
 
-def _game_from_nfl_game(session: Session, nfl_game: TgfpNflGame) -> Game:
+def _game_from_nfl_game(session: Session, nfl_game: ESPNNflGame) -> Game:
     road_team: Team = session.exec(
         select(Team).where(Team.tgfp_nfl_team_id == nfl_game.away_team.id)
     ).one()
@@ -43,8 +42,9 @@ def _game_from_nfl_game(session: Session, nfl_game: TgfpNflGame) -> Game:
         spread=nfl_game.spread,
         start_time=nfl_game.start_time,
         week_no=nfl_game.week_no,
+        season_type=nfl_game.season_type,
         tgfp_nfl_game_id=nfl_game.id,
-        season=current_nfl_season(),
+        season=nfl_game.season,
     )
     return game
 
@@ -53,16 +53,12 @@ def create_the_picks():
     """Creates the weekly picks page"""
     logging.info("Creating weekly picks page")
     with Session(engine) as session:
-        week_no: int = Game.next_week_to_load(session)
-        if not week_no:
-            logging.error("No week to load for create picks")
-            raise CreatePicksException("No week to load for create picks")
-        nfl: TgfpNfl = TgfpNfl(week_no=week_no)
-        nfl_games: List[TgfpNflGame] = nfl.games()
+        nfl: ESPNNfl = ESPNNfl()
+        nfl_games: List[ESPNNflGame] = nfl.games()
         if not nfl_games:
             logging.error("No nfl_games found")
             raise CreatePicksException("There should have been games!!!")
-        nfl_game: TgfpNflGame
+        nfl_game: ESPNNflGame
         for nfl_game in nfl_games:
             logging.debug(
                 f"Creating pick for nfl_game: {nfl_game}",

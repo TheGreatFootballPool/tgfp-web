@@ -3,61 +3,53 @@ import logging
 from sqlmodel import Session, select
 
 from db import engine
+from espn_nfl import ESPNNfl
 from jobs.award_notify_discord import send_award_notification
 from models import Game, PlayerGamePick, AwardSlug, Player
 from models.award_helpers import upsert_award_with_args
-from models.model_helpers import current_nfl_season
+from models.model_helpers import WeekInfo
 
 
-def _all_games_are_final(session: Session, week_no: int) -> bool:
-    statement = select(Game).where(Game.week_no == week_no)
+def _games_exist_and_all_games_are_final(week_info: WeekInfo, session: Session) -> bool:
+    statement = select(Game).where(
+        Game.season == week_info.season,
+        Game.season_type == week_info.season_type,
+        Game.week_no == week_info.week_no,
+    )
     games: list[Game] = list(session.exec(statement).all())
+    if not games:
+        return False
     for game in games:
         if not game.is_final:
             return False
     return True
 
 
-def sync_won_the_week(week_no: int, session: Session):
-    """
-
-    :param week_no: Week number to query
-    :type week_no: int
-    :param session: Active database session
-    :type session: Session
-    :return: Player or None if no player won the week
-    :rtype: Player | None
-    """
-    if not _all_games_are_final(session, week_no):
+def sync_won_the_week(week_info: WeekInfo, session: Session):
+    if not _games_exist_and_all_games_are_final(week_info=week_info, session=session):
         return
-    logging.debug(f"sync_won_the_week {week_no}")
     # first we need to make sure that the week is '
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         raise Exception("Too few players")
     sorted_players = sorted(
-        active_players, key=lambda p: p.wins(week_no=week_no), reverse=True
+        active_players, key=lambda p: p.wins_for_week(week_info), reverse=True
     )
-    top_total_points = sorted_players[0].total_points(week_no=week_no)
-    if top_total_points > sorted_players[1].total_points(week_no=week_no):
+    top_total_points = sorted_players[0].total_points_for_week(week_info=week_info)
+    if top_total_points > sorted_players[1].total_points_for_week(week_info=week_info):
         player = sorted_players[0]
         upsert_award_with_args(
             session=session,
             player_id=player.id,
             slug=AwardSlug.WON_THE_WEEK,
-            season=current_nfl_season(),
-            week_no=week_no,
+            week_info=week_info,
         )
 
 
-def sync_in_your_face(week_no: int, session: Session):
-    logging.debug("sync_in_your_face")
-    if not _all_games_are_final(session, week_no):
+def sync_in_your_face(week_info: WeekInfo, session: Session):
+    if not _games_exist_and_all_games_are_final(week_info=week_info, session=session):
         return
-
-    games: list[Game] = Game.games_for_week(
-        session=session, season=current_nfl_season(), week_no=week_no
-    )
+    games: list[Game] = Game.games_for_week(week_info=week_info, session=session)
     for game in games:
         statement = select(PlayerGamePick).where(PlayerGamePick.game_id == game.id)
         picks: list[PlayerGamePick] = list(session.exec(statement).all())
@@ -71,38 +63,32 @@ def sync_in_your_face(week_no: int, session: Session):
                 session=session,
                 player_id=player.id,
                 slug=AwardSlug.IN_YOUR_FACE,
-                season=current_nfl_season(),
-                week_no=week_no,
+                week_info=week_info,
                 game_id=game.id,
             )
 
 
-def sync_perfect_week(week_no: int, session: Session) -> list[Player] | None:
-    logging.debug("sync_perfect_week")
-    if not _all_games_are_final(session, week_no):
+def sync_perfect_week(week_info: WeekInfo, session: Session):
+    if not _games_exist_and_all_games_are_final(week_info=week_info, session=session):
         return
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
         logging.error("Too few players")
         raise Exception("Too few players")
     for player in active_players:
-        losses: int = player.losses(week_no=week_no)
-        wins: int = player.wins(week_no=week_no)
+        losses: int = player.losses_for_week(week_info=week_info)
+        wins: int = player.wins_for_week(week_info=week_info)
         if losses == 0 and wins > 0:
             upsert_award_with_args(
                 session=session,
                 player_id=player.id,
                 slug=AwardSlug.PERFECT_WEEK,
-                season=current_nfl_season(),
-                week_no=week_no,
+                week_info=week_info,
             )
 
 
-def sync_quick_pick(week_no: int, session: Session) -> bool:
-    logging.debug(f"sync_quick_pick: {week_no}")
-    picks = PlayerGamePick.find_picks(
-        season=current_nfl_season(), week_no=week_no, session=session
-    )
+def sync_quick_pick(week_info: WeekInfo, session: Session) -> bool:
+    picks = PlayerGamePick.find_picks_for_week(week_info=week_info, session=session)
     did_update: bool = False
     picks.sort(key=lambda x: x.created_at, reverse=False)
     if len(picks):
@@ -111,18 +97,25 @@ def sync_quick_pick(week_no: int, session: Session) -> bool:
             session=session,
             player_id=pick.player_id,
             slug=AwardSlug.QUICK_PICK,
-            season=current_nfl_season(),
-            week_no=week_no,
+            week_info=week_info,
         )
     return did_update
 
 
 def update_all_awards():
     logging.debug("Updating all awards")
+    espn_nfl: ESPNNfl = ESPNNfl()
+    season_types = espn_nfl.SEASON_TYPES
     with Session(engine) as session:
-        for week_no in range(1, Game.most_recent_week(session) + 1):
-            sync_perfect_week(week_no=week_no, session=session)
-            sync_in_your_face(week_no=week_no, session=session)
-            sync_quick_pick(week_no=week_no, session=session)
-            sync_won_the_week(week_no=week_no, session=session)
+        for season_type in season_types:
+            for week_no in range(1, season_type.weeks + 1):
+                week_info: WeekInfo = WeekInfo(
+                    season_type=season_type.type_id,
+                    season=espn_nfl.season,
+                    week_no=week_no,
+                )
+                sync_perfect_week(week_info=week_info, session=session)
+                sync_in_your_face(week_info=week_info, session=session)
+                sync_quick_pick(week_info=week_info, session=session)
+                sync_won_the_week(week_info=week_info, session=session)
         send_award_notification(session=session)

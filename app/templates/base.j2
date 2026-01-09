@@ -68,7 +68,7 @@
             <div id="appVersion" class="content">App Version: {{ config.APP_VERSION }}</div>
             <div id="appEnvironment" class="content">App ENV: {{ config.ENVIRONMENT }}</div>
         {% endif %}
-        <div id="currentWeek" class="subhead">Current Week: {{ current_week }} </div>
+        <div id="currentWeek" class="subhead">{{ week_info.season_type_name }} - Week: {{ week_info.week_no }} </div>
     </div>
     <div id="righterStill"></div>
 </div>

@@ -35,7 +35,7 @@
         {% set home_team=game.home_team -%}
             {% set opacity=1 %}
             {% if game.is_final %}
-                {% if  week_no == current_week %}
+                {% if  week_no == week_info.week_no %}
                     {% set opacity=0.5 %}
                     {% set opacity=0.5 %}
                 {% else %}
@@ -52,11 +52,11 @@
     {% endfor -%}
     </tr>
     {% for player in active_players -%}
-        {% set player_picks = player.picks(week_no=week_no) -%}
+        {% set player_picks = player.picks_for_week(week_info=week_info) -%}
         {{ row_with_style(player_picks, loop.index) }}
         <td style="overflow:hidden; border-top:solid 1px #888;border-left:solid 1px #888;">
             <div style="white-space: nowrap;float:left;width:50%;">&nbsp;{{ player.nick_name }}</div>
-            <div align="right" style="white-space: nowrap;float:right;width:50%;">({{ player.wins(week_no=week_no) }}-{{ player.losses(week_no=week_no) }}) {% if player.bonus(week_no=week_no) > 0 %}+{% endif %}{{ player.bonus(week_no=week_no) }}&nbsp;</div></td>
+            <div align="right" style="white-space: nowrap;float:right;width:50%;">({{ player.wins_for_week(week_info=week_info) }}-{{ player.losses_for_week(week_info=week_info) }}) {% if player.bonus_for_week(week_info=week_info) > 0 %}+{% endif %}{{ player.bonus_for_week(week_info=week_info) }}&nbsp;</div></td>
         {% for game in games -%}
             {% if not player_picks %}
                 <td style="color:green;text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">--no pick--</td>
