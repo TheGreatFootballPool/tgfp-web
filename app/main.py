@@ -45,6 +45,7 @@ async def lifespan(
         release=config.APP_VERSION,
         environment=config.ENVIRONMENT,
         traces_sample_rate=0.01,
+        enable_logs=True,
     )
     init_award_table()
     try:
@@ -271,6 +272,41 @@ async def picks_form(
     week_info: WeekInfo = Depends(_get_current_week_info),
 ):
     player: Player = Player.by_discord_id(session=session, discord_id=discord_id)
+
+    # Check if picks already exist for this week
+    existing_picks = player.picks_for_week(week_info)
+    if existing_picks:
+        # Log to Sentry - user somehow got past the picks page guard
+        # Early return after sending log.
+        original_timestamp = existing_picks[0].created_at if existing_picks else None
+        current_timestamp = datetime.now(timezone("UTC"))
+        sentry_sdk.logger.warning(
+            f"Player {player.id} ({player.full_name}) attempted to resubmit picks for week {week_info.week_no}",
+            extra={
+                "player_id": player.id,
+                "player_name": player.full_name,
+                "week_info": f"{week_info.season} S{week_info.season_type} W{week_info.week_no}",
+                "existing_picks_count": len(existing_picks),
+                "original_picks_timestamp": original_timestamp.isoformat()
+                if original_timestamp
+                else None,
+                "resubmit_attempt_timestamp": current_timestamp.isoformat(),
+                "time_delta_seconds": (
+                    current_timestamp - original_timestamp
+                ).total_seconds()
+                if original_timestamp
+                else None,
+                "user_agent": request.headers.get("user-agent"),
+                "referer": request.headers.get("referer"),
+                "client_host": request.client.host if request.client else None,
+            },
+        )
+        # Gracefully show success page without saving duplicate picks
+        context = {"player": player, "config": config, "week_info": week_info}
+        return templates.TemplateResponse(
+            request=request, name="picks_form.j2", context=context
+        )
+
     games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
     form = await request.form()
     # now get the form variables
