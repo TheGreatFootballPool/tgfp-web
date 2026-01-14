@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Optional, List
 
 from pytz import timezone
+import sqlalchemy.exc
 
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
@@ -278,7 +279,7 @@ async def picks_form(
     if existing_picks:
         # Log to Sentry - user somehow got past the picks page guard
         # Early return after sending log.
-        original_timestamp = existing_picks[0].created_at if existing_picks else None
+        original_timestamp = existing_picks[0].created_at
         current_timestamp = datetime.now(timezone("UTC"))
         sentry_sdk.logger.warning(
             f"Player {player.id} ({player.full_name}) attempted to resubmit picks for week {week_info.week_no}",
@@ -287,21 +288,18 @@ async def picks_form(
                 "player_name": player.full_name,
                 "week_info": f"{week_info.season} S{week_info.season_type} W{week_info.week_no}",
                 "existing_picks_count": len(existing_picks),
-                "original_picks_timestamp": original_timestamp.isoformat()
-                if original_timestamp
-                else None,
+                "original_picks_timestamp": original_timestamp.isoformat(),
                 "resubmit_attempt_timestamp": current_timestamp.isoformat(),
                 "time_delta_seconds": (
                     current_timestamp - original_timestamp
-                ).total_seconds()
-                if original_timestamp
-                else None,
+                ).total_seconds(),
                 "user_agent": request.headers.get("user-agent"),
                 "referer": request.headers.get("referer"),
                 "client_host": request.client.host if request.client else None,
             },
         )
         # Gracefully show success page without saving duplicate picks
+        session.rollback()
         context = {"player": player, "config": config, "week_info": week_info}
         return templates.TemplateResponse(
             request=request, name="picks_form.j2", context=context
@@ -344,14 +342,29 @@ async def picks_form(
         return templates.TemplateResponse(
             request=request, name="error_picks.j2", context=context
         )
-    session.commit()
-    job_scheduler.add_job(
-        "app.jobs.award_update_all:update_all_awards",
-        trigger="date",
-        run_date=datetime.now(timezone("UTC")),
-        id=f"update_all_awards_{player.id}_{week_info.week_no}",
-        replace_existing=True,
-    )
+    try:
+        session.commit()
+        job_scheduler.add_job(
+            "app.jobs.award_update_all:update_all_awards",
+            trigger="date",
+            run_date=datetime.now(timezone("UTC")),
+            id=f"update_all_awards_{player.id}_{week_info.week_no}",
+            replace_existing=True,
+        )
+    except sqlalchemy.exc.IntegrityError:
+        # Race condition: concurrent submission passed the earlier check
+        session.rollback()
+        sentry_sdk.logger.warning(
+            f"Race condition: Player {player.id} ({player.full_name}) concurrent pick submission for week {week_info.week_no}",
+            extra={
+                "player_id": player.id,
+                "player_name": player.full_name,
+                "week_info": f"{week_info.season} S{week_info.season_type} W{week_info.week_no}",
+                "user_agent": request.headers.get("user-agent"),
+                "referer": request.headers.get("referer"),
+                "client_host": request.client.host if request.client else None,
+            },
+        )
 
     context = {"player": player, "config": config, "week_info": week_info}
     return templates.TemplateResponse(
