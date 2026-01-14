@@ -55,7 +55,9 @@ async def lifespan(
             job_scheduler.reschedule_job("weekly_planner", trigger=trigger)
         else:
             job_scheduler.add_job(
-                "app.jobs.scheduler:schedule_jobs", trigger=trigger, id="weekly_planner"
+                "app.jobs.scheduler:schedule_jobs_current_week",
+                trigger=trigger,
+                id="weekly_planner",
             )
         job_scheduler.add_job(
             "app.jobs.award_update_all:update_all_awards",
