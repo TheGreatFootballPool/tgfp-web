@@ -155,3 +155,10 @@ def schedule_jobs(week_info: WeekInfo):
     schedule_create_picks()
     schedule_sync_team_records()
     schedule_award_updates()
+
+
+def schedule_jobs_current_week():
+    """Wrapper function that can be scheduled without arguments"""
+    from models.model_helpers import current_week_info
+    week_info = current_week_info()
+    schedule_jobs(week_info=week_info)

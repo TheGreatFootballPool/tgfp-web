@@ -36,7 +36,7 @@ cd tgfp-web
 - `export OP_SERVICE_ACCOUNT_TOKEN=<your token>`
 - `op vault list` (to test)
 - Run the convenience script to create the env file with `op inject`
-  - Production [scripts/create_local_prod_env.sh](scripts/create_local_prod_env.sh) 
+  - Production [scripts/create_local_prod_env.sh](scripts/create_prod_env.sh) 
   - Development [scripts/create_local_dev_env.sh](scripts/create_local_dev_env.sh)
 </details>
 
@@ -71,7 +71,7 @@ brew link --force libpq
 - run `scripts/create_local_dev_env.sh` to create the development env
 - fire up the dev container for DB `docker compose -f compose.dev.yml up -d --build postgres`
 - fire up the tgfp-web site locally
-NOTE: Don't worry about the web site not firing up yet, we'll get to that
+NOTE: Don't worry about the website not firing up yet, we'll get to that
 
 ### Initialize the Postgresql DB
 - read in the config
