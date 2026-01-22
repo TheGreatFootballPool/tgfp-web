@@ -52,15 +52,12 @@ async def lifespan(
     try:
         pacific = timezone("America/Los_Angeles")
         trigger = CronTrigger(day_of_week="wed", hour=7, minute=0, timezone=pacific)
-        job = job_scheduler.get_job("weekly_planner")
-        if job:
-            job_scheduler.reschedule_job("weekly_planner", trigger=trigger)
-        else:
-            job_scheduler.add_job(
-                "app.jobs.scheduler:schedule_jobs_current_week",
-                trigger=trigger,
-                id="weekly_planner",
-            )
+        job_scheduler.add_job(
+            "app.jobs.scheduler:schedule_jobs_current_week",
+            trigger=trigger,
+            id="weekly_planner",
+            replace_existing=True,
+        )
         job_scheduler.add_job(
             "app.jobs.award_update_all:update_all_awards",
             trigger="date",
