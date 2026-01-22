@@ -338,6 +338,7 @@ async def picks_form(
             "goto_route": "picks",
             "player": player,
             "config": config,
+            "week_info": week_info,
         }
         return templates.TemplateResponse(
             request=request, name="error_picks.j2", context=context
