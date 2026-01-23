@@ -1,16 +1,19 @@
 """
 This module contains all the necessary functions for interfacing with
 a data source (ESPN / Yahoo for example) for retrieving scores, schedule data, etc.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before this module is imported and used.
 """
 
 from __future__ import annotations
 
-import logging
 import time
 from dataclasses import dataclass
 from typing import Optional, Any, List
 from dateutil import parser
 import httpx
+import sentry_sdk
 
 
 def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
@@ -40,7 +43,7 @@ def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
                 )
             return response
         except (httpx.RequestError, httpx.HTTPStatusError):
-            logging.warning(f"Retry attempt {attempt + 1}/{max_retries}")
+            sentry_sdk.logger.warning(f"Retry attempt {attempt + 1}/{max_retries}")
             if attempt == max_retries:
                 raise
             time.sleep(delay)
@@ -50,6 +53,16 @@ def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
 
 @dataclass
 class ESPNSeasonType:
+    """
+    Represents an NFL season type (preseason, regular season, postseason, off-season).
+
+    Attributes:
+        type_id: ESPN's numeric identifier for the season type (1=Pre, 2=Regular, 3=Post, 4=Off)
+        name: Human-readable name of the season type
+        weeks: Total number of weeks in this season type
+        skip_weeks: List of week numbers to skip (e.g., [4] for postseason bye week)
+    """
+
     type_id: int
     name: str
     weeks: int

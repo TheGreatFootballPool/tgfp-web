@@ -11,6 +11,7 @@ import sqlalchemy.exc
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -46,7 +47,19 @@ async def lifespan(
         release=config.APP_VERSION,
         environment=config.ENVIRONMENT,
         traces_sample_rate=0.01,
+        # Enable structured logging (allows sentry_sdk.logger at any level)
         enable_logs=True,
+        # Logging integration configuration:
+        # - level="INFO": Capture INFO+ logs as breadcrumbs (context attached to errors)
+        # - event_level="WARNING": Only send WARNING+ as standalone events to Sentry
+        # - sentry_logs_level=None: Don't auto-capture from standard loggers (use explicit sentry_sdk.logger)
+        integrations=[
+            LoggingIntegration(
+                level="INFO",  # Capture INFO+ as breadcrumbs for error context
+                event_level="WARNING",  # Only send WARNING+ as standalone events
+                sentry_logs_level=None,  # Explicit sentry_sdk.logger calls only
+            ),
+        ],
     )
     init_award_table()
     try:
@@ -218,6 +231,22 @@ def picks(
 ):
     """Picks page"""
     player: Player = Player.by_discord_id(session, discord_id)
+
+    # Check if this is a skip week (e.g., postseason bye week)
+    if week_info.is_skip_week:
+        context = {
+            "error_messages": [
+                f"There are no games during {week_info.season_type_name} week {week_info.week_no} (bye week)."
+            ],
+            "goto_route": "allpicks",
+            "player": player,
+            "config": config,
+            "week_info": week_info,
+        }
+        return templates.TemplateResponse(
+            request=request, name="error_picks.j2", context=context
+        )
+
     if player.picks_for_week(week_info):
         context = {
             "error_messages": [
@@ -388,6 +417,19 @@ def allpicks(
         )
     else:
         display_week_info = week_info
+
+    # If displaying a skip week, show the previous week instead
+    if display_week_info.is_skip_week:
+        if display_week_info.week_no <= 1:
+            sentry_sdk.logger.error(
+                "Skip week should NEVER be true if the week is <= 1"
+            )
+        else:
+            display_week_info = WeekInfo(
+                season=display_week_info.season,
+                season_type=display_week_info.season_type,
+                week_no=display_week_info.week_no - 1,
+            )
     active_players: List[Player] = Player.active_players(session=session)
     active_players.sort(key=lambda x: x.total_points, reverse=True)
     games: List[Game] = Game.games_for_week(
@@ -423,14 +465,22 @@ async def standings(
         session.exec(select(Player).where(Player.active)).all()
     )
     players.sort(key=lambda x: x.total_points, reverse=True)
-    games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
+
+    # For skip weeks or if all games are pregame, show previous week's standings
     most_recent_week: int = week_info.week_no
-    all_games_in_pregame: bool = True
-    for game in games:
-        if not game.is_pregame:
-            all_games_in_pregame = False
-            break
-    if all_games_in_pregame and most_recent_week > 1:
+    should_show_previous_week = False
+
+    if week_info.is_skip_week:
+        # Skip week (e.g., postseason bye) - use previous week
+        should_show_previous_week = True
+    else:
+        # Check if all games are still pregame
+        games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
+        all_games_in_pregame: bool = all(game.is_pregame for game in games)
+        if all_games_in_pregame and most_recent_week > 1:
+            should_show_previous_week = True
+
+    if should_show_previous_week and most_recent_week > 1:
         most_recent_week -= 1
     context = {
         "player": player,

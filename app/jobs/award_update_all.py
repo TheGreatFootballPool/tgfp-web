@@ -1,5 +1,11 @@
-import logging
+"""
+Sync player awards based on game outcomes and weekly performance.
 
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before any jobs are scheduled or executed.
+"""
+
+import sentry_sdk
 from sqlmodel import Session, select
 
 from db import engine
@@ -66,7 +72,7 @@ def sync_in_your_face(week_info: WeekInfo, session: Session):
 def sync_perfect_week(week_info: WeekInfo, session: Session):
     active_players: list[Player] = Player.active_players(session=session)
     if len(active_players) < 2:
-        logging.error("Too few players")
+        sentry_sdk.logger.error("Too few players")
         raise Exception("Too few players")
     for player in active_players:
         losses: int = player.losses_for_week(week_info=week_info)

@@ -1,6 +1,8 @@
 {% set login_status_class='subhead' %}
 {% macro week_no_link(week_info) %}
-    {% if week_info == display_week_info %}
+    {% if week_info.is_skip_week %}
+        &nbsp;<span style="font-size:10pt;color:#999">(bye)</span>&nbsp;
+    {% elif week_info == display_week_info %}
         &nbsp;<span style="font-size:12pt">{{ week_info.week_no }}&nbsp;</span>
     {% else %}
         <!--suppress HtmlUnknownTarget -->

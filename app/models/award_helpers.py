@@ -1,9 +1,15 @@
+"""
+Helper functions for managing player awards in the database.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before these functions are called.
+"""
+
 from sqlmodel import Session, select
 
 from db import engine
 from models import AwardSlug, Award, PlayerAward
-
-import logging
+import sentry_sdk
 
 from models.award import AWARD_DEFINITIONS
 from models.model_helpers import WeekInfo
@@ -24,8 +30,8 @@ def init_award_table() -> None:
                 existing.description = row["description"]
                 existing.icon = row["icon"]
                 existing.point_value = row["point_value"]
-                logging.info(
-                    "init_award_helper: Award {} already exists".format(row["slug"])
+                sentry_sdk.logger.info(
+                    f"init_award_helper: Award {row['slug']} already exists"
                 )
             else:
                 # ✅ set slug to the string value; SQLModel will coerce back to AwardSlug on load

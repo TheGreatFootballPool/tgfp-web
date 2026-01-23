@@ -1,7 +1,11 @@
-"""Take a game, and get the current scores from ESPNNfl and update the TGFP game"""
+"""
+Take a game, and get the current scores from ESPNNfl and update the TGFP game.
 
-import logging
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before any jobs are scheduled or executed.
+"""
 
+import sentry_sdk
 from apscheduler.jobstores.base import JobLookupError
 from sqlmodel import Session
 
@@ -26,7 +30,7 @@ def _update_one_game(session: Session, game_id: int) -> Game | None:
     nfl_data_source = ESPNNfl(week_no=game.week_no, season_type=game.season_type)
     nfl_game = nfl_data_source.find_game(nfl_game_id=game.tgfp_nfl_game_id)
     if not nfl_game:
-        logging.warning(
+        sentry_sdk.logger.warning(
             f"No game with id {game_id}  Probably because ESPN was not responding"
         )
         return None
@@ -51,7 +55,7 @@ def update_a_game(game_id: int):
             job_id: str = job_id_for_game_id(game_id=game_id)
             update_player_records(session=session)
             try:
-                logging.info("Removing job %s with game: %s", job_id, game.id)
+                sentry_sdk.logger.info(f"Removing job {job_id} with game: {game.id}")
                 job_scheduler.remove_job(job_id)
             except JobLookupError:
                 pass  # already gone; fine
