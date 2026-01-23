@@ -106,6 +106,12 @@ def schedule_update_games(week_info: WeekInfo):
 
 
 def schedule_create_picks(week_info: WeekInfo):
+    """
+    Creates the flows for creating picks
+
+    NOTE: We take a week_info here, and it's OK if we schedule picks to run even on skip weeks
+    since the create_picks method no-ops, I'd rather have the schedule be consistent.
+    """
     pacific = timezone("America/Los_Angeles")
     trigger = CronTrigger(day_of_week="wed", hour=6, minute=0, timezone=pacific)
     job = job_scheduler.get_job("create_picks")
@@ -163,5 +169,6 @@ def schedule_jobs(week_info: WeekInfo):
 def schedule_jobs_current_week():
     """Wrapper function that can be scheduled without arguments"""
     from models.model_helpers import current_week_info
+
     week_info = current_week_info()
     schedule_jobs(week_info=week_info)

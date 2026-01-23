@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 import sentry_sdk
@@ -70,11 +69,11 @@ def create_the_picks(week_info: WeekInfo):
         )
         nfl_games: List[ESPNNflGame] = nfl.games()
         if not nfl_games:
-            logging.error("No nfl_games found")
+            sentry_sdk.logger.error("No nfl_games found")
             raise CreatePicksException("There should have been games!!!")
         nfl_game: ESPNNflGame
         for nfl_game in nfl_games:
-            logging.debug(
+            sentry_sdk.logger.debug(
                 f"Creating pick for nfl_game: {nfl_game}",
                 nfl_game=nfl_game.extra_info,  # type: ignore[arg-type]
             )

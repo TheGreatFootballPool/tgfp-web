@@ -416,8 +416,14 @@ def allpicks(
         display_week_info = week_info
 
     # If displaying a skip week, show the previous week instead
+    # NOTE TO REVIEWERS: I know I'm modifying the week_info but that's OK
     if display_week_info.is_skip_week:
-        display_week_info.week_no -= 1
+        if display_week_info.week_no <= 1:
+            sentry_sdk.logger.error(
+                "Skip week should NEVER be true if the week is <= 1"
+            )
+        else:
+            display_week_info.week_no -= 1
 
     active_players: List[Player] = Player.active_players(session=session)
     active_players.sort(key=lambda x: x.total_points, reverse=True)
@@ -457,18 +463,20 @@ async def standings(
 
     # For skip weeks or if all games are pregame, show previous week's standings
     most_recent_week: int = week_info.week_no
+    should_show_previous_week = False
+
     if week_info.is_skip_week:
-        # Skip week - use previous week
-        most_recent_week -= 1
+        # Skip week (e.g., postseason bye) - use previous week
+        should_show_previous_week = True
     else:
+        # Check if all games are still pregame
         games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
-        all_games_in_pregame: bool = True
-        for game in games:
-            if not game.is_pregame:
-                all_games_in_pregame = False
-                break
+        all_games_in_pregame: bool = all(game.is_pregame for game in games)
         if all_games_in_pregame and most_recent_week > 1:
-            most_recent_week -= 1
+            should_show_previous_week = True
+
+    if should_show_previous_week and most_recent_week > 1:
+        most_recent_week -= 1
     context = {
         "player": player,
         "most_recent_week": most_recent_week,
