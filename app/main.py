@@ -46,7 +46,13 @@ async def lifespan(
         release=config.APP_VERSION,
         environment=config.ENVIRONMENT,
         traces_sample_rate=0.01,
-        enable_logs=True,
+        # Only capture WARNING and above (excludes INFO-level HTTP access logs)
+        integrations=[
+            sentry_sdk.integrations.logging.LoggingIntegration(
+                level="WARNING",  # Capture WARNING+ as breadcrumbs (context for debugging)
+                event_level="WARNING"  # Only send WARNING and above as events
+            ),
+        ],
     )
     init_award_table()
     try:
