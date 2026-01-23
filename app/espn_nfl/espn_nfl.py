@@ -50,6 +50,16 @@ def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
 
 @dataclass
 class ESPNSeasonType:
+    """
+    Represents an NFL season type (preseason, regular season, postseason, off-season).
+
+    Attributes:
+        type_id: ESPN's numeric identifier for the season type (1=Pre, 2=Regular, 3=Post, 4=Off)
+        name: Human-readable name of the season type
+        weeks: Total number of weeks in this season type
+        skip_weeks: List of week numbers to skip (e.g., [4] for postseason bye week)
+    """
+
     type_id: int
     name: str
     weeks: int

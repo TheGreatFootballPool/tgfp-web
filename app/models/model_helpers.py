@@ -21,6 +21,17 @@ class WeekInfo:
         season_type: ESPNSeasonType = ESPNNfl.SEASON_TYPES[self.season_type - 1]
         return season_type.name
 
+    @property
+    def is_skip_week(self) -> bool:
+        """
+        Check if the current week is a skip week for this season type.
+
+        Returns:
+            True if this week should be skipped (e.g., postseason bye week), False otherwise
+        """
+        season_type: ESPNSeasonType = ESPNNfl.SEASON_TYPES[self.season_type - 1]
+        return self.week_no in season_type.skip_weeks
+
 
 def current_week_info() -> WeekInfo:
     espn_nfl = ESPNNfl()

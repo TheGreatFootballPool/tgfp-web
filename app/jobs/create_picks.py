@@ -1,10 +1,12 @@
 import logging
 from typing import List
 
+import sentry_sdk
 from sqlmodel import Session, select
 
 from db import engine
 from models import Game, Team
+from models.model_helpers import WeekInfo
 from espn_nfl import ESPNNfl, ESPNNflGame
 
 
@@ -49,11 +51,23 @@ def _game_from_nfl_game(session: Session, nfl_game: ESPNNflGame) -> Game:
     return game
 
 
-def create_the_picks():
+def create_the_picks(week_info: WeekInfo):
     """Creates the weekly picks page"""
-    logging.info("Creating weekly picks page")
+    # Check if this is a skip week (e.g., postseason bye week)
+    if week_info.is_skip_week:
+        sentry_sdk.logger.info(
+            f"Skipping picks page creation for {week_info.season_type_name} "
+            f"week {week_info.week_no} (skip week)"
+        )
+        return
+
+    sentry_sdk.logger.info(
+        f"Creating weekly picks page for {week_info.season_type_name} week {week_info.week_no}"
+    )
     with Session(engine) as session:
-        nfl: ESPNNfl = ESPNNfl()
+        nfl: ESPNNfl = ESPNNfl(
+            week_no=week_info.week_no, season_type=week_info.season_type
+        )
         nfl_games: List[ESPNNflGame] = nfl.games()
         if not nfl_games:
             logging.error("No nfl_games found")

@@ -11,6 +11,7 @@ import sqlalchemy.exc
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -46,11 +47,14 @@ async def lifespan(
         release=config.APP_VERSION,
         environment=config.ENVIRONMENT,
         traces_sample_rate=0.01,
-        # Only capture WARNING and above (excludes INFO-level HTTP access logs)
+        # Enable structured logging (allows sentry_sdk.logger at any level)
+        enable_logs=True,
+        # Block automatic INFO logs from uvicorn, but allow explicit sentry_sdk.logger calls
         integrations=[
-            sentry_sdk.integrations.logging.LoggingIntegration(
-                level="WARNING",  # Capture WARNING+ as breadcrumbs (context for debugging)
-                event_level="WARNING"  # Only send WARNING and above as events
+            LoggingIntegration(
+                level="WARNING",  # Only capture WARNING+ from standard Python logging
+                event_level="WARNING",  # Only send WARNING+ as events
+                sentry_logs_level=None,  # Don't automatically capture logs from standard loggers
             ),
         ],
     )
@@ -224,6 +228,22 @@ def picks(
 ):
     """Picks page"""
     player: Player = Player.by_discord_id(session, discord_id)
+
+    # Check if this is a skip week (e.g., postseason bye week)
+    if week_info.is_skip_week:
+        context = {
+            "error_messages": [
+                f"There are no games during {week_info.season_type_name} week {week_info.week_no} (bye week)."
+            ],
+            "goto_route": "allpicks",
+            "player": player,
+            "config": config,
+            "week_info": week_info,
+        }
+        return templates.TemplateResponse(
+            request=request, name="error_picks.j2", context=context
+        )
+
     if player.picks_for_week(week_info):
         context = {
             "error_messages": [
@@ -394,6 +414,11 @@ def allpicks(
         )
     else:
         display_week_info = week_info
+
+    # If displaying a skip week, show the previous week instead
+    if display_week_info.is_skip_week:
+        display_week_info.week_no -= 1
+
     active_players: List[Player] = Player.active_players(session=session)
     active_players.sort(key=lambda x: x.total_points, reverse=True)
     games: List[Game] = Game.games_for_week(
@@ -429,15 +454,21 @@ async def standings(
         session.exec(select(Player).where(Player.active)).all()
     )
     players.sort(key=lambda x: x.total_points, reverse=True)
-    games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
+
+    # For skip weeks or if all games are pregame, show previous week's standings
     most_recent_week: int = week_info.week_no
-    all_games_in_pregame: bool = True
-    for game in games:
-        if not game.is_pregame:
-            all_games_in_pregame = False
-            break
-    if all_games_in_pregame and most_recent_week > 1:
+    if week_info.is_skip_week:
+        # Skip week - use previous week
         most_recent_week -= 1
+    else:
+        games: List[Game] = Game.games_for_week(session=session, week_info=week_info)
+        all_games_in_pregame: bool = True
+        for game in games:
+            if not game.is_pregame:
+                all_games_in_pregame = False
+                break
+        if all_games_in_pregame and most_recent_week > 1:
+            most_recent_week -= 1
     context = {
         "player": player,
         "most_recent_week": most_recent_week,

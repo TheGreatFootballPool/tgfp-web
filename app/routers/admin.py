@@ -27,7 +27,7 @@ def job_schedule(request: Request):
 
 @router.get("/job_create_picks")
 def job_create_picks(request: Request):
-    create_the_picks()
+    create_the_picks(week_info=current_week_info())
     redirect_url = request.url_for("picks")
     response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
     return response
