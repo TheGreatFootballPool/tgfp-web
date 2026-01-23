@@ -4,9 +4,8 @@
         &nbsp;<span style="font-size:12pt">{{ week_info.week_no }}&nbsp;</span>
     {% else %}
         <!--suppress HtmlUnknownTarget -->
+        {# Note: week_info is intentional here, not display_week_info #}
         <a style="font-size:12pt" href="/allpicks?season={{ week_info.season }}&season_type={{ week_info.season_type }}&week_no={{ week_info.week_no }}">&nbsp;{{ week_info.week_no }}&nbsp;</a>
-    {% endif %}
-    {% if index != week_info.week_no %}
     {% endif %}
 {% endmacro %}
 
@@ -23,8 +22,7 @@
     <div id="headerBar">
         <div class="title">The Great Football Pool</div>
         <div class="description">{{ page_description }}</div>
-        {% set ns = namespace(week_info_name="") %}
-        {% set ns = namespace(end_div_tag_needed=False) %}
+        {% set ns = namespace(week_info_name="", end_div_tag_needed=False) %}
         {% for week_info in all_week_infos %}
             {% if week_info.season_type_name != ns.week_info_name %}
                 {% if ns.end_div_tag_needed %}
