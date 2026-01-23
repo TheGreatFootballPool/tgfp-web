@@ -1,3 +1,10 @@
+"""
+Helper functions for managing player awards in the database.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before these functions are called.
+"""
+
 from sqlmodel import Session, select
 
 from db import engine

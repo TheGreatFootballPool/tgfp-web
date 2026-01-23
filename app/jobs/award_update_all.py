@@ -1,3 +1,10 @@
+"""
+Sync player awards based on game outcomes and weekly performance.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before any jobs are scheduled or executed.
+"""
+
 import sentry_sdk
 from sqlmodel import Session, select
 

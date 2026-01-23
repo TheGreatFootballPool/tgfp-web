@@ -1,4 +1,9 @@
-"""This example requires the 'message_content' intent."""
+"""
+Sends Discord notifications to players who haven't submitted their picks.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before any jobs are scheduled or executed.
+"""
 
 import datetime
 import sentry_sdk

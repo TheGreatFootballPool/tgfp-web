@@ -1,4 +1,9 @@
-"""Take a game, and get the current scores from ESPNNfl and update the TGFP game"""
+"""
+Take a game, and get the current scores from ESPNNfl and update the TGFP game.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before any jobs are scheduled or executed.
+"""
 
 import sentry_sdk
 from apscheduler.jobstores.base import JobLookupError

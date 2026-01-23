@@ -1,6 +1,9 @@
 """
 This module contains all the necessary functions for interfacing with
 a data source (ESPN / Yahoo for example) for retrieving scores, schedule data, etc.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before this module is imported and used.
 """
 
 from __future__ import annotations
