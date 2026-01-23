@@ -1,3 +1,9 @@
+"""
+Creates the weekly picks page by fetching games from ESPN and storing them in the database.
+
+Note: This module uses sentry_sdk.logger for logging. Sentry SDK is initialized in
+app/main.py's lifespan context manager before any jobs are scheduled or executed.
+"""
 from typing import List
 
 import sentry_sdk
