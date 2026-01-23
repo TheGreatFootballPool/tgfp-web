@@ -394,6 +394,7 @@ def allpicks(
         session=session, week_info=display_week_info
     )
     teams: List[Team] = Team.all_teams(session=session)
+    all_week_infos: List[WeekInfo] = Game.get_distinct_week_infos(session=session)
     context = {
         "player": player,
         "active_players": active_players,
@@ -402,6 +403,7 @@ def allpicks(
         "games": games,
         "teams": teams,
         "config": config,
+        "all_week_infos": all_week_infos,
     }
     return templates.TemplateResponse(
         request=request, name="allpicks.j2", context=context

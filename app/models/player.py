@@ -50,7 +50,7 @@ class Player(TGFPModelBase, table=True):
         sess.info[cache_key] = picks
         return picks
 
-    def pick_for_game_id(self, game_id: int) -> "PlayerGamePick":
+    def pick_for_game_id(self, game_id: int) -> Optional["PlayerGamePick"]:
         from .player_game_pick import PlayerGamePick
 
         # Search cached picks first (across all cached weeks)
@@ -60,7 +60,7 @@ class Player(TGFPModelBase, table=True):
             .where(PlayerGamePick.player_id == self.id)
             .where(PlayerGamePick.game_id == game_id)
         )
-        return session.exec(statement).one()
+        return session.exec(statement).one_or_none()
 
     @staticmethod
     def _record_from_picks(picks: List["PlayerGamePick"]) -> dict:

@@ -52,18 +52,22 @@
     {% endfor -%}
     </tr>
     {% for player in active_players -%}
-        {% set player_picks = player.picks_for_week(week_info=week_info) -%}
+        {% set player_picks = player.picks_for_week(week_info=display_week_info) -%}
         {{ row_with_style(player_picks, loop.index) }}
         <td style="overflow:hidden; border-top:solid 1px #888;border-left:solid 1px #888;">
             <div style="white-space: nowrap;float:left;width:50%;">&nbsp;{{ player.nick_name }}</div>
-            <div align="right" style="white-space: nowrap;float:right;width:50%;">({{ player.wins_for_week(week_info=week_info) }}-{{ player.losses_for_week(week_info=week_info) }}) {% if player.bonus_for_week(week_info=week_info) > 0 %}+{% endif %}{{ player.bonus_for_week(week_info=week_info) }}&nbsp;</div></td>
+            <div align="right" style="white-space: nowrap;float:right;width:50%;">({{ player.wins_for_week(week_info=display_week_info) }}-{{ player.losses_for_week(week_info=display_week_info) }}) {% if player.bonus_for_week(week_info=display_week_info) > 0 %}+{% endif %}{{ player.bonus_for_week(week_info=display_week_info) }}&nbsp;</div></td>
         {% for game in games -%}
             {% if not player_picks %}
                 <td style="color:green;text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">--no pick--</td>
             {% else %}
                 {% set pick = player.pick_for_game_id(game.id) %}
-                {% set team = pick.picked_team %}
-                <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ team_with_upset_lock_style(team, pick) }}</td>
+                {% if pick %}
+                    {% set team = pick.picked_team %}
+                    <td style="text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">{{ team_with_upset_lock_style(team, pick) }}</td>
+                {% else %}
+                    <td style="color:green;text-align:center;border-top:solid 1px #888;border-left:solid 1px #888;">--no pick--</td>
+                {% endif %}
             {% endif %}
         {% endfor %}
     {% endfor -%}
