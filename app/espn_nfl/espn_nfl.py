@@ -5,12 +5,12 @@ a data source (ESPN / Yahoo for example) for retrieving scores, schedule data, e
 
 from __future__ import annotations
 
-import logging
 import time
 from dataclasses import dataclass
 from typing import Optional, Any, List
 from dateutil import parser
 import httpx
+import sentry_sdk
 
 
 def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
@@ -40,7 +40,7 @@ def _http_get_with_retry(url: str, **kwargs) -> httpx.Response:
                 )
             return response
         except (httpx.RequestError, httpx.HTTPStatusError):
-            logging.warning(f"Retry attempt {attempt + 1}/{max_retries}")
+            sentry_sdk.logger.warning(f"Retry attempt {attempt + 1}/{max_retries}")
             if attempt == max_retries:
                 raise
             time.sleep(delay)

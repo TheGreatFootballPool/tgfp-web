@@ -416,15 +416,17 @@ def allpicks(
         display_week_info = week_info
 
     # If displaying a skip week, show the previous week instead
-    # NOTE TO REVIEWERS: I know I'm modifying the week_info but that's OK
     if display_week_info.is_skip_week:
         if display_week_info.week_no <= 1:
             sentry_sdk.logger.error(
                 "Skip week should NEVER be true if the week is <= 1"
             )
         else:
-            display_week_info.week_no -= 1
-
+            display_week_info = WeekInfo(
+                season=display_week_info.season,
+                season_type=display_week_info.season_type,
+                week_no=display_week_info.week_no - 1,
+            )
     active_players: List[Player] = Player.active_players(session=session)
     active_players.sort(key=lambda x: x.total_points, reverse=True)
     games: List[Game] = Game.games_for_week(
