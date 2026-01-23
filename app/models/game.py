@@ -133,7 +133,9 @@ class Game(TGFPModelBase, table=True):
         """Returns a list of distinct week infos"""
         week_infos: List[WeekInfo] = []
         distinct_weeks = session.exec(
-            select(Game.season, Game.season_type, Game.week_no).distinct()
+            select(Game.season, Game.season_type, Game.week_no)
+            .distinct()
+            .order_by(Game.season, Game.season_type, Game.week_no)
         ).all()
         for season, season_type, week_no in distinct_weeks:
             week_infos.append(WeekInfo(season, season_type, week_no))
