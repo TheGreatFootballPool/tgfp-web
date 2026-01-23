@@ -49,12 +49,15 @@ async def lifespan(
         traces_sample_rate=0.01,
         # Enable structured logging (allows sentry_sdk.logger at any level)
         enable_logs=True,
-        # Block automatic INFO logs from uvicorn, but allow explicit sentry_sdk.logger calls
+        # Logging integration configuration:
+        # - level="INFO": Capture INFO+ logs as breadcrumbs (context attached to errors)
+        # - event_level="WARNING": Only send WARNING+ as standalone events to Sentry
+        # - sentry_logs_level=None: Don't auto-capture from standard loggers (use explicit sentry_sdk.logger)
         integrations=[
             LoggingIntegration(
-                level="WARNING",  # Only capture WARNING+ from standard Python logging
-                event_level="WARNING",  # Only send WARNING+ as events
-                sentry_logs_level=None,  # Don't automatically capture logs from standard loggers
+                level="INFO",  # Capture INFO+ as breadcrumbs for error context
+                event_level="WARNING",  # Only send WARNING+ as standalone events
+                sentry_logs_level=None,  # Explicit sentry_sdk.logger calls only
             ),
         ],
     )
