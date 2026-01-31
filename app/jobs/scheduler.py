@@ -44,16 +44,13 @@ def schedule_nag_players(week_info: WeekInfo):
             job_id: str = f"s{week_info.season}:st:{week_info.season_type}:w{first_game.week_no}:d{delta}"
             job_name: str = f"{delta} minutes before kickoff"
             trigger: DateTrigger = DateTrigger(run_date=d)
-            job = job_scheduler.get_job(job_id)
-            if job:
-                job_scheduler.reschedule_job(job_id, trigger=trigger)
-            else:
-                job_scheduler.add_job(
-                    "app.jobs.nag_players:nag_the_players",
-                    name=job_name,
-                    trigger=trigger,
-                    id=job_id,
-                )
+            job_scheduler.add_job(
+                "app.jobs.nag_players:nag_the_players",
+                name=job_name,
+                trigger=trigger,
+                id=job_id,
+                replace_existing=True,
+            )
 
 
 def schedule_update_games(week_info: WeekInfo):
@@ -92,17 +89,14 @@ def schedule_update_games(week_info: WeekInfo):
             trigger: IntervalTrigger = IntervalTrigger(
                 minutes=5, start_date=start_date, end_date=end_date, jitter=60
             )
-            job = job_scheduler.get_job(job_id)
-            if job:
-                job_scheduler.reschedule_job(job_id, trigger=trigger)
-            else:
-                job_scheduler.add_job(
-                    "app.jobs.update_game:update_a_game",
-                    name=job_name,
-                    trigger=trigger,
-                    id=job_id,
-                    args=[game.id],
-                )
+            job_scheduler.add_job(
+                "app.jobs.update_game:update_a_game",
+                name=job_name,
+                trigger=trigger,
+                id=job_id,
+                args=[game.id],
+                replace_existing=True,
+            )
 
 
 def schedule_create_picks(week_info: WeekInfo):
@@ -114,44 +108,35 @@ def schedule_create_picks(week_info: WeekInfo):
     """
     pacific = timezone("America/Los_Angeles")
     trigger = CronTrigger(day_of_week="wed", hour=6, minute=0, timezone=pacific)
-    job = job_scheduler.get_job("create_picks")
-    if job:
-        job_scheduler.reschedule_job("create_picks", trigger=trigger)
-    else:
-        job_scheduler.add_job(
-            "app.jobs.create_picks:create_the_picks",
-            trigger=trigger,
-            id="create_picks",
-            args=[week_info],
-        )
+    job_scheduler.add_job(
+        "app.jobs.create_picks:create_the_picks",
+        trigger=trigger,
+        id="create_picks",
+        args=[week_info],
+        replace_existing=True,
+    )
 
 
 def schedule_sync_team_records():
     pacific = timezone("America/Los_Angeles")
     trigger = CronTrigger(day_of_week="tue", hour=4, minute=0, timezone=pacific)
-    job = job_scheduler.get_job("sync_team_records")
-    if job:
-        job_scheduler.reschedule_job("sync_team_records", trigger=trigger)
-    else:
-        job_scheduler.add_job(
-            "app.jobs.sync_team_records:sync_the_team_records",
-            trigger=trigger,
-            id="sync_team_records",
-        )
+    job_scheduler.add_job(
+        "app.jobs.sync_team_records:sync_the_team_records",
+        trigger=trigger,
+        id="sync_team_records",
+        replace_existing=True,
+    )
 
 
 def schedule_award_updates():
     pacific = timezone("America/Los_Angeles")
     trigger = CronTrigger(day_of_week="tue", hour=5, minute=30, timezone=pacific)
-    job = job_scheduler.get_job("update_awards")
-    if job:
-        job_scheduler.reschedule_job("update_awards", trigger=trigger)
-    else:
-        job_scheduler.add_job(
-            "app.jobs.award_update_all:update_all_awards",
-            trigger=trigger,
-            id="update_awards",
-        )
+    job_scheduler.add_job(
+        "app.jobs.award_update_all:update_all_awards",
+        trigger=trigger,
+        id="update_awards",
+        replace_existing=True,
+    )
 
 
 def job_id_for_game_id(game_id: int) -> str:
